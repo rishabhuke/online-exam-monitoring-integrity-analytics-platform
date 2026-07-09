@@ -1,0 +1,758 @@
+/* ======================================================
+   DASHBOARD CSS
+   Online Exam Monitoring & Integrity Analytics Platform
+====================================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#f4f7fc;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    color:#2c3e50;
+}
+
+.dashboard-container{
+
+    max-width:1300px;
+
+    margin:35px auto;
+
+    padding:20px;
+
+}
+
+/* ======================================================
+   WELCOME CARD
+====================================================== */
+
+.welcome-card{
+
+    background:linear-gradient(135deg,#2563eb,#1e40af);
+
+    color:white;
+
+    border-radius:20px;
+
+    padding:35px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:30px;
+
+    box-shadow:0 15px 35px rgba(37,99,235,.25);
+
+}
+
+.welcome-left h1{
+
+    font-size:35px;
+    color: white;
+
+    margin-bottom:12px;
+
+}
+
+.welcome-left span{
+
+    color:#FFD54F;
+
+}
+
+.welcome-left p{
+
+    font-size:16px;
+
+    opacity:.95;
+
+    line-height:1.7;
+
+    max-width:600px;
+
+}
+
+.candidate-avatar{
+
+    width:120px;
+
+    height:120px;
+
+    border-radius:50%;
+
+    background:white;
+
+    color:#2563eb;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:55px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+
+}
+
+/* ======================================================
+   SESSION STATUS
+====================================================== */
+
+.status-card{
+
+    background:white;
+
+    border-radius:18px;
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:20px;
+
+    padding:25px;
+
+    margin-bottom:35px;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+.status-item{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+}
+
+.status-item i{
+
+    width:60px;
+
+    height:60px;
+
+    border-radius:50%;
+
+    background:#e8f0ff;
+
+    color:#2563eb;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:26px;
+
+}
+
+.status-item h4{
+
+    color:#1e3a8a;
+
+    margin-bottom:5px;
+
+}
+
+.status-item p{
+
+    color:#666;
+
+}
+
+/* ==========================================
+   CANDIDATE SERVICES
+========================================== */
+
+.services-container{
+
+    background:#ffffff;
+
+    border-radius:22px;
+
+    padding:35px;
+
+    margin-bottom:40px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    justify-content:center;
+
+    gap:25px;
+
+}
+
+/* Header */
+
+.services-header{
+
+    width:100%;
+
+    text-align:center;
+
+    margin-bottom:10px;
+
+}
+
+.services-header h2{
+
+    font-size:32px;
+
+    color:#1e3a8a;
+
+    margin-bottom:10px;
+
+}
+
+.services-header h2 i{
+
+    color:#2563eb;
+
+    margin-right:10px;
+
+}
+
+.services-header p{
+
+    color:#6b7280;
+
+    font-size:16px;
+
+    margin-bottom:15px;
+
+}
+
+/* Cards */
+
+.service-card{
+
+    width:340px;
+
+    background:#ffffff;
+
+    border-radius:18px;
+
+    padding:28px;
+
+    text-align:center;
+
+    border:1px solid #e5e7eb;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+    transition:all .35s ease;
+
+}
+
+.service-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:0 18px 35px rgba(37,99,235,.18);
+
+}
+
+.service-icon{
+
+    width:75px;
+
+    height:75px;
+
+    background:#eef4ff;
+
+    color:#2563eb;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    margin:0 auto 20px;
+
+    font-size:34px;
+
+    transition:.3s;
+
+}
+
+.service-card:hover .service-icon{
+
+    transform:scale(1.1);
+
+    background:#2563eb;
+
+    color:white;
+
+}
+
+.service-card h3{
+
+    color:#1e3a8a;
+
+    margin-bottom:15px;
+
+    font-size:22px;
+
+}
+
+.service-card p{
+
+    color:#6b7280;
+
+    line-height:1.7;
+
+    min-height:75px;
+
+    margin-bottom:20px;
+
+}
+
+.service-btn{
+
+    display:inline-block;
+
+    padding:12px 28px;
+
+    background:#2563eb;
+
+    color:#fff;
+
+    text-decoration:none;
+
+    border-radius:10px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.service-btn:hover{
+
+    background:#1d4ed8;
+
+}
+
+/* Responsive */
+
+@media(max-width:992px){
+
+    .service-card{
+
+        width:45%;
+
+    }
+
+}
+
+@media(max-width:768px){
+
+    .service-card{
+
+        width:100%;
+
+    }
+
+    .services-header h2{
+
+        font-size:28px;
+
+    }
+
+}
+/* ======================================================
+   ANNOUNCEMENTS
+====================================================== */
+
+.announcement-card{
+
+    background:#ffffff;
+
+    border-radius:18px;
+
+    padding:30px;
+
+    margin-bottom:35px;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+.announcement-card h2{
+
+    color:#1e3a8a;
+
+    margin-bottom:25px;
+
+}
+
+.announcement{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    padding:18px;
+
+    margin-bottom:15px;
+
+    border-left:5px solid #2563eb;
+
+    background:#f8fbff;
+
+    border-radius:10px;
+
+    transition:.3s;
+
+}
+
+.announcement:hover{
+
+    background:#eef5ff;
+
+}
+
+.announcement i{
+
+    color:#2563eb;
+
+    font-size:22px;
+
+}
+
+/* ======================================================
+   INSTRUCTIONS
+====================================================== */
+
+.instruction-card{
+
+    background:#ffffff;
+
+    border-radius:18px;
+
+    padding:30px;
+
+    margin-bottom:35px;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+.instruction-card h2{
+
+    color:#1e3a8a;
+
+    margin-bottom:25px;
+
+}
+
+.instruction-card ul{
+
+    list-style:none;
+
+}
+
+.instruction-card li{
+
+    margin-bottom:18px;
+
+    padding-left:35px;
+
+    position:relative;
+
+    color:#555;
+
+    line-height:1.7;
+
+}
+
+.instruction-card li::before{
+
+    content:"✔";
+
+    position:absolute;
+
+    left:0;
+
+    color:#10b981;
+
+    font-weight:bold;
+
+    font-size:18px;
+
+}
+
+/* ======================================================
+   SECURITY
+====================================================== */
+
+.security-card{
+
+    background:#ffffff;
+
+    border-radius:18px;
+
+    padding:30px;
+
+    margin-bottom:40px;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+.security-card h2{
+
+    color:#1e3a8a;
+
+    margin-bottom:30px;
+
+}
+
+.security-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:20px;
+
+}
+
+.security-grid div{
+
+    background:#f8fbff;
+
+    padding:20px;
+
+    border-radius:12px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    transition:.3s;
+
+}
+
+.security-grid div:hover{
+
+    background:#eef5ff;
+
+    transform:translateY(-4px);
+
+}
+
+.security-grid i{
+
+    width:45px;
+
+    height:45px;
+
+    background:#2563eb;
+
+    color:white;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:18px;
+
+}
+
+/* ======================================================
+   FOOTER
+====================================================== */
+
+.dashboard-footer{
+
+    margin-top:40px;
+
+    background:#1e3a8a;
+
+    color:white;
+
+    text-align:center;
+
+    padding:25px;
+
+    border-radius:18px;
+
+}
+
+.dashboard-footer p{
+
+    margin:5px 0;
+
+    opacity:.9;
+
+}
+
+/* ======================================================
+   BUTTON ANIMATION
+====================================================== */
+
+.service-btn{
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.service-btn::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:0;
+
+    height:100%;
+
+    left:0;
+
+    top:0;
+
+    background:rgba(255,255,255,.15);
+
+    transition:.4s;
+
+}
+
+.service-btn:hover::after{
+
+    width:100%;
+
+}
+
+/* ======================================================
+   RESPONSIVE
+====================================================== */
+
+@media(max-width:1100px){
+
+.services-grid{
+
+grid-template-columns:repeat(2,1fr);
+
+}
+
+.center-card:nth-child(4){
+
+grid-column:auto;
+
+}
+
+.center-card:nth-child(5){
+
+grid-column:auto;
+
+}
+
+.status-card{
+
+grid-template-columns:1fr;
+
+}
+
+.security-grid{
+
+grid-template-columns:1fr;
+
+}
+
+}
+
+@media(max-width:768px){
+
+.welcome-card{
+
+flex-direction:column;
+
+text-align:center;
+
+gap:25px;
+
+}
+
+.services-grid{
+
+grid-template-columns:1fr;
+
+}
+
+.dashboard-container{
+
+padding:15px;
+
+}
+
+.welcome-left h1{
+
+font-size:28px;
+
+}
+
+.section-heading h2{
+
+font-size:24px;
+
+}
+
+}
+
+@media(max-width:500px){
+
+.candidate-avatar{
+
+width:90px;
+
+height:90px;
+
+font-size:40px;
+
+}
+
+.status-item{
+
+flex-direction:column;
+
+text-align:center;
+
+}
+
+.service-card{
+
+padding:25px;
+
+}
+
+}

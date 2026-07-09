@@ -1,0 +1,403 @@
+/* ===========================
+   REGISTER PAGE
+=========================== */
+
+body{
+    background: linear-gradient(135deg,#2563eb,#1e40af,#0f172a);
+    min-height:100vh;
+}
+
+/* ===========================
+   CONTAINER
+=========================== */
+
+.register-container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:50px 20px;
+}
+
+/* ===========================
+   CARD
+=========================== */
+
+.register-card{
+
+    width:1150px;
+    max-width:100%;
+
+    display:grid;
+    grid-template-columns:1.1fr .9fr;
+
+    background:rgba(255,255,255,.97);
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+    box-shadow:0 15px 40px rgba(0,0,0,.2);
+
+}
+
+/* ===========================
+   LEFT SECTION
+=========================== */
+
+.left-section{
+
+    padding:45px;
+
+}
+
+.heading h1{
+
+    color:#1e3a8a;
+
+    margin-bottom:10px;
+
+}
+
+.heading p{
+
+    color:#666;
+
+    margin-bottom:35px;
+
+}
+
+/* ===========================
+   FORM
+=========================== */
+
+.input-group{
+
+    margin-bottom:22px;
+
+}
+
+.input-group label{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-weight:600;
+
+    color:#444;
+
+}
+
+.input-group input{
+
+    width:100%;
+
+    padding:14px;
+
+    border:1px solid #d7d7d7;
+
+    border-radius:10px;
+
+    font-size:15px;
+
+    transition:.3s;
+
+}
+
+.input-group input:focus{
+
+    outline:none;
+
+    border-color:#2563eb;
+
+    box-shadow:0 0 12px rgba(37,99,235,.25);
+
+}
+
+/* ===========================
+   PASSWORD
+=========================== */
+
+.password-box{
+
+    position:relative;
+
+}
+
+.password-box input{
+
+    padding-right:55px;
+
+}
+
+.togglePassword{
+
+    position:absolute;
+
+    right:18px;
+
+    top:50%;
+
+    transform:translateY(-50%);
+
+    cursor:pointer;
+
+    color:#777;
+
+    font-size:18px;
+
+}
+
+.togglePassword:hover{
+
+    color:#2563eb;
+
+}
+
+/* ===========================
+   BUTTON
+=========================== */
+
+.register-btn{
+
+    width:100%;
+
+    margin-top:15px;
+
+    padding:15px;
+
+    background:#2563eb;
+
+    color:white;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-size:17px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.35s;
+
+}
+
+.register-btn:hover{
+
+    background:#1d4ed8;
+
+    transform:translateY(-3px);
+
+    box-shadow:0 10px 25px rgba(37,99,235,.3);
+
+}
+
+/* ===========================
+   RIGHT
+=========================== */
+
+.right-section{
+
+    background:#f8fbff;
+
+    padding:40px;
+
+    text-align:center;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+}
+
+.right-section h2{
+
+    color:#1e3a8a;
+
+    margin-bottom:25px;
+
+}
+
+.right-section h2 i{
+
+    margin-right:8px;
+
+}
+
+/* ===========================
+   VIDEO
+=========================== */
+
+video{
+
+    width:100%;
+
+    height:300px;
+
+    object-fit:cover;
+
+    border-radius:15px;
+
+    border:3px solid #2563eb;
+
+    background:#111827;
+
+}
+
+/* ===========================
+   PHOTO
+=========================== */
+
+#photoPreview{
+
+    width:220px;
+
+    height:220px;
+
+    object-fit:cover;
+
+    border-radius:50%;
+
+    margin:25px auto;
+
+    display:none;
+
+    border:5px solid #2563eb;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.15);
+
+}
+
+/* ===========================
+   CAMERA BUTTONS
+=========================== */
+
+.camera-buttons{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:15px;
+
+    flex-wrap:wrap;
+
+}
+
+.camera-buttons button{
+
+    background:#2563eb;
+
+    color:white;
+
+    border:none;
+
+    padding:12px 18px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.camera-buttons button:hover{
+
+    background:#1d4ed8;
+
+    transform:translateY(-3px);
+
+}
+
+.camera-note{
+
+    margin-top:25px;
+
+    color:#555;
+
+    font-size:14px;
+
+    line-height:1.7;
+
+}
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+
+@media(max-width:900px){
+
+.register-card{
+
+grid-template-columns:1fr;
+
+}
+
+.left-section{
+
+padding:35px;
+
+}
+
+.right-section{
+
+padding:35px;
+
+}
+
+video{
+
+height:240px;
+
+}
+
+}
+
+@media(max-width:600px){
+
+.heading h1{
+
+font-size:28px;
+
+}
+
+.input-group input{
+
+padding:12px;
+
+}
+
+.register-btn{
+
+padding:13px;
+
+}
+
+.camera-buttons{
+
+flex-direction:column;
+
+}
+
+.camera-buttons button{
+
+width:100%;
+
+}
+
+#photoPreview{
+
+width:180px;
+
+height:180px;
+
+}
+
+}

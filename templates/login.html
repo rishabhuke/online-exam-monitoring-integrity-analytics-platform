@@ -1,1 +1,166 @@
-<!-- Placeholder-->
+{% extends "base.html" %}
+
+{% block title %}
+Candidate Login
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="login-container">
+
+    <div class="login-card">
+
+        <!-- Left Side -->
+        <div class="login-left">
+
+            <div class="login-header">
+
+                <i class="fa-solid fa-user-lock login-icon"></i>
+
+                <h1>Candidate Login</h1>
+
+                <p>
+                    Login securely to access your examinations.
+                </p>
+
+            </div>
+
+            <form id="loginForm">
+
+                <!-- Email -->
+
+                <div class="input-group">
+
+                    <label>Email Address</label>
+
+                    <div class="input-box">
+
+                        <i class="fa-solid fa-envelope"></i>
+
+                        <input
+                            type="email"
+                            id="email"
+                            placeholder="Enter Email"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+                <!-- Password -->
+
+                <div class="input-group">
+
+                    <label>Password</label>
+
+                    <div class="password-box">
+
+                        <i class="fa-solid fa-lock"></i>
+
+                        <input
+                            type="password"
+                            id="password"
+                            placeholder="Enter Password"
+                            required
+                        >
+
+                        <span
+                            class="togglePassword"
+                            onclick="togglePassword()"
+                        >
+                            <i class="fa-solid fa-eye"></i>
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <!-- Remember -->
+
+                <div class="options">
+
+                    <label class="remember">
+
+                        <input
+                            type="checkbox"
+                            id="remember"
+                        >
+
+                        Remember Me
+
+                    </label>
+
+                    <a href="#" class="forgot">
+                        Forgot Password?
+                    </a>
+
+                </div>
+
+                <!-- Login -->
+
+                <button
+                    type="submit"
+                    class="login-btn"
+                >
+
+                    <i class="fa-solid fa-right-to-bracket"></i>
+
+                    Login
+
+                </button>
+
+            </form>
+
+            <div class="bottom-text">
+
+                Don't have an account?
+
+                <a href="/register">
+
+                    Register Here
+
+                </a>
+
+            </div>
+
+        </div>
+
+        <!-- Right Side -->
+
+        <div class="login-right">
+
+            <img
+                src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+                alt="Candidate"
+            >
+
+            <h2>Secure Examination Portal</h2>
+
+            <p>
+
+                Login to continue to your dashboard,
+                start exams and monitor your progress.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script
+src="{{ url_for('static', filename='js/login.js') }}">
+</script>
+
+{% endblock %}

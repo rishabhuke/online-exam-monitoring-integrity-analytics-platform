@@ -1,1 +1,88 @@
-<!-- Placeholder-->
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <h1>Online Exam Monitoring & Integrity Analytics Platform</h1>
+
+        <p>
+            Secure, AI-enabled online examination system with candidate authentication,
+            session management, integrity monitoring, and real-time analytics.
+        </p>
+
+        <div class="hero-buttons">
+
+            <a href="/login" class="btn">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Login
+            </a>
+
+            <a href="/register" class="btn btn-success">
+                <i class="fa-solid fa-user-plus"></i>
+                Register
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="features">
+
+    <div class="feature-card">
+
+        <i class="fa-solid fa-camera"></i>
+
+        <h3>Webcam Verification</h3>
+
+        <p>
+            Capture candidate photo during registration using OpenCV.
+        </p>
+
+    </div>
+
+    <div class="feature-card">
+
+        <i class="fa-solid fa-user-shield"></i>
+
+        <h3>Secure Authentication</h3>
+
+        <p>
+            Session-based login with protected dashboard access.
+        </p>
+
+    </div>
+
+    <div class="feature-card">
+
+        <i class="fa-solid fa-clock"></i>
+
+        <h3>Timed Online Exams</h3>
+
+        <p>
+            Countdown timer with automatic submission after time expires.
+        </p>
+
+    </div>
+
+    <div class="feature-card">
+
+        <i class="fa-solid fa-chart-line"></i>
+
+        <h3>Integrity Analytics</h3>
+
+        <p>
+            Store sessions and generate monitoring reports.
+        </p>
+
+    </div>
+
+</section>
+
+{% endblock %}

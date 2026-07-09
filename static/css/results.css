@@ -1,0 +1,310 @@
+/* ======================================================
+   RESULTS PAGE CSS
+   Matches Candidate Dashboard Theme
+====================================================== */
+
+/* ================= PAGE HEADER ================= */
+
+.results-page-header{
+    background:linear-gradient(135deg,#2563eb,#1e40af);
+    color:white;
+    border-radius:20px;
+    padding:30px 35px;
+    margin-bottom:30px;
+    box-shadow:0 15px 35px rgba(37,99,235,.25);
+}
+
+.results-page-header h1{
+    font-size:34px;
+    margin-bottom:10px;
+    color:white;
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.results-page-header p{
+    font-size:16px;
+    opacity:.95;
+    line-height:1.6;
+}
+
+/* ================= SUMMARY CARDS ================= */
+
+.results-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:22px;
+    margin-bottom:30px;
+}
+
+.result-summary-card{
+    background:#ffffff;
+    border-radius:20px;
+    padding:24px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    display:flex;
+    align-items:center;
+    gap:18px;
+    border:1px solid #e5e7eb;
+    transition:all .3s ease;
+}
+
+.result-summary-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 16px 30px rgba(37,99,235,.12);
+}
+
+.summary-icon{
+    width:68px;
+    height:68px;
+    border-radius:50%;
+    background:#eef4ff;
+    color:#2563eb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
+    flex-shrink:0;
+}
+
+.summary-content h3{
+    color:#1e3a8a;
+    font-size:18px;
+    margin-bottom:8px;
+}
+
+.summary-content p{
+    color:#2563eb;
+    font-size:28px;
+    font-weight:700;
+}
+
+/* ================= FILTER CARD ================= */
+
+.results-filter-card{
+    background:#ffffff;
+    border-radius:20px;
+    padding:25px 28px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    margin-bottom:30px;
+    border:1px solid #e5e7eb;
+}
+
+.results-filter-left h2{
+    color:#1e3a8a;
+    font-size:28px;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.results-filter-left h2 i{
+    color:#2563eb;
+}
+
+.results-filter-left p{
+    color:#6b7280;
+    font-size:15px;
+}
+
+.results-filter-right{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+}
+
+.result-search-input,
+.result-filter-select{
+    height:46px;
+    border:1px solid #dbe2ea;
+    border-radius:12px;
+    padding:0 16px;
+    font-size:15px;
+    outline:none;
+    background:#f8fbff;
+    color:#1f2937;
+    transition:.3s;
+}
+
+.result-search-input{
+    min-width:260px;
+}
+
+.result-search-input:focus,
+.result-filter-select:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 4px rgba(37,99,235,.08);
+    background:#fff;
+}
+
+/* ================= TABLE CARD ================= */
+
+.results-table-card{
+    background:#ffffff;
+    border-radius:20px;
+    padding:28px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    border:1px solid #e5e7eb;
+}
+
+.table-responsive{
+    width:100%;
+    overflow-x:auto;
+}
+
+.results-table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:900px;
+}
+
+.results-table thead tr{
+    background:#eef4ff;
+}
+
+.results-table th{
+    color:#1e3a8a;
+    text-align:left;
+    font-size:15px;
+    font-weight:700;
+    padding:16px 18px;
+    border-bottom:1px solid #dbeafe;
+}
+
+.results-table td{
+    padding:18px;
+    color:#374151;
+    font-size:15px;
+    border-bottom:1px solid #eef2f7;
+    vertical-align:middle;
+}
+
+.results-table tbody tr:hover{
+    background:#f8fbff;
+}
+
+/* ================= STATUS BADGES ================= */
+
+.status-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:90px;
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.2px;
+}
+
+.passed-badge{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.failed-badge{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+/* ================= TABLE ACTION ================= */
+
+.table-action-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px 16px;
+    background:#2563eb;
+    color:#fff;
+    text-decoration:none;
+    border-radius:10px;
+    font-weight:600;
+    font-size:14px;
+    transition:.3s;
+}
+
+.table-action-btn:hover{
+    background:#1d4ed8;
+}
+
+/* ================= EMPTY MESSAGE ================= */
+
+.no-results-message{
+    display:none;
+    margin-top:20px;
+    padding:18px;
+    border-radius:14px;
+    background:#f8fbff;
+    color:#64748b;
+    font-weight:600;
+    text-align:center;
+    border:1px dashed #cbd5e1;
+}
+
+.no-results-message i{
+    margin-right:8px;
+    color:#2563eb;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:1100px){
+    .results-summary-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:900px){
+    .results-filter-card{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .results-filter-right{
+        width:100%;
+    }
+
+    .result-search-input{
+        width:100%;
+        min-width:unset;
+    }
+}
+
+@media(max-width:768px){
+    .results-page-header{
+        padding:24px 22px;
+    }
+
+    .results-page-header h1{
+        font-size:28px;
+    }
+
+    .results-filter-left h2{
+        font-size:24px;
+    }
+
+    .results-table-card{
+        padding:20px;
+    }
+}
+
+@media(max-width:480px){
+    .results-page-header h1{
+        font-size:24px;
+    }
+
+    .results-page-header p{
+        font-size:14px;
+    }
+
+    .summary-content p{
+        font-size:24px;
+    }
+}

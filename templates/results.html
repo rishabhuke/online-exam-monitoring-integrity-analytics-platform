@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}
+My Results
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/results.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <!-- ================= PAGE HEADER ================= -->
+    <section class="results-page-header">
+        <div class="results-header-left">
+            <h1>
+                <i class="fa-solid fa-square-poll-vertical"></i>
+                Examination Results
+            </h1>
+            <p>
+                View your completed examination scores, status, and performance summary.
+            </p>
+        </div>
+    </section>
+
+    <!-- ================= SUMMARY CARDS ================= -->
+    <section class="results-summary-grid">
+
+        <div class="result-summary-card">
+            <div class="summary-icon">
+                <i class="fa-solid fa-file-circle-check"></i>
+            </div>
+            <div class="summary-content">
+                <h3>Total Exams</h3>
+                <p id="totalExamsCount">3</p>
+            </div>
+        </div>
+
+        <div class="result-summary-card">
+            <div class="summary-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="summary-content">
+                <h3>Passed</h3>
+                <p id="passedCount">2</p>
+            </div>
+        </div>
+
+        <div class="result-summary-card">
+            <div class="summary-icon">
+                <i class="fa-solid fa-chart-column"></i>
+            </div>
+            <div class="summary-content">
+                <h3>Average Score</h3>
+                <p id="avgScore">82%</p>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ================= FILTER / SEARCH ================= -->
+    <section class="results-filter-card">
+        <div class="results-filter-left">
+            <h2>
+                <i class="fa-solid fa-filter"></i>
+                Result History
+            </h2>
+            <p>Track all your completed assessments in one place.</p>
+        </div>
+
+        <div class="results-filter-right">
+            <input
+                type="text"
+                id="resultSearch"
+                class="result-search-input"
+                placeholder="Search exam name..."
+            />
+
+            <select id="statusFilter" class="result-filter-select">
+                <option value="all">All Status</option>
+                <option value="passed">Passed</option>
+                <option value="failed">Failed</option>
+            </select>
+        </div>
+    </section>
+
+    <!-- ================= RESULTS TABLE ================= -->
+    <section class="results-table-card">
+        <div class="table-responsive">
+            <table class="results-table" id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Exam Name</th>
+                        <th>Date</th>
+                        <th>Score</th>
+                        <th>Percentage</th>
+                        <th>Status</th>
+                        <th>Report</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+
+                    <!-- Row 1 -->
+                    <tr data-status="passed">
+                        <td>Java Programming Assessment</td>
+                        <td>15 July 2026</td>
+                        <td>24 / 30</td>
+                        <td>80%</td>
+                        <td>
+                            <span class="status-badge passed-badge">Passed</span>
+                        </td>
+                        <td>
+                            <a href="#" class="table-action-btn">
+                                View Report
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Row 2 -->
+                    <tr data-status="passed">
+                        <td>Database Management System</td>
+                        <td>18 July 2026</td>
+                        <td>21 / 25</td>
+                        <td>84%</td>
+                        <td>
+                            <span class="status-badge passed-badge">Passed</span>
+                        </td>
+                        <td>
+                            <a href="#" class="table-action-btn">
+                                View Report
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Row 3 -->
+                    <tr data-status="failed">
+                        <td>Web Technologies Assessment</td>
+                        <td>22 July 2026</td>
+                        <td>18 / 40</td>
+                        <td>45%</td>
+                        <td>
+                            <span class="status-badge failed-badge">Failed</span>
+                        </td>
+                        <td>
+                            <a href="#" class="table-action-btn">
+                                View Report
+                            </a>
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="no-results-message" id="noResultsMessage">
+            <i class="fa-solid fa-circle-info"></i>
+            No matching results found.
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/results.js') }}"></script>
+{% endblock %}

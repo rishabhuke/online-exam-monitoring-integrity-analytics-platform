@@ -1,14 +1,24 @@
-from flask import Flask, session, redirect, url_for, request, jsonify
+from flask import (
+    Flask,
+    render_template,
+    session,
+    redirect,
+    url_for,
+    request,
+    jsonify
+)
 import sqlite3
-
-app = Flask(__name__)
-app.secret_key = "online_exam_monitoring_2026_secret"   # Change this later
-
-
 from pathlib import Path
 
+app = Flask(__name__)
+app.secret_key = "online_exam_monitoring_2026_secret"
+
+# ----------------------------
+# Database Configuration
+# ----------------------------
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE = BASE_DIR / "database.db"
+
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -16,62 +26,117 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-#Home Route
+
+# ==========================================================
+# FRONTEND PAGES
+# ==========================================================
+
 @app.route("/")
 def home():
-    return "Online Exam Monitoring & Integrity Analytics Platform Backend"
+    return render_template("index.html")
 
-# Temporary login route for testing session management.
-# This will be replaced by the actual login implementation.
-# Temporary login route for session testing
+
+@app.route("/register")
+def register_page():
+    return render_template("register.html")
+
+
 @app.route("/login")
-def login():
-    session["candidate_id"] = 1
-    return "Session Created Successfully"
+def login_page():
+    return render_template("login.html")
 
-#Protect Pages
+
 @app.route("/dashboard")
 def dashboard():
-    if "candidate_id" not in session:
-        return redirect(url_for("login"))
+    return render_template("dashboard.html")
 
-    return "Welcome Candidate!"
 
-#Logout
+# PAGE ROUTE -> this is for dashboard "Open Exams" button
+@app.route("/exams")
+def exams():
+    return render_template("exams.html")
+
+@app.route("/results")
+def results():
+    return render_template("results.html")
+
+@app.route("/analytics")
+def analytics():
+    return render_template("analytics.html")
+
+@app.route("/environment-check")
+def environment_check():
+    return render_template("environment_check.html")
+
+@app.route("/help-support")
+def help_support():
+    return render_template("help_support.html")
+    
+
+# PAGE ROUTE -> this is for Start Exam button inside exams.html
+@app.route("/start_exam/<int:exam_id>")
+def start_exam(exam_id):
+    return render_template("exam_window.html", exam_id=exam_id)
+
+
+# ==========================================================
+# TEMP LOGIN
+# ==========================================================
+
+@app.route("/login/test")
+def test_login():
+    session["candidate_id"] = 1
+    return redirect(url_for("dashboard"))
+
+
+# ==========================================================
+# LOGOUT
+# ==========================================================
+
 @app.route("/logout")
 def logout():
     session.clear()
-    return "Logged Out Successfully"
+    return redirect(url_for("login_page"))
 
 
-# Route to serve exam questions
-@app.route("/exam/<int:exam_id>")
+# ==========================================================
+# API : GET QUESTIONS FOR AN EXAM
+# ==========================================================
+
+@app.route("/api/exam/<int:exam_id>")
 def get_exam(exam_id):
-
     if "candidate_id" not in session:
-        return redirect(url_for("login"))
+        return jsonify({"error": "Unauthorized"}), 401
 
     conn = get_db_connection()
 
     questions = conn.execute("""
-        SELECT id, question, option_a, option_b, option_c, option_d
+        SELECT
+            id,
+            question,
+            option_a,
+            option_b,
+            option_c,
+            option_d
         FROM Questions
-        WHERE exam_id=?
+        WHERE exam_id = ?
     """, (exam_id,)).fetchall()
 
     conn.close()
 
     return jsonify([dict(q) for q in questions])
 
-# Route to receive and store submitted answers
+
+# ==========================================================
+# API : SUBMIT ANSWERS
+# ==========================================================
+
 @app.route("/submit_exam", methods=["POST"])
 def submit_exam():
-
     if "candidate_id" not in session:
-        return redirect(url_for("login"))
+        return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json()
-
     conn = get_db_connection()
 
     for answer in data["answers"]:
@@ -91,7 +156,5 @@ def submit_exam():
     return jsonify({"message": "Answers submitted successfully"})
 
 
-
-#Run Flask
 if __name__ == "__main__":
     app.run(debug=True)

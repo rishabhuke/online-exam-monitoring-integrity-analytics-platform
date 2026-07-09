@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}
+Performance Analytics
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analytics.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container analytics-page">
+
+    <!-- ================= PAGE HEADER ================= -->
+    <section class="analytics-header">
+        <div class="analytics-header-left">
+            <h1>
+                <i class="fa-solid fa-chart-line"></i>
+                Performance Analytics
+            </h1>
+            <p>
+                Track your examination performance, subject-wise progress, strengths, and improvement areas.
+            </p>
+        </div>
+
+        <div class="analytics-badge">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Candidate Insights</span>
+        </div>
+    </section>
+
+    <!-- ================= TOP STATS ================= -->
+    <section class="analytics-stats-grid">
+
+        <div class="analytics-stat-card stat-blue">
+            <div class="stat-icon">
+                <i class="fa-solid fa-file-circle-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Exams</h3>
+                <p>12</p>
+                <span>Completed assessments</span>
+            </div>
+        </div>
+
+        <div class="analytics-stat-card stat-green">
+            <div class="stat-icon">
+                <i class="fa-solid fa-bullseye"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Average Score</h3>
+                <p>84%</p>
+                <span>Overall performance</span>
+            </div>
+        </div>
+
+        <div class="analytics-stat-card stat-purple">
+            <div class="stat-icon">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Best Score</h3>
+                <p>94%</p>
+                <span>Highest exam result</span>
+            </div>
+        </div>
+
+        <div class="analytics-stat-card stat-orange">
+            <div class="stat-icon">
+                <i class="fa-solid fa-fire"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Consistency</h3>
+                <p>88%</p>
+                <span>Stable performance rate</span>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ================= MAIN ANALYTICS GRID ================= -->
+    <section class="analytics-main-grid">
+
+        <!-- Performance Overview -->
+        <div class="analytics-panel glass-panel large-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-chart-column"></i> Performance Overview</h2>
+                <p>Quick summary of your exam progress.</p>
+            </div>
+
+            <div class="overview-metrics">
+                <div class="overview-item">
+                    <span class="metric-label">Passed Exams</span>
+                    <div class="metric-bar-wrap">
+                        <div class="metric-bar blue-bar" style="width: 83%;"></div>
+                    </div>
+                    <span class="metric-value">10 / 12</span>
+                </div>
+
+                <div class="overview-item">
+                    <span class="metric-label">On-Time Submissions</span>
+                    <div class="metric-bar-wrap">
+                        <div class="metric-bar green-bar" style="width: 92%;"></div>
+                    </div>
+                    <span class="metric-value">92%</span>
+                </div>
+
+                <div class="overview-item">
+                    <span class="metric-label">Accuracy</span>
+                    <div class="metric-bar-wrap">
+                        <div class="metric-bar purple-bar" style="width: 84%;"></div>
+                    </div>
+                    <span class="metric-value">84%</span>
+                </div>
+
+                <div class="overview-item">
+                    <span class="metric-label">Improvement Rate</span>
+                    <div class="metric-bar-wrap">
+                        <div class="metric-bar orange-bar" style="width: 76%;"></div>
+                    </div>
+                    <span class="metric-value">76%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Candidate Insights -->
+        <div class="analytics-panel glass-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-lightbulb"></i> Candidate Insights</h2>
+                <p>Auto-generated learning observations.</p>
+            </div>
+
+            <div class="insight-list">
+                <div class="insight-card">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                    <div>
+                        <h4>Strong Progress in DBMS</h4>
+                        <p>Your scores in database-related exams improved consistently over the last attempts.</p>
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <i class="fa-solid fa-code"></i>
+                    <div>
+                        <h4>Java Accuracy is High</h4>
+                        <p>You perform best in Java assessments with better speed and fewer incorrect answers.</p>
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <div>
+                        <h4>Need Focus on Web Technologies</h4>
+                        <p>HTML/CSS/JS theory and MCQ accuracy need improvement compared to other subjects.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ================= SUBJECT PERFORMANCE ================= -->
+    <section class="analytics-subject-section glass-panel">
+        <div class="panel-header">
+            <h2><i class="fa-solid fa-book-open-reader"></i> Subject-wise Performance</h2>
+            <p>Detailed progress across different technical subjects.</p>
+        </div>
+
+        <div class="subject-performance-grid">
+
+            <div class="subject-card">
+                <div class="subject-top">
+                    <h3>Java Programming</h3>
+                    <span>88%</span>
+                </div>
+                <div class="subject-progress">
+                    <div class="subject-progress-fill java-fill"></div>
+                </div>
+                <p>Excellent command over OOPs, syntax, and core concepts.</p>
+            </div>
+
+            <div class="subject-card">
+                <div class="subject-top">
+                    <h3>DBMS</h3>
+                    <span>84%</span>
+                </div>
+                <div class="subject-progress">
+                    <div class="subject-progress-fill dbms-fill"></div>
+                </div>
+                <p>Good performance in SQL, normalization, and transactions.</p>
+            </div>
+
+            <div class="subject-card">
+                <div class="subject-top">
+                    <h3>Web Technologies</h3>
+                    <span>69%</span>
+                </div>
+                <div class="subject-progress">
+                    <div class="subject-progress-fill web-fill"></div>
+                </div>
+                <p>Needs improvement in frontend theory and browser concepts.</p>
+            </div>
+
+            <div class="subject-card">
+                <div class="subject-top">
+                    <h3>Python</h3>
+                    <span>91%</span>
+                </div>
+                <div class="subject-progress">
+                    <div class="subject-progress-fill python-fill"></div>
+                </div>
+                <p>Strong performance in syntax, logic, and problem solving.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ================= RECENT ACTIVITY ================= -->
+    <section class="analytics-bottom-grid">
+
+        <div class="analytics-panel glass-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-clock-rotate-left"></i> Recent Exam Activity</h2>
+                <p>Your latest completed assessments.</p>
+            </div>
+
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon blue-icon">
+                        <i class="fa-solid fa-file-lines"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h4>Java Programming Assessment</h4>
+                        <p>Completed on 15 July 2026 · Score: 24/30 · 80%</p>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon green-icon">
+                        <i class="fa-solid fa-database"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h4>Database Management System</h4>
+                        <p>Completed on 18 July 2026 · Score: 21/25 · 84%</p>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-icon orange-icon">
+                        <i class="fa-solid fa-globe"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h4>Web Technologies Assessment</h4>
+                        <p>Completed on 22 July 2026 · Score: 18/40 · 45%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-panel glass-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-shield-heart"></i> Improvement Suggestions</h2>
+                <p>Recommended areas to focus on next.</p>
+            </div>
+
+            <ul class="suggestion-list">
+                <li>Practice more Web Technologies MCQs to improve frontend fundamentals.</li>
+                <li>Revise SQL joins, normalization, and indexing for stronger DBMS accuracy.</li>
+                <li>Maintain Java consistency with timed coding quizzes and concept revision.</li>
+                <li>Focus on weak-topic revision before upcoming assessments.</li>
+            </ul>
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

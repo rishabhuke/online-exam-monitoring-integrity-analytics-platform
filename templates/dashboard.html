@@ -1,1 +1,316 @@
-<!-- Placeholder-->
+{% extends "base.html" %}
+
+{% block title %}
+Candidate Dashboard
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container">
+
+    <!-- ================= WELCOME CARD ================= -->
+
+    <section class="welcome-card">
+
+        <div class="welcome-left">
+
+            <h1>Welcome Back,
+                <span id="candidateName">
+                    Candidate
+                </span> 👋
+            </h1>
+
+            <p>
+                Ready to begin your scheduled examination?
+                Complete the environment check before starting your exam.
+            </p>
+
+        </div>
+
+        <div class="welcome-right">
+
+            <div class="candidate-avatar">
+
+                <i class="fa-solid fa-user-graduate"></i>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ================= SESSION STATUS ================= -->
+
+    <section class="status-card">
+
+        <div class="status-item">
+
+            <i class="fa-solid fa-circle-check"></i>
+
+            <div>
+
+                <h4>Session</h4>
+
+                <p>Active</p>
+
+            </div>
+
+        </div>
+
+        <div class="status-item">
+
+            <i class="fa-solid fa-calendar-days"></i>
+
+            <div>
+
+                <h4>Last Login</h4>
+
+                <p>Today</p>
+
+            </div>
+
+        </div>
+
+        <div class="status-item">
+
+            <i class="fa-solid fa-user"></i>
+
+            <div>
+
+                <h4>Role</h4>
+
+                <p>Candidate</p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ================= CANDIDATE SERVICES ================= -->
+
+    <section class="services-container">
+        <div class="services-header">
+        <h2>
+
+            <i class="fa-solid fa-layer-group"></i>
+
+            Candidate Services
+
+        </h2>
+         <p>
+            Access all examination services from one place.
+        </p>
+</div>
+    
+        <!-- Exams -->
+
+        <div class="service-card">
+
+            <i class="fa-solid fa-book-open service-icon"></i>
+
+            <h3>Exams</h3>
+
+            <p>
+                View all examinations scheduled by the administrator.
+            </p>
+
+           <a href="{{ url_for('exams') }}" class="service-btn">
+    Open Exams
+</a>
+
+        </div>
+
+        <!-- Results -->
+
+        <div class="service-card">
+
+            <i class="fa-solid fa-trophy service-icon"></i>
+
+            <h3>Results</h3>
+
+            <p>
+
+                View your completed examination scores and reports.
+
+            </p>
+
+            <a href="{{ url_for('results') }}" class="service-btn">
+    View Results
+</a>
+
+        </div>
+
+        <!-- Analytics -->
+
+        <div class="service-card">
+
+            <i class="fa-solid fa-chart-line service-icon"></i>
+
+            <h3>Analytics</h3>
+
+            <p>
+
+                Track your performance and learning progress.
+
+            </p>
+
+            <a href="{{ url_for('analytics') }}" class="service-btn">
+    View Analytics
+</a>
+        </div>
+
+        <!-- Environment Check -->
+
+        <div class="service-card center-card">
+
+            <i class="fa-solid fa-desktop service-icon"></i>
+
+            <h3>Environment Check</h3>
+
+            <p>
+
+                Verify camera, microphone, internet and browser compatibility.
+
+            </p>
+
+           <a href="{{ url_for('environment_check') }}" class="service-btn">
+    Run Check
+</a>
+
+        </div>
+
+        <!-- Help -->
+
+        <div class="service-card center-card">
+
+            <i class="fa-solid fa-headset service-icon"></i>
+
+            <h3>Help & Support</h3>
+
+            <p>
+
+                Read FAQs or contact the administrator for assistance.
+
+            </p>
+
+            <a href="{{ url_for('help_support') }}" class="service-btn">
+    Get Help
+</a>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= ANNOUNCEMENTS ================= -->
+
+    <section class="announcement-card">
+
+        <h2>
+
+            <i class="fa-solid fa-bullhorn"></i>
+
+            Announcements
+
+        </h2>
+
+        <div class="announcement">
+
+            <i class="fa-solid fa-thumbtack"></i>
+
+            No announcements available.
+
+        </div>
+
+    </section>
+
+    <!-- ================= INSTRUCTIONS ================= -->
+
+    <section class="instruction-card">
+
+        <h2>
+
+            <i class="fa-solid fa-circle-info"></i>
+
+            Examination Instructions
+
+        </h2>
+
+        <ul>
+
+            <li>Keep your webcam enabled throughout the examination.</li>
+
+            <li>Use a stable internet connection.</li>
+
+            <li>Do not switch browser tabs during the exam.</li>
+
+            <li>Submit the examination before the timer expires.</li>
+
+            <li>Complete the environment check before starting.</li>
+
+        </ul>
+
+    </section>
+
+    <!-- ================= SECURITY ================= -->
+
+    <section class="security-card">
+
+        <h2>
+
+            <i class="fa-solid fa-shield-halved"></i>
+
+            Security & Integrity
+
+        </h2>
+
+        <div class="security-grid">
+
+            <div>
+
+                <i class="fa-solid fa-lock"></i>
+
+                Secure Login Session
+
+            </div>
+
+            <div>
+
+                <i class="fa-solid fa-camera"></i>
+
+                Camera Monitoring Enabled
+
+            </div>
+
+            <div>
+
+                <i class="fa-solid fa-clipboard-check"></i>
+
+                Activity Logging Enabled
+
+            </div>
+
+            <div>
+
+                <i class="fa-solid fa-user-shield"></i>
+
+                Unauthorized Access Protection
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

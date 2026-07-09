@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}
+Candidate Registration
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/register.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="register-container">
+
+    <div class="register-card">
+
+        <div class="left-section">
+
+            <div class="heading">
+
+                <h1>Create Candidate Account</h1>
+
+                <p>
+                    Register to access secure online examinations.
+                </p>
+
+            </div>
+
+            <form id="registerForm">
+
+                <div class="input-group">
+
+                    <label>Full Name</label>
+
+                    <input
+                        type="text"
+                        id="name"
+                        placeholder="Enter Full Name"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label>Email Address</label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="Enter Email"
+                        required
+                    >
+
+                </div>
+
+                <div class="input-group">
+
+                    <label>Password</label>
+
+                    <div class="password-box">
+
+                        <input
+                            type="password"
+                            id="password"
+                            placeholder="Enter Password"
+                            required
+                        >
+
+                        <span
+                            class="togglePassword"
+                            onclick="togglePassword('password',this)"
+                        >
+                            <i class="fa-solid fa-eye"></i>
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label>Confirm Password</label>
+
+                    <div class="password-box">
+
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            placeholder="Confirm Password"
+                            required
+                        >
+
+                        <span
+                            class="togglePassword"
+                            onclick="togglePassword('confirmPassword',this)"
+                        >
+                            <i class="fa-solid fa-eye"></i>
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="register-btn"
+                >
+
+                    <i class="fa-solid fa-user-plus"></i>
+
+                    Register Candidate
+
+                </button>
+
+            </form>
+
+        </div>
+
+        <div class="right-section">
+
+            <h2>
+
+                <i class="fa-solid fa-camera"></i>
+
+                Identity Verification
+
+            </h2>
+
+            <video
+                id="video"
+                autoplay
+                playsinline
+            ></video>
+
+            <canvas
+                id="canvas"
+                style="display:none;"
+            ></canvas>
+
+            <img
+                id="photoPreview"
+                src=""
+                alt="Captured Photo"
+            >
+
+            <div class="camera-buttons">
+
+                <button
+                    id="startCamera"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-video"></i>
+
+                    Start Camera
+
+                </button>
+
+                <button
+                    id="captureBtn"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-camera"></i>
+
+                    Capture
+
+                </button>
+
+            </div>
+
+            <div class="camera-note">
+
+                Candidate photograph is mandatory
+                for registration.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script
+src="{{ url_for('static', filename='js/register.js') }}">
+</script>
+
+{% endblock %}
