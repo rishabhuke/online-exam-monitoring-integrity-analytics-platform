@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}
+Help & Support
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/help_support.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container support-page">
+
+    <!-- ================= PAGE HEADER ================= -->
+    <section class="support-header">
+        <div class="support-header-left">
+            <h1>
+                <i class="fa-solid fa-headset"></i>
+                Help & Support
+            </h1>
+            <p>
+                Need assistance with exams, environment setup, login issues, or platform access? Find quick answers, report a problem, or contact support from here.
+            </p>
+        </div>
+
+        <div class="support-header-badge">
+            <i class="fa-solid fa-life-ring"></i>
+            <span>Candidate Support Center</span>
+        </div>
+    </section>
+
+    <!-- ================= SUPPORT QUICK ACTIONS ================= -->
+    <section class="support-actions-grid">
+
+        <div class="support-action-card glass-panel">
+            <div class="support-action-icon blue-icon">
+                <i class="fa-solid fa-book-open"></i>
+            </div>
+            <h3>Exam Guidelines</h3>
+            <p>Read important instructions, exam rules, and preparation notes before starting your assessment.</p>
+            <button class="support-btn primary-btn">View Guidelines</button>
+        </div>
+
+        <div class="support-action-card glass-panel">
+            <div class="support-action-icon green-icon">
+                <i class="fa-solid fa-desktop"></i>
+            </div>
+            <h3>Environment Issues</h3>
+            <p>Facing webcam, microphone, browser, or fullscreen issues? Get quick troubleshooting help here.</p>
+            <button class="support-btn primary-btn">Open Troubleshooting</button>
+        </div>
+
+        <div class="support-action-card glass-panel">
+            <div class="support-action-icon purple-icon">
+                <i class="fa-solid fa-envelope-circle-check"></i>
+            </div>
+            <h3>Contact Administrator</h3>
+            <p>Reach out to the exam administrator if you need urgent help related to access, results, or exam schedule.</p>
+            <button class="support-btn primary-btn">Contact Admin</button>
+        </div>
+
+    </section>
+
+    <!-- ================= FAQ + CONTACT GRID ================= -->
+    <section class="support-main-grid">
+
+        <!-- FAQ -->
+        <div class="glass-panel support-faq-card">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-circle-question"></i> Frequently Asked Questions</h2>
+                <p>Common questions from candidates before and during exams.</p>
+            </div>
+
+            <div class="faq-list">
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>What should I do if my webcam is not working?</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>
+                            Ensure your camera is connected, browser permissions are allowed, and no other application is using the webcam. You can also run the Environment Check again.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Can I switch tabs during the examination?</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>
+                            No. Switching tabs or minimizing the browser may be flagged as suspicious activity and could affect exam integrity rules.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>What happens if my internet disconnects during the exam?</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>
+                            Reconnect immediately and rejoin the exam if allowed by the platform. If the issue persists, contact the administrator as soon as possible.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Can I retake an exam after submission?</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>
+                            That depends on administrator settings. Most scheduled exams allow only one attempt unless a retake is explicitly assigned.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Why is the Start Exam button disabled?</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>
+                            The exam may not have started yet, may be scheduled for a future time, or environment checks might still be incomplete.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Contact / Support Info -->
+        <div class="glass-panel support-contact-card">
+            <div class="section-header">
+                <h2><i class="fa-solid fa-address-book"></i> Support Channels</h2>
+                <p>Ways to get help if you need assistance.</p>
+            </div>
+
+            <div class="contact-channel-list">
+                <div class="contact-channel">
+                    <div class="channel-icon blue-icon">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <div>
+                        <h4>Email Support</h4>
+                        <p>support@examplatform.com</p>
+                    </div>
+                </div>
+
+                <div class="contact-channel">
+                    <div class="channel-icon green-icon">
+                        <i class="fa-solid fa-phone"></i>
+                    </div>
+                    <div>
+                        <h4>Support Helpline</h4>
+                        <p>+91 98765 43210</p>
+                    </div>
+                </div>
+
+                <div class="contact-channel">
+                    <div class="channel-icon purple-icon">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div>
+                        <h4>Exam Administrator</h4>
+                        <p>admin@examplatform.com</p>
+                    </div>
+                </div>
+
+                <div class="contact-channel">
+                    <div class="channel-icon orange-icon">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div>
+                        <h4>Availability</h4>
+                        <p>Mon – Sat · 9:00 AM to 6:00 PM</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ================= ISSUE REPORT FORM ================= -->
+    <section class="glass-panel issue-report-card">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-bug"></i> Report an Issue</h2>
+            <p>Submit your issue and the support team can review it.</p>
+        </div>
+
+        <form class="issue-form" id="issueForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="issueName">Full Name</label>
+                    <input type="text" id="issueName" placeholder="Enter your name">
+                </div>
+
+                <div class="form-group">
+                    <label for="issueEmail">Email Address</label>
+                    <input type="email" id="issueEmail" placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label for="issueType">Issue Type</label>
+                    <select id="issueType">
+                        <option value="">Select issue type</option>
+                        <option>Login Problem</option>
+                        <option>Exam Access Issue</option>
+                        <option>Camera / Microphone Problem</option>
+                        <option>Result / Report Issue</option>
+                        <option>Technical Error</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="issuePriority">Priority</label>
+                    <select id="issuePriority">
+                        <option value="">Select priority</option>
+                        <option>Low</option>
+                        <option>Medium</option>
+                        <option>High</option>
+                        <option>Urgent</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="issueMessage">Issue Description</label>
+                <textarea id="issueMessage" rows="6" placeholder="Describe the problem you are facing..."></textarea>
+            </div>
+
+            <div class="issue-form-actions">
+                <button type="submit" class="support-btn submit-btn">Submit Issue</button>
+            </div>
+        </form>
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/help_support.js') }}"></script>
+{% endblock %}

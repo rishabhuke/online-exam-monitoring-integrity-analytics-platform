@@ -1,0 +1,439 @@
+/* ======================================================
+   ENVIRONMENT CHECK PAGE CSS
+   Glassmorphism + Hover Effects
+====================================================== */
+
+.environment-page{
+    position:relative;
+}
+
+/* background glow */
+.environment-page::before,
+.environment-page::after{
+    content:"";
+    position:fixed;
+    border-radius:50%;
+    filter:blur(90px);
+    z-index:-1;
+    opacity:.28;
+    pointer-events:none;
+}
+
+.environment-page::before{
+    width:280px;
+    height:280px;
+    top:120px;
+    left:30px;
+    background:rgba(37,99,235,.35);
+}
+
+.environment-page::after{
+    width:320px;
+    height:320px;
+    right:40px;
+    bottom:40px;
+    background:rgba(16,185,129,.25);
+}
+
+/* ================= HEADER ================= */
+
+.environment-header{
+    background:linear-gradient(135deg,#2563eb,#1e40af);
+    color:white;
+    border-radius:24px;
+    padding:32px 35px;
+    margin-bottom:30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    box-shadow:0 18px 40px rgba(37,99,235,.25);
+}
+
+.environment-header h1{
+    font-size:34px;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:white;
+}
+
+.environment-header p{
+    font-size:16px;
+    line-height:1.7;
+    opacity:.95;
+    max-width:760px;
+}
+
+.environment-header-badge{
+    background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.25);
+    color:white;
+    padding:14px 20px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:600;
+    backdrop-filter:blur(12px);
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
+}
+
+/* ================= GLASS PANEL ================= */
+
+.glass-panel{
+    background:rgba(255,255,255,.65);
+    border:1px solid rgba(255,255,255,.45);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    box-shadow:0 14px 35px rgba(15,23,42,.08);
+    border-radius:24px;
+    transition:all .35s ease;
+}
+
+.glass-panel:hover{
+    transform:translateY(-6px);
+    box-shadow:0 22px 45px rgba(37,99,235,.14);
+    border-color:rgba(37,99,235,.25);
+}
+
+/* ================= OVERALL READINESS ================= */
+
+.overall-readiness{
+    padding:26px 28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    margin-bottom:30px;
+}
+
+.readiness-left h2{
+    color:#1e3a8a;
+    font-size:28px;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.readiness-left h2 i{
+    color:#2563eb;
+}
+
+.readiness-left p{
+    color:#6b7280;
+    font-size:15px;
+}
+
+.readiness-right{
+    text-align:right;
+}
+
+.readiness-score{
+    font-size:30px;
+    font-weight:700;
+    color:#2563eb;
+    margin-bottom:8px;
+}
+
+.readiness-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px 16px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+}
+
+.ready-badge{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.pending-badge{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+/* ================= CHECK GRID ================= */
+
+.environment-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:22px;
+    margin-bottom:30px;
+}
+
+.env-card{
+    padding:26px;
+    position:relative;
+    overflow:hidden;
+}
+
+.env-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.02));
+    pointer-events:none;
+}
+
+.env-card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.env-icon{
+    width:68px;
+    height:68px;
+    border-radius:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:26px;
+    box-shadow:0 12px 24px rgba(0,0,0,.12);
+}
+
+.blue-icon{ background:linear-gradient(135deg,#2563eb,#1d4ed8); }
+.green-icon{ background:linear-gradient(135deg,#16a34a,#15803d); }
+.purple-icon{ background:linear-gradient(135deg,#7c3aed,#6d28d9); }
+.orange-icon{ background:linear-gradient(135deg,#f59e0b,#ea580c); }
+.teal-icon{ background:linear-gradient(135deg,#0f766e,#14b8a6); }
+.red-icon{ background:linear-gradient(135deg,#dc2626,#b91c1c); }
+
+.env-status{
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.3px;
+}
+
+.env-status.pending{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+.env-status.ready{
+    background:#dcfce7;
+    color:#15803d;
+}
+
+.env-status.checking{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.env-card h3{
+    color:#1e3a8a;
+    font-size:22px;
+    margin-bottom:12px;
+}
+
+.env-card p{
+    color:#6b7280;
+    font-size:15px;
+    line-height:1.7;
+    margin-bottom:22px;
+    min-height:100px;
+}
+
+/* ================= BUTTONS ================= */
+
+.env-actions{
+    display:flex;
+    justify-content:flex-start;
+}
+
+.env-btn{
+    border:none;
+    outline:none;
+    padding:13px 20px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all .3s ease;
+}
+
+.primary-btn{
+    background:#2563eb;
+    color:#fff;
+    box-shadow:0 10px 24px rgba(37,99,235,.2);
+}
+
+.primary-btn:hover{
+    background:#1d4ed8;
+    transform:translateY(-2px);
+}
+
+.secondary-btn{
+    background:#e5e7eb;
+    color:#374151;
+}
+
+.secondary-btn:hover{
+    background:#d1d5db;
+}
+
+/* ================= RUN ALL SECTION ================= */
+
+.run-all-section{
+    padding:26px 28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    margin-bottom:30px;
+}
+
+.run-all-left h2{
+    color:#1e3a8a;
+    font-size:28px;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.run-all-left h2 i{
+    color:#2563eb;
+}
+
+.run-all-left p{
+    color:#6b7280;
+    font-size:15px;
+}
+
+.run-all-btn{
+    border:none;
+    outline:none;
+    background:linear-gradient(135deg,#16a34a,#15803d);
+    color:white;
+    padding:15px 28px;
+    border-radius:14px;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 12px 24px rgba(22,163,74,.22);
+    transition:all .3s ease;
+}
+
+.run-all-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 18px 30px rgba(22,163,74,.28);
+}
+
+/* ================= HELP GRID ================= */
+
+.environment-help-grid{
+    display:grid;
+    grid-template-columns:1.2fr .8fr;
+    gap:22px;
+}
+
+.help-card{
+    padding:28px;
+}
+
+.help-card h2{
+    color:#1e3a8a;
+    font-size:25px;
+    margin-bottom:16px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.help-card h2 i{
+    color:#2563eb;
+}
+
+.help-card p{
+    color:#6b7280;
+    line-height:1.8;
+    font-size:15px;
+    margin-bottom:18px;
+}
+
+.help-card ul{
+    padding-left:20px;
+    color:#4b5563;
+    line-height:1.9;
+    font-size:15px;
+}
+
+.help-card ul li{
+    margin-bottom:6px;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:1200px){
+    .environment-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .environment-help-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:900px){
+    .overall-readiness,
+    .run-all-section{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .readiness-right{
+        text-align:left;
+    }
+}
+
+@media(max-width:768px){
+    .environment-header{
+        flex-direction:column;
+        align-items:flex-start;
+        padding:24px 22px;
+    }
+
+    .environment-header h1{
+        font-size:28px;
+    }
+
+    .environment-grid{
+        grid-template-columns:1fr;
+    }
+
+    .help-card,
+    .overall-readiness,
+    .run-all-section{
+        padding:22px;
+    }
+}
+
+@media(max-width:480px){
+    .environment-header h1{
+        font-size:24px;
+    }
+
+    .environment-header p{
+        font-size:14px;
+    }
+
+    .readiness-left h2,
+    .run-all-left h2{
+        font-size:22px;
+    }
+
+    .env-card h3{
+        font-size:20px;
+    }
+}

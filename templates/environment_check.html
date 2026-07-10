@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}
+Environment Check
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/environment_check.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container environment-page">
+
+    <!-- ================= PAGE HEADER ================= -->
+    <section class="environment-header">
+        <div class="environment-header-left">
+            <h1>
+                <i class="fa-solid fa-desktop"></i>
+                Environment Check
+            </h1>
+            <p>
+                Verify your system before starting the examination. Make sure your camera, microphone, internet connection, browser permissions, and fullscreen support are working properly.
+            </p>
+        </div>
+
+        <div class="environment-header-badge">
+            <i class="fa-solid fa-shield-check"></i>
+            <span>Exam Readiness Panel</span>
+        </div>
+    </section>
+
+    <!-- ================= OVERALL STATUS ================= -->
+    <section class="overall-readiness glass-panel">
+        <div class="readiness-left">
+            <h2><i class="fa-solid fa-circle-check"></i> Overall Readiness Status</h2>
+            <p>Complete all required checks before entering the exam window.</p>
+        </div>
+
+        <div class="readiness-right">
+            <div class="readiness-score" id="readinessScore">2 / 6 Ready</div>
+            <span class="readiness-badge pending-badge" id="overallBadge">Pending Checks</span>
+        </div>
+    </section>
+
+    <!-- ================= CHECK GRID ================= -->
+    <section class="environment-grid">
+
+        <!-- Camera Check -->
+        <div class="env-card glass-panel" data-check="camera">
+            <div class="env-card-top">
+                <div class="env-icon blue-icon">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+                <span class="env-status pending" id="cameraStatus">Pending</span>
+            </div>
+
+            <h3>Camera Check</h3>
+            <p>
+                Verify that your webcam is connected and permission is enabled for monitoring during the examination.
+            </p>
+
+            <div class="env-actions">
+                <button class="env-btn primary-btn" onclick="runCheck('camera')">Check Camera</button>
+            </div>
+        </div>
+
+        <!-- Microphone Check -->
+        <div class="env-card glass-panel" data-check="microphone">
+            <div class="env-card-top">
+                <div class="env-icon green-icon">
+                    <i class="fa-solid fa-microphone"></i>
+                </div>
+                <span class="env-status pending" id="microphoneStatus">Pending</span>
+            </div>
+
+            <h3>Microphone Check</h3>
+            <p>
+                Confirm that your microphone is available and browser permissions are granted for audio monitoring.
+            </p>
+
+            <div class="env-actions">
+                <button class="env-btn primary-btn" onclick="runCheck('microphone')">Check Microphone</button>
+            </div>
+        </div>
+
+        <!-- Internet Check -->
+        <div class="env-card glass-panel" data-check="internet">
+            <div class="env-card-top">
+                <div class="env-icon purple-icon">
+                    <i class="fa-solid fa-wifi"></i>
+                </div>
+                <span class="env-status pending" id="internetStatus">Pending</span>
+            </div>
+
+            <h3>Internet Check</h3>
+            <p>
+                Ensure that your network connection is stable enough to continue the exam without interruptions.
+            </p>
+
+            <div class="env-actions">
+                <button class="env-btn primary-btn" onclick="runCheck('internet')">Check Internet</button>
+            </div>
+        </div>
+
+        <!-- Browser Check -->
+        <div class="env-card glass-panel" data-check="browser">
+            <div class="env-card-top">
+                <div class="env-icon orange-icon">
+                    <i class="fa-solid fa-globe"></i>
+                </div>
+                <span class="env-status pending" id="browserStatus">Pending</span>
+            </div>
+
+            <h3>Browser Compatibility</h3>
+            <p>
+                Verify whether your current browser supports required APIs, permissions, and exam security rules.
+            </p>
+
+            <div class="env-actions">
+                <button class="env-btn primary-btn" onclick="runCheck('browser')">Check Browser</button>
+            </div>
+        </div>
+
+        <!-- Fullscreen Check -->
+        <div class="env-card glass-panel" data-check="fullscreen">
+            <div class="env-card-top">
+                <div class="env-icon teal-icon">
+                    <i class="fa-solid fa-expand"></i>
+                </div>
+                <span class="env-status pending" id="fullscreenStatus">Pending</span>
+            </div>
+
+            <h3>Fullscreen Support</h3>
+            <p>
+                The exam may require fullscreen mode. Check whether your browser allows entering fullscreen properly.
+            </p>
+
+            <div class="env-actions">
+                <button class="env-btn primary-btn" onclick="runCheck('fullscreen')">Check Fullscreen</button>
+            </div>
+        </div>
+
+        <!-- Face Visibility -->
+        <div class="env-card glass-panel" data-check="face">
+            <div class="env-card-top">
+                <div class="env-icon red-icon">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+                <span class="env-status pending" id="faceStatus">Pending</span>
+            </div>
+
+            <h3>Face Visibility</h3>
+            <p>
+                Ensure your face is clearly visible to the webcam and lighting conditions are suitable for monitoring.
+            </p>
+
+            <div class="env-actions">
+                <button class="env-btn primary-btn" onclick="runCheck('face')">Check Visibility</button>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ================= RUN ALL CHECKS ================= -->
+    <section class="run-all-section glass-panel">
+        <div class="run-all-left">
+            <h2><i class="fa-solid fa-list-check"></i> Run Full System Check</h2>
+            <p>Automatically perform all environment checks and verify exam readiness.</p>
+        </div>
+
+        <div class="run-all-right">
+            <button class="run-all-btn" id="runAllChecksBtn">Run All Checks</button>
+        </div>
+    </section>
+
+    <!-- ================= HELP / INSTRUCTIONS ================= -->
+    <section class="environment-help-grid">
+
+        <div class="glass-panel help-card">
+            <h2><i class="fa-solid fa-circle-info"></i> Important Notes</h2>
+            <ul>
+                <li>Allow browser permissions for camera and microphone when prompted.</li>
+                <li>Use Google Chrome or Microsoft Edge for the best compatibility.</li>
+                <li>Keep a stable internet connection during the exam.</li>
+                <li>Ensure your face is clearly visible with sufficient lighting.</li>
+                <li>Complete all checks before clicking Start Exam.</li>
+            </ul>
+        </div>
+
+        <div class="glass-panel help-card">
+            <h2><i class="fa-solid fa-headset"></i> Need Assistance?</h2>
+            <p>
+                If any environment check fails, refresh the page, reconnect the required device, or contact the administrator before starting your assessment.
+            </p>
+            <button class="env-btn secondary-btn">Contact Support</button>
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/environment_check.js') }}"></script>
+{% endblock %}

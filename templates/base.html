@@ -1,1 +1,112 @@
-<!-- Placeholder-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Online Exam Monitoring System{% endblock %}</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+
+        <div class="logo">
+            <i class="fa-solid fa-graduation-cap"></i>
+            Exam Integrity Platform
+        </div>
+
+        {% if request.endpoint in ['home', 'login_page', 'register_page'] %}
+        <!-- ================= PUBLIC NAVBAR ================= -->
+        <ul class="nav-links">
+            <li>
+                <a href="{{ url_for('pages.home') }}">
+                    <i class="fa-solid fa-house"></i>
+                    Home
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('auth.register') }}">
+                    <i class="fa-solid fa-user-plus"></i>
+                    Register
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('auth.login') }}">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    Login
+                </a>
+            </li>
+        </ul>
+
+        {% else %}
+        <!-- ================= CANDIDATE / INTERNAL NAVBAR ================= -->
+        <ul class="nav-links">
+            <li>
+                <a href="{{ url_for('pages.dashboard_page') }}">
+                    <i class="fa-solid fa-table-columns"></i>
+                    Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('pages.exams') }}">
+                    <i class="fa-solid fa-file-lines"></i>
+                    Exams
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('pages.analytics') }}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    Analytics
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('pages.help_support') }}">
+                    <i class="fa-solid fa-headset"></i>
+                    Help
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('auth.logout') }}" class="logout-link">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
+                </a>
+            </li>
+        </ul>
+        {% endif %}
+
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Online Exam Monitoring & Integrity Analytics Platform</p>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>
