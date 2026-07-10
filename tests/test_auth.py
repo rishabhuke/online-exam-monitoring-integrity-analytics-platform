@@ -48,6 +48,9 @@ def client(monkeypatch, tmp_path):
     # Point the app's DATABASE path to our temp file
     monkeypatch.setattr(app_module, "DATABASE", test_db)
 
+    import routes.auth as auth_module
+    monkeypatch.setattr(auth_module, "DATABASE", test_db)
+
     # Initialize schema on the temp DB
     import sqlite3
     conn = sqlite3.connect(test_db)
