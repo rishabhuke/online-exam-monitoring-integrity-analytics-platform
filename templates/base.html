@@ -32,21 +32,21 @@
         <!-- ================= PUBLIC NAVBAR ================= -->
         <ul class="nav-links">
             <li>
-                <a href="{{ url_for('home') }}">
+                <a href="{{ url_for('pages.home') }}">
                     <i class="fa-solid fa-house"></i>
                     Home
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('register_page') }}">
+                <a href="{{ url_for('auth.register') }}">
                     <i class="fa-solid fa-user-plus"></i>
                     Register
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('login_page') }}">
+                <a href="{{ url_for('auth.login') }}">
                     <i class="fa-solid fa-right-to-bracket"></i>
                     Login
                 </a>
@@ -57,35 +57,35 @@
         <!-- ================= CANDIDATE / INTERNAL NAVBAR ================= -->
         <ul class="nav-links">
             <li>
-                <a href="{{ url_for('dashboard') }}">
+                <a href="{{ url_for('pages.dashboard_page') }}">
                     <i class="fa-solid fa-table-columns"></i>
                     Dashboard
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('exams') }}">
+                <a href="{{ url_for('pages.exams') }}">
                     <i class="fa-solid fa-file-lines"></i>
                     Exams
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('analytics') }}">
+                <a href="{{ url_for('pages.analytics') }}">
                     <i class="fa-solid fa-chart-line"></i>
                     Analytics
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('help_support') }}">
+                <a href="{{ url_for('pages.help_support') }}">
                     <i class="fa-solid fa-headset"></i>
                     Help
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('logout') }}" class="logout-link">
+                <a href="{{ url_for('auth.logout') }}" class="logout-link">
                     <i class="fa-solid fa-right-from-bracket"></i>
                     Logout
                 </a>
