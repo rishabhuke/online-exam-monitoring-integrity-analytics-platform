@@ -216,6 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+*.db
+static/uploads/
+.DS_Store
 
 
 # SQLite database
