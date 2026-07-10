@@ -7,6 +7,8 @@ from routes.pages import pages_bp
 
 app = Flask(__name__)
 app.secret_key = "online_exam_monitoring_2026_secret"
+from datetime import timedelta
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 
 # Register Blueprints
 app.register_blueprint(auth_bp)
