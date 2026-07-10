@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candidate Login</title>
+    <title>Candidate Registration</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -12,8 +12,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px 0;
         }
         .form-container {
             background: rgba(255, 255, 255, 0.1);
@@ -21,7 +22,7 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            width: 350px;
+            width: 400px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         h2 {
@@ -53,7 +54,47 @@
             border-color: #00adb5;
             background: rgba(255, 255, 255, 0.1);
         }
-        button {
+        .webcam-section {
+            margin: 20px 0;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        #webcam {
+            width: 100%;
+            max-width: 320px;
+            height: 240px;
+            background-color: #0f172a;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            object-fit: cover;
+        }
+        #preview {
+            width: 100%;
+            max-width: 320px;
+            height: 240px;
+            border-radius: 8px;
+            border: 2px solid #00adb5;
+            object-fit: cover;
+            display: none;
+        }
+        .btn-capture {
+            padding: 8px 16px;
+            border: 1px solid #00adb5;
+            background: rgba(0, 173, 181, 0.1);
+            color: #00adb5;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-capture:hover {
+            background: #00adb5;
+            color: #fff;
+        }
+        button[type="submit"] {
             width: 100%;
             padding: 12px;
             border: none;
@@ -66,7 +107,7 @@
             margin-top: 10px;
             transition: background 0.3s;
         }
-        button:hover {
+        button[type="submit"]:hover {
             background: #008f96;
         }
         .footer-text {
@@ -101,50 +142,76 @@
 <body>
 
 <div class="form-container">
-    <h2>Candidate Login</h2>
+    <h2>Candidate Registration</h2>
     <div id="message" class="message-box"></div>
-    <form id="loginForm">
+    <form id="registerForm">
+        <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" required placeholder="Enter your full name">
+        </div>
         <div class="form-group">
             <label for="email">Email Address</label>
             <input type="email" id="email" required placeholder="Enter email address">
         </div>
         <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" required placeholder="Enter password">
+            <label for="password">Password (min 8 chars)</label>
+            <input type="password" id="password" required minlength="8" placeholder="Create secure password">
         </div>
-        <button type="submit">Login</button>
+
+        <!-- Webcam capture section -->
+        <div class="webcam-section">
+            <label>Verify Identity (Face Check Required)</label>
+            <video id="webcam" autoplay></video>
+            <canvas id="snapshot" style="display:none;"></canvas>
+            <img id="preview" alt="Captured Photo Preview">
+            <button type="button" id="capture-btn" class="btn-capture">Capture Photo</button>
+            <input type="hidden" id="photo_data" name="photo_data">
+        </div>
+
+        <button type="submit">Register</button>
     </form>
     <div class="footer-text">
-        Don't have an account? <a href="/auth/register">Register here</a>
+        Already registered? <a href="/login">Login here</a>
     </div>
 </div>
 
+<script src="{{ url_for('static', filename='js/webcam.js') }}"></script>
 <script>
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const messageDiv = document.getElementById('message');
         messageDiv.style.display = 'none';
 
+        const name = document.getElementById('name').value;
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
+        const photo_data = document.getElementById('photo_data').value;
+
+        if (!photo_data) {
+            messageDiv.textContent = 'Please capture your face photo before registering.';
+            messageDiv.className = 'message-box error';
+            messageDiv.style.display = 'block';
+            return;
+        }
 
         try {
-            const response = await fetch('/auth/login', {
+            const response = await fetch('/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ name, email, password, photo_data })
             });
             const result = await response.json();
 
-            messageDiv.textContent = result.message;
+            messageDiv.textContent = result.message || result.error || result.status;
             messageDiv.style.display = 'block';
 
             if (response.ok) {
                 messageDiv.className = 'message-box success';
-                // Store candidate session details in localStorage for simple frontend mock verification
-                localStorage.setItem('candidate', JSON.stringify(result.candidate));
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
             } else {
                 messageDiv.className = 'message-box error';
             }

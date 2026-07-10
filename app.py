@@ -1,11 +1,13 @@
 from flask import Flask, session, redirect, url_for, request, jsonify
 import sqlite3
+from pathlib import Path
+from routes.auth import auth_bp
 
 app = Flask(__name__)
 app.secret_key = "online_exam_monitoring_2026_secret"   # Change this later
 
-
-from pathlib import Path
+# Register Blueprints
+app.register_blueprint(auth_bp)
 
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE = BASE_DIR / "database.db"
@@ -21,35 +23,21 @@ def get_db_connection():
 def home():
     return "Online Exam Monitoring & Integrity Analytics Platform Backend"
 
-# Temporary login route for testing session management.
-# This will be replaced by the actual login implementation.
-# Temporary login route for session testing
-@app.route("/login")
-def login():
-    session["candidate_id"] = 1
-    return "Session Created Successfully"
-
 #Protect Pages
 @app.route("/dashboard")
 def dashboard():
     if "candidate_id" not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
 
     return "Welcome Candidate!"
 
-#Logout
-@app.route("/logout")
-def logout():
-    session.clear()
-    return "Logged Out Successfully"
-
 
 # Route to serve exam questions
-@app.route("/exam/<int:exam_id>")
+@app.route("/api/exam/<int:exam_id>")
 def get_exam(exam_id):
 
     if "candidate_id" not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
 
     conn = get_db_connection()
 
@@ -68,7 +56,7 @@ def get_exam(exam_id):
 def submit_exam():
 
     if "candidate_id" not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("auth.login"))
 
     data = request.get_json()
 
@@ -95,3 +83,4 @@ def submit_exam():
 #Run Flask
 if __name__ == "__main__":
     app.run(debug=True)
+
