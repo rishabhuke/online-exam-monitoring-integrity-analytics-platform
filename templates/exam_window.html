@@ -15,7 +15,7 @@ Exam Window
     <!-- ================= EXAM HEADER ================= -->
     <section class="exam-header-card">
         <div class="exam-header-left">
-            <h1>Java Programming Assessment</h1>
+            <h1 id="examTitle">Java Programming Assessment</h1>
             <p>Read each question carefully and choose the correct answer.</p>
         </div>
 
@@ -25,60 +25,73 @@ Exam Window
         </div>
     </section>
 
+    <!-- ================= STATUS SUMMARY ================= -->
+    <section class="exam-status-summary">
+        <div class="status-pill answered-pill">
+            Answered: <span id="answeredCount">0</span>
+        </div>
+        <div class="status-pill not-answered-pill">
+            Not Answered: <span id="notAnsweredCount">10</span>
+        </div>
+        <div class="status-pill review-pill">
+            Marked Review: <span id="reviewCount">0</span>
+        </div>
+    </section>
+
     <!-- ================= EXAM BODY ================= -->
     <section class="exam-body">
 
-        <!-- Question Navigation -->
+        <!-- Question Palette -->
         <aside class="question-palette">
-            <h3>Questions</h3>
-            <div class="palette-grid">
-                <button class="palette-btn active">1</button>
-                <button class="palette-btn">2</button>
-                <button class="palette-btn">3</button>
-                <button class="palette-btn">4</button>
-                <button class="palette-btn">5</button>
-                <button class="palette-btn">6</button>
-                <button class="palette-btn">7</button>
-                <button class="palette-btn">8</button>
-                <button class="palette-btn">9</button>
-                <button class="palette-btn">10</button>
+            <div class="palette-header">
+                <h3>Questions</h3>
+                <p>Click a number to jump</p>
+            </div>
+
+            <div class="palette-grid" id="paletteGrid"></div>
+
+            <div class="palette-legend">
+                <div class="legend-item">
+                    <span class="legend-box current-box"></span>
+                    <span>Current</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-box answered-box"></span>
+                    <span>Answered</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-box review-box"></span>
+                    <span>Review</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-box not-answered-box"></span>
+                    <span>Not Answered</span>
+                </div>
             </div>
         </aside>
 
         <!-- Question Area -->
         <div class="question-panel">
             <div class="question-card">
-                <h2>Question 1</h2>
-                <p class="question-text">
-                    Which of the following is not a primitive data type in Java?
-                </p>
+                <div class="question-top">
+                    <h2 id="questionNumber">Question 1</h2>
+                    <span class="question-tag">MCQ</span>
+                </div>
 
-                <div class="options-list">
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="A">
-                        <span>int</span>
-                    </label>
+                <p class="question-text" id="questionText"></p>
 
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="B">
-                        <span>String</span>
-                    </label>
-
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="C">
-                        <span>boolean</span>
-                    </label>
-
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="D">
-                        <span>double</span>
-                    </label>
+                <div class="options-list" id="optionsList">
+                    <!-- injected by JS -->
                 </div>
             </div>
 
             <div class="question-actions">
-                <button class="nav-btn secondary-btn">Previous</button>
-                <button class="nav-btn primary-btn">Next</button>
+                <button class="nav-btn secondary-btn" id="prevBtn">Previous</button>
+                <div class="middle-actions">
+                    <button class="nav-btn review-btn" id="markReviewBtn">Mark for Review</button>
+                    <button class="nav-btn clear-btn" id="clearResponseBtn">Clear Response</button>
+                </div>
+                <button class="nav-btn primary-btn" id="nextBtn">Next</button>
             </div>
         </div>
 
@@ -86,9 +99,62 @@ Exam Window
 
     <!-- ================= SUBMIT BAR ================= -->
     <section class="submit-section">
-        <button class="submit-btn">Submit Exam</button>
+        <button class="submit-btn" id="submitExamBtn">Submit Exam</button>
     </section>
 
+</div>
+
+<!-- ================= SUBMIT PREVIEW MODAL ================= -->
+<div class="exam-modal-overlay" id="submitModal">
+    <div class="exam-modal">
+        <div class="modal-header">
+            <h2>Exam Submission Preview</h2>
+            <button class="close-modal-btn" id="closeModalBtn">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="modal-summary-grid">
+                <div class="modal-summary-card answered-card">
+                    <h3>Answered</h3>
+                    <p id="modalAnswered">0</p>
+                </div>
+
+                <div class="modal-summary-card not-answered-card">
+                    <h3>Not Answered</h3>
+                    <p id="modalNotAnswered">0</p>
+                </div>
+
+                <div class="modal-summary-card review-card">
+                    <h3>Marked Review</h3>
+                    <p id="modalReview">0</p>
+                </div>
+            </div>
+
+            <div class="modal-question-review">
+                <h3>Question-wise Status</h3>
+                <div class="modal-palette-grid" id="modalPaletteGrid"></div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="nav-btn secondary-btn" id="cancelSubmitBtn">Cancel</button>
+            <button class="submit-btn final-submit-btn" id="confirmSubmitBtn">Confirm Submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= SUCCESS MODAL ================= -->
+<div class="exam-modal-overlay" id="successModal">
+    <div class="exam-modal success-modal">
+        <div class="success-icon">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h2>Exam Submitted Successfully</h2>
+        <p>Your responses have been captured for preview/demo purposes.</p>
+        <button class="submit-btn" id="closeSuccessBtn">Close</button>
+    </div>
 </div>
 
 {% endblock %}
