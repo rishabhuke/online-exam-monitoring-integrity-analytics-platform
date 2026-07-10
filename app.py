@@ -23,9 +23,6 @@ def get_db_connection():
     return conn
 
 
-# ==========================================================
-# API : GET QUESTIONS FOR AN EXAM
-# ==========================================================
 @app.route("/api/exam/<int:exam_id>")
 def get_exam(exam_id):
     if "candidate_id" not in session:
@@ -42,9 +39,6 @@ def get_exam(exam_id):
     return jsonify([dict(q) for q in questions])
 
 
-# ==========================================================
-# API : SUBMIT ANSWERS
-# ==========================================================
 @app.route("/submit_exam", methods=["POST"])
 def submit_exam():
     if "candidate_id" not in session:
