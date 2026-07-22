@@ -10,6 +10,12 @@ Exam Window
 
 {% block content %}
 
+<!-- Hidden capture elements for face presence monitoring (Milestone 2).
+     Owner: Rishabh. Not meant to be visible - Prashanthi, if we want a
+     visible "monitoring active" indicator later, it can live here too. -->
+<video id="face-monitor-video" autoplay style="display:none;"></video>
+<canvas id="face-monitor-canvas" style="display:none;"></canvas>
+
 <div class="exam-window-container">
 
     <!-- ================= EXAM HEADER ================= -->
@@ -94,5 +100,8 @@ Exam Window
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    const EXAM_ID = {{ exam_id }};
+</script>
 <script src="{{ url_for('static', filename='js/exam_window.js') }}"></script>
 {% endblock %}

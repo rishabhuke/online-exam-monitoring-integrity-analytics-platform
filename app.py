@@ -4,6 +4,7 @@ from pathlib import Path
 
 from routes.auth import auth_bp
 from routes.pages import pages_bp
+from routes.exam import exam_bp
 
 app = Flask(__name__)
 app.secret_key = "online_exam_monitoring_2026_secret"
@@ -13,6 +14,7 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 # Register Blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(pages_bp)
+app.register_blueprint(exam_bp)
 
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE = BASE_DIR / "database.db"
