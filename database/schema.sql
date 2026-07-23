@@ -47,3 +47,17 @@ CREATE TABLE IF NOT EXISTS SessionLogs (
     status TEXT,
     FOREIGN KEY(candidate_id) REFERENCES Candidates(id)
 );
+
+-- FaceAbsenceEvents Table (Milestone 2)
+-- One row per continuous interval where the candidate's face was not
+-- detected during an exam session. Written by modules/face_monitor.py.
+CREATE TABLE IF NOT EXISTS FaceAbsenceEvents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id INTEGER,
+    exam_id INTEGER,
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    duration_seconds REAL,
+    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
+    FOREIGN KEY(exam_id) REFERENCES Exams(id)
+);

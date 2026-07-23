@@ -69,6 +69,20 @@ CREATE TABLE IF NOT EXISTS SessionLogs (
 )
 """)
 
+# FaceAbsenceEvents Table (Milestone 2)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS FaceAbsenceEvents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id INTEGER,
+    exam_id INTEGER,
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    duration_seconds REAL,
+    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
+    FOREIGN KEY(exam_id) REFERENCES Exams(id)
+)
+""")
+
 conn.commit()
 conn.close()
 
