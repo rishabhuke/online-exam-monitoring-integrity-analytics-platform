@@ -83,6 +83,22 @@ CREATE TABLE IF NOT EXISTS FaceAbsenceEvents (
 )
 """)
 
+# IntegrityFlags Table (Milestone 2)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS IntegrityFlags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id INTEGER,
+    exam_id INTEGER,
+    flag_type TEXT,
+    severity TEXT,
+    detail TEXT,
+    threshold_breached TEXT,
+    created_at TIMESTAMP,
+    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
+    FOREIGN KEY(exam_id) REFERENCES Exams(id)
+)
+""")
+
 conn.commit()
 conn.close()
 

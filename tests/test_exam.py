@@ -26,6 +26,7 @@ import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import modules.photo_capture as photo_capture
+import modules.detection_engine as detection_engine
 
 
 def make_fake_data_url():
@@ -41,6 +42,7 @@ def isolated_db(monkeypatch, tmp_path):
     """Points photo_capture.DATABASE at a temp SQLite file with schema applied."""
     test_db = tmp_path / "test.db"
     monkeypatch.setattr(photo_capture, "DATABASE", test_db)
+    monkeypatch.setattr(detection_engine, "DATABASE", test_db)
 
     conn = sqlite3.connect(test_db)
     conn.execute("PRAGMA foreign_keys = ON")
@@ -51,7 +53,7 @@ def isolated_db(monkeypatch, tmp_path):
     # Seed Candidates/Exams rows for every id these tests reference, since
     # FaceAbsenceEvents has FK constraints on both (matching the rest of
     # this app's schema).
-    for cid in (1, 2, 5, 9):
+    for cid in (1, 2, 5, 7, 9):
         conn.execute(
             "INSERT INTO Candidates (id, name, email, password_hash) VALUES (?, ?, ?, ?)",
             (cid, f"Test Candidate {cid}", f"candidate{cid}@example.com", "hash"),
@@ -163,3 +165,84 @@ def test_process_exam_frame_raises_on_bad_frame(isolated_db, monkeypatch):
     monkeypatch.setattr(photo_capture, "contains_face", lambda image: True)
     with pytest.raises(ValueError):
         photo_capture.process_exam_frame(1, 1, "not-a-valid-data-url")
+
+
+# ---------------------------------------------------------------------------
+# Detection engine tests (modules/detection_engine.py)
+# ---------------------------------------------------------------------------
+
+def _insert_face_absence_event(db_path, candidate_id, exam_id, duration_seconds):
+    """Helper: directly insert a FaceAbsenceEvents row for cumulative-threshold tests."""
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        """
+        INSERT INTO FaceAbsenceEvents (candidate_id, exam_id, start_time, end_time, duration_seconds)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (candidate_id, exam_id, "2026-01-01T00:00:00", "2026-01-01T00:01:00", duration_seconds),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_single_interval_below_threshold_raises_nothing(isolated_db):
+    raised = detection_engine.evaluate_face_absence(1, 1, interval_duration_seconds=10)
+    assert raised == []
+    assert detection_engine.get_flags(1, 1) == []
+
+
+def test_single_interval_above_threshold_raises_flag(isolated_db, monkeypatch):
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_face_absent_seconds": 60,
+    })
+
+    raised = detection_engine.evaluate_face_absence(1, 1, interval_duration_seconds=90)
+
+    assert "face_absent_single_interval" in raised
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["flag_type"] == "face_absent_single_interval"
+    assert flags[0]["severity"] == "high"
+
+
+def test_cumulative_absence_across_multiple_intervals_raises_flag(isolated_db, monkeypatch):
+    """Several short intervals, individually under threshold, should still
+    raise a cumulative flag once their sum crosses max_cumulative_absent_seconds."""
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS,
+        "max_face_absent_seconds": 999,       # disable single-interval flag for this test
+        "max_cumulative_absent_seconds": 100,
+    })
+
+    _insert_face_absence_event(isolated_db, 7, 1, 40)
+    _insert_face_absence_event(isolated_db, 7, 1, 40)
+    # cumulative so far: 80s, still under 100s threshold
+    raised_early = detection_engine.evaluate_face_absence(7, 1, interval_duration_seconds=0)
+    assert "face_absent_cumulative" not in raised_early
+
+    _insert_face_absence_event(isolated_db, 7, 1, 30)
+    # cumulative now: 110s, over threshold
+    raised_final = detection_engine.evaluate_face_absence(7, 1, interval_duration_seconds=30)
+
+    assert "face_absent_cumulative" in raised_final
+    flags = detection_engine.get_flags(7, 1)
+    assert any(f["flag_type"] == "face_absent_cumulative" for f in flags)
+
+
+def test_get_flags_scoped_to_candidate_and_exam(isolated_db, monkeypatch):
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_face_absent_seconds": 5,
+    })
+
+    detection_engine.evaluate_face_absence(1, 1, interval_duration_seconds=50)
+    detection_engine.evaluate_face_absence(2, 1, interval_duration_seconds=50)
+
+    assert len(detection_engine.get_flags(1, 1)) == 1
+    assert len(detection_engine.get_flags(2, 1)) == 1
+    assert len(detection_engine.get_flags(9, 1)) == 0  # candidate with no flags
+
+
+def test_evaluate_tab_switches_is_a_noop_stub(isolated_db):
+    """Pavani's browser event table doesn't exist yet - this must not error,
+    and must not raise anything, until that table lands."""
+    assert detection_engine.evaluate_tab_switches(1, 1) == []

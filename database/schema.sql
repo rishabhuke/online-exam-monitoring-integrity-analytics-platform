@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS SessionLogs (
 
 -- FaceAbsenceEvents Table (Milestone 2)
 -- One row per continuous interval where the candidate's face was not
--- detected during an exam session. Written by modules/face_monitor.py.
+-- detected during an exam session. Written by modules/photo_capture.py.
 CREATE TABLE IF NOT EXISTS FaceAbsenceEvents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     candidate_id INTEGER,
@@ -58,6 +58,23 @@ CREATE TABLE IF NOT EXISTS FaceAbsenceEvents (
     start_time TIMESTAMP,
     end_time TIMESTAMP,
     duration_seconds REAL,
+    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
+    FOREIGN KEY(exam_id) REFERENCES Exams(id)
+);
+
+-- IntegrityFlags Table (Milestone 2)
+-- One row per suspicious-event flag raised by the rule-based detection
+-- engine (modules/detection_engine.py) when a configured threshold is
+-- breached (e.g. face absent too long, too many tab switches).
+CREATE TABLE IF NOT EXISTS IntegrityFlags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id INTEGER,
+    exam_id INTEGER,
+    flag_type TEXT,
+    severity TEXT,
+    detail TEXT,
+    threshold_breached TEXT,
+    created_at TIMESTAMP,
     FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
     FOREIGN KEY(exam_id) REFERENCES Exams(id)
 );

@@ -223,3 +223,4 @@ static/uploads/
 
 # SQLite database
 database.db
+.DS_Store
