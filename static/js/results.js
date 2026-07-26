@@ -1,52 +1,446 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("resultSearch");
-    const statusFilter = document.getElementById("statusFilter");
-    const tableBody = document.getElementById("resultsTableBody");
-    const rows = Array.from(tableBody.querySelectorAll("tr"));
-    const noResultsMessage = document.getElementById("noResultsMessage");
-    const reportButtons = document.querySelectorAll(".table-action-btn");
+"use strict";
 
-    function filterResults() {
-        const searchValue = searchInput.value.trim().toLowerCase();
-        const selectedStatus = statusFilter.value.toLowerCase();
+/* ==========================================================
+   RESULTS
+========================================================== */
 
-        let visibleCount = 0;
+let results = [];
 
-        rows.forEach(row => {
-            const examName = row.cells[0].textContent.trim().toLowerCase();
-            const rowStatus = row.getAttribute("data-status");
+const tableBody =
+    document.getElementById("resultsTableBody");
 
-            const matchesSearch = examName.includes(searchValue);
-            const matchesStatus =
-                selectedStatus === "all" || rowStatus === selectedStatus;
+const totalExams =
+    document.getElementById("totalExamsCount");
 
-            if (matchesSearch && matchesStatus) {
-                row.style.display = "";
-                visibleCount++;
-            } else {
-                row.style.display = "none";
-            }
-        });
+const passedCount =
+    document.getElementById("passedCount");
 
-        noResultsMessage.style.display = visibleCount === 0 ? "block" : "none";
+const failedCount =
+    document.getElementById("failedCount");
+
+const averageScore =
+    document.getElementById("avgScore");
+
+const noResults =
+    document.getElementById("noResultsMessage");
+
+
+/* ==========================================================
+   LOAD RESULTS
+========================================================== */
+
+async function loadResults() {
+
+    try {
+
+        const response =
+            await fetch("/api/results");
+
+        if (!response.ok) {
+
+            throw new Error("Unable to fetch results.");
+
+        }
+
+        results =
+            await response.json();
+
+        renderTable(results);
+
+        updateSummary(results);
+
     }
 
-    if (searchInput) {
-        searchInput.addEventListener("input", filterResults);
+    catch (error) {
+
+        console.error(error);
+
+        tableBody.innerHTML = "";
+
+        noResults.style.display = "block";
+
     }
 
-    if (statusFilter) {
-        statusFilter.addEventListener("change", filterResults);
+}
+
+
+/* ==========================================================
+   UPDATE SUMMARY
+========================================================== */
+
+function updateSummary(data) {
+
+    totalExams.textContent =
+        data.length;
+
+    const passed =
+        data.filter(result => result.result === "PASS").length;
+
+    const failed =
+        data.filter(result => result.result === "FAIL").length;
+
+    passedCount.textContent =
+        passed;
+
+    failedCount.textContent =
+        failed;
+
+    if (data.length === 0) {
+
+        averageScore.textContent = "0%";
+
+        return;
+
     }
 
-    reportButtons.forEach(button => {
-        button.addEventListener("click", function (e) {
-            e.preventDefault();
+    const average =
 
-            const row = this.closest("tr");
-            const examName = row.cells[0].textContent.trim();
+        data.reduce(
 
-            alert(`Detailed report for "${examName}" will open here.`);
-        });
+            (sum, result) =>
+
+                sum + Number(result.percentage),
+
+            0
+
+        ) / data.length;
+
+    averageScore.textContent =
+        average.toFixed(1) + "%";
+
+}
+
+
+/* ==========================================================
+   RENDER TABLE
+========================================================== */
+
+function renderTable(data) {
+
+    tableBody.innerHTML = "";
+
+    if (data.length === 0) {
+
+        noResults.style.display = "block";
+
+        return;
+
+    }
+
+    noResults.style.display = "none";
+
+    data.forEach((result, index) => {
+
+        tableBody.innerHTML += `
+
+        <tr>
+
+            <td>${index + 1}</td>
+
+            <td>${result.title}</td>
+
+            <td>${result.topic}</td>
+
+            <td>${result.difficulty}</td>
+
+            <td>
+
+                ${result.score}
+
+                /
+
+                ${result.total_questions}
+
+            </td>
+
+            <td>
+
+                ${result.percentage}%
+
+            </td>
+
+            <td>
+
+                <span class="status-badge
+
+                ${result.result === "PASS"
+
+                    ? "passed-badge"
+
+                    : "failed-badge"}
+
+                ">
+
+                    ${result.result}
+
+                </span>
+
+            </td>
+
+            <td>
+
+                <button
+
+                    class="table-action-btn"
+
+                    onclick="openResult(${result.exam_id})"
+
+                >
+
+                    View Report
+
+                </button>
+
+            </td>
+
+        </tr>
+
+        `;
+
     });
-});
+
+}
+
+
+/* ==========================================================
+   INITIAL LOAD
+========================================================== */
+
+loadResults();
+/* ==========================================================
+   SEARCH & FILTER
+========================================================== */
+
+const searchInput =
+    document.getElementById("resultSearch");
+
+const statusFilter =
+    document.getElementById("statusFilter");
+
+searchInput.addEventListener("input", filterResults);
+
+statusFilter.addEventListener("change", filterResults);
+
+function filterResults() {
+
+    const keyword =
+        searchInput.value.toLowerCase().trim();
+
+    const status =
+        statusFilter.value;
+
+    const filtered = results.filter(result => {
+
+        const matchTitle =
+            result.title.toLowerCase().includes(keyword);
+
+        const matchStatus =
+            status === "all" ||
+            result.result === status;
+
+        return matchTitle && matchStatus;
+
+    });
+
+    renderTable(filtered);
+
+}
+
+
+
+/* ==========================================================
+   RESULT MODAL
+========================================================== */
+
+const resultModal =
+    document.getElementById("resultModal");
+
+const closeModal =
+    document.getElementById("closeModal");
+
+const resultDetails =
+    document.getElementById("resultDetails");
+
+const viewAnswersBtn =
+    document.getElementById("viewAnswersBtn");
+
+let selectedExamId = null;
+
+
+
+/* ==========================================================
+   OPEN RESULT
+========================================================== */
+
+function openResult(examId) {
+
+    selectedExamId = examId;
+
+    const result = results.find(
+
+        r => r.exam_id === examId
+
+    );
+
+    if (!result)
+        return;
+
+    resultDetails.innerHTML = `
+
+        <div class="detail-row">
+
+            <span class="detail-label">
+
+                Exam
+
+            </span>
+
+            <span class="detail-value">
+
+                ${result.title}
+
+            </span>
+
+        </div>
+
+        <div class="detail-row">
+
+            <span class="detail-label">
+
+                Topic
+
+            </span>
+
+            <span class="detail-value">
+
+                ${result.topic}
+
+            </span>
+
+        </div>
+
+        <div class="detail-row">
+
+            <span class="detail-label">
+
+                Difficulty
+
+            </span>
+
+            <span class="detail-value">
+
+                ${result.difficulty}
+
+            </span>
+
+        </div>
+
+        <div class="detail-row">
+
+            <span class="detail-label">
+
+                Score
+
+            </span>
+
+            <span class="detail-value">
+
+                ${result.score} / ${result.total_questions}
+
+            </span>
+
+        </div>
+
+        <div class="detail-row">
+
+            <span class="detail-label">
+
+                Percentage
+
+            </span>
+
+            <span class="detail-value">
+
+                ${result.percentage}%
+
+            </span>
+
+        </div>
+
+        <div class="detail-row">
+
+            <span class="detail-label">
+
+                Result
+
+            </span>
+
+            <span class="detail-value">
+
+                ${result.result}
+
+            </span>
+
+        </div>
+
+    `;
+
+    resultModal.style.display = "flex";
+
+}
+
+
+
+/* ==========================================================
+   CLOSE MODAL
+========================================================== */
+
+closeModal.addEventListener(
+
+    "click",
+
+    function(){
+
+        resultModal.style.display = "none";
+
+    }
+
+);
+
+window.addEventListener(
+
+    "click",
+
+    function(event){
+
+        if(event.target === resultModal){
+
+            resultModal.style.display = "none";
+
+        }
+
+    }
+
+);
+
+
+
+/* ==========================================================
+   VIEW ANSWERS
+========================================================== */
+
+viewAnswersBtn.addEventListener(
+
+    "click",
+
+    function(){
+
+        if(selectedExamId===null)
+            return;
+
+        window.location.href =
+            `/view_answers/${selectedExamId}`;
+
+    }
+
+);

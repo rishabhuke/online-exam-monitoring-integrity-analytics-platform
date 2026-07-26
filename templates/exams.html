@@ -5,7 +5,6 @@ Available Examinations
 {% endblock %}
 
 {% block extra_css %}
-
 <link rel="stylesheet" href="{{ url_for('static', filename='css/exams.css') }}">
 {% endblock %}
 
@@ -13,162 +12,90 @@ Available Examinations
 
 <div class="dashboard-container">
 
-    <!-- ================= PAGE HEADER ================= -->
+    <!-- Header -->
     <section class="exam-page-header">
-        <div class="exam-header-left">
+
+        <div>
+
             <h1>
                 <i class="fa-solid fa-file-circle-check"></i>
                 Available Examinations
             </h1>
+
             <p>
-                Select an examination to begin your assessment.
+                Choose an assessment and begin your AI monitored examination.
             </p>
+
         </div>
+
+        <div class="search-box">
+
+            <input
+                type="text"
+                id="searchExam"
+                placeholder="Search Subject..."
+            >
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+        </div>
+
     </section>
 
-    <!-- ================= EXAMS LIST ================= -->
-    <section class="exam-section">
 
-        <!-- Exam 1 -->
-        <div class="exam-card available">
-            <div class="exam-card-top">
-                <div class="exam-title-wrap">
-                    <div class="exam-icon">
-                        <i class="fa-brands fa-java"></i>
-                    </div>
-                    <div>
-                        <h3>Java Programming Assessment</h3>
-                    </div>
-                </div>
-            </div>
+    <!-- Statistics -->
 
-            <div class="exam-details">
-                <div class="detail-item">
-                    <span class="label">Duration</span>
-                    <span class="value">60 Minutes</span>
-                </div>
+    <section class="exam-summary">
 
-                <div class="detail-item">
-                    <span class="label">Questions</span>
-                    <span class="value">30 MCQs</span>
-                </div>
+    <div class="summary-card">
 
-                <div class="detail-item">
-                    <span class="label">Scheduled Date</span>
-                    <span class="value">15 July 2026</span>
-                </div>
+        <h3 id="totalExams">0</h3>
 
-                <div class="detail-item">
-                    <span class="label">Start Time</span>
-                    <span class="value">10:00 AM</span>
-                </div>
+        <span>Total Exams</span>
 
-                <div class="detail-item">
-                    <span class="label">Status</span>
-                    <span class="value status available-text">Available</span>
-                </div>
-            </div>
+    </div>
 
-            <div class="exam-footer">
-                <a href="{{ url_for('pages.start_exam', exam_id=1) }}" class="exam-btn start-btn">
-                    Start Exam
-                </a>
-            </div>
-        </div>
+    <div class="summary-card">
 
-        <!-- Exam 2 -->
-        <div class="exam-card upcoming">
-            <div class="exam-card-top">
-                <div class="exam-title-wrap">
-                    <div class="exam-icon">
-                        <i class="fa-solid fa-database"></i>
-                    </div>
-                    <div>
-                        <h3>Database Management System</h3>
-                    </div>
-                </div>
-            </div>
+        <h3 id="availableExams">0</h3>
 
-            <div class="exam-details">
-                <div class="detail-item">
-                    <span class="label">Duration</span>
-                    <span class="value">45 Minutes</span>
-                </div>
+        <span>Available Now</span>
 
-                <div class="detail-item">
-                    <span class="label">Questions</span>
-                    <span class="value">25 MCQs</span>
-                </div>
+    </div>
 
-                <div class="detail-item">
-                    <span class="label">Scheduled Date</span>
-                    <span class="value">18 July 2026</span>
-                </div>
+</section>
 
-                <div class="detail-item">
-                    <span class="label">Start Time</span>
-                    <span class="value">2:00 PM</span>
-                </div>
 
-                <div class="detail-item">
-                    <span class="label">Status</span>
-                    <span class="value status upcoming-text">Upcoming</span>
-                </div>
-            </div>
+    <!-- Loading -->
 
-            <div class="exam-footer">
-                <button class="exam-btn disabled-btn" type="button">
-                    Not Available
-                </button>
-            </div>
-        </div>
+    <div id="loading">
 
-        <!-- Exam 3 -->
-        <div class="exam-card upcoming">
-            <div class="exam-card-top">
-                <div class="exam-title-wrap">
-                    <div class="exam-icon">
-                        <i class="fa-solid fa-globe"></i>
-                    </div>
-                    <div>
-                        <h3>Web Technologies Assessment</h3>
-                    </div>
-                </div>
-            </div>
+        <i class="fa-solid fa-spinner fa-spin"></i>
 
-            <div class="exam-details">
-                <div class="detail-item">
-                    <span class="label">Duration</span>
-                    <span class="value">90 Minutes</span>
-                </div>
+        Loading Exams...
 
-                <div class="detail-item">
-                    <span class="label">Questions</span>
-                    <span class="value">40 MCQs</span>
-                </div>
+    </div>
 
-                <div class="detail-item">
-                    <span class="label">Scheduled Date</span>
-                    <span class="value">22 July 2026</span>
-                </div>
 
-                <div class="detail-item">
-                    <span class="label">Start Time</span>
-                    <span class="value">9:30 AM</span>
-                </div>
+    <!-- No Exams -->
 
-                <div class="detail-item">
-                    <span class="label">Status</span>
-                    <span class="value status upcoming-text">Upcoming</span>
-                </div>
-            </div>
+    <div id="emptyState" style="display:none;">
 
-            <div class="exam-footer">
-                <button class="exam-btn disabled-btn" type="button">
-                    Not Available
-                </button>
-            </div>
-        </div>
+        <img src="{{ url_for('static', filename='images/no-data.svg') }}"
+             width="220">
+
+        <h2>No Examinations Found</h2>
+
+        <p>
+            AI generated examinations will appear here.
+        </p>
+
+    </div>
+
+
+    <!-- Dynamic Cards -->
+
+    <section class="exam-section" id="examContainer">
 
     </section>
 
@@ -177,5 +104,7 @@ Available Examinations
 {% endblock %}
 
 {% block extra_js %}
+
 <script src="{{ url_for('static', filename='js/exams.js') }}"></script>
+
 {% endblock %}

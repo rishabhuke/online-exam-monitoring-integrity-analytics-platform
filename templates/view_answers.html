@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>View Answers</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/view_answers.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <h1 id="examName">
+            Loading...
+        </h1>
+
+        <button id="dashboardBtn">
+            Back to Dashboard
+        </button>
+
+    </div>
+
+    <div id="questionsContainer">
+
+    </div>
+
+</div>
+
+<script>
+
+const EXAM_ID = {{ exam_id }};
+
+</script>
+
+<script src="{{ url_for('static',
+filename='js/view_answers.js') }}"></script>
+
+</body>
+</html>

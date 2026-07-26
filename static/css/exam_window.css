@@ -1,265 +1,1364 @@
 /* ======================================================
-   EXAM WINDOW PAGE
+   AI ONLINE EXAMINATION
+   PART 2A
+   Global + Start Overlay + Header
 ====================================================== */
 
-.exam-window-container{
-    max-width:1350px;
-    margin:35px auto;
-    padding:20px;
-    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:"Poppins",sans-serif;
 }
 
-/* ================= HEADER ================= */
+body{
+
+    background:#f5f7fb;
+
+    color:#1f2937;
+
+}
+
+.exam-window-container{
+
+    max-width:1450px;
+
+    margin:35px auto;
+
+    padding:20px;
+
+}
+
+
+/* ======================================================
+   START OVERLAY
+====================================================== */
+
+.start-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(15,23,42,.82);
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:9999;
+
+    backdrop-filter:blur(8px);
+
+}
+
+.start-card{
+
+    width:600px;
+
+    background:#ffffff;
+
+    border-radius:22px;
+
+    padding:45px;
+
+    text-align:center;
+
+    box-shadow:0 25px 70px rgba(0,0,0,.30);
+
+}
+
+.start-card h2{
+
+    font-size:34px;
+
+    color:#1e3a8a;
+
+    margin-bottom:18px;
+
+}
+
+.start-card p{
+
+    color:#64748b;
+
+    font-size:16px;
+
+    margin-bottom:25px;
+
+    line-height:1.7;
+
+}
+
+
+/* ======================================================
+   INSTRUCTIONS
+====================================================== */
+
+.instruction-list{
+
+    list-style:none;
+
+    text-align:left;
+
+    margin:30px 0;
+
+}
+
+.instruction-list li{
+
+    padding:12px 16px;
+
+    margin-bottom:12px;
+
+    background:#f8fafc;
+
+    border-left:5px solid #2563eb;
+
+    border-radius:12px;
+
+    color:#334155;
+
+    font-size:15px;
+
+}
+
+
+/* ======================================================
+   CAMERA STATUS
+====================================================== */
+
+.camera-status{
+
+    margin:25px auto;
+
+    width:80%;
+
+    padding:14px;
+
+    border-radius:14px;
+
+    background:#fee2e2;
+
+    color:#dc2626;
+
+    font-weight:700;
+
+    font-size:16px;
+
+    transition:.3s;
+
+}
+
+/* JS will add this class after camera verification */
+
+.camera-status.success{
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+}
+
+
+/* ======================================================
+   START BUTTONS
+====================================================== */
+
+#checkCameraBtn,
+
+#startExamBtn{
+
+    width:260px;
+
+    margin-top:15px;
+
+}
+
+#startExamBtn{
+
+    display:none;
+
+}
+
+
+/* ======================================================
+   EXAM HEADER
+====================================================== */
 
 .exam-header-card{
-    background:linear-gradient(135deg,#2563eb,#1e40af);
-    color:white;
-    border-radius:20px;
-    padding:30px 35px;
+
     display:flex;
+
     justify-content:space-between;
+
     align-items:center;
-    gap:20px;
-    margin-bottom:30px;
-    box-shadow:0 15px 35px rgba(37,99,235,.25);
+
+    padding:32px;
+
+    border-radius:24px;
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+
+    color:white;
+
+    box-shadow:0 20px 45px rgba(37,99,235,.28);
+
+    margin-bottom:28px;
+
+}
+
+.exam-header-left{
+
+    flex:1;
+
 }
 
 .exam-header-left h1{
-    font-size:32px;
-    margin-bottom:10px;
+
+    font-size:34px;
+
+    margin-bottom:12px;
+
 }
 
 .exam-header-left p{
-    font-size:15px;
+
+    font-size:16px;
+
+    line-height:1.8;
+
     opacity:.95;
-    line-height:1.6;
+
 }
 
+
+/* ======================================================
+   RIGHT HEADER
+====================================================== */
+
+.exam-header-right{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:20px;
+
+}
+
+
+/* ======================================================
+   TIMER
+====================================================== */
+
 .exam-timer-box{
-    min-width:180px;
-    background:rgba(255,255,255,.15);
-    padding:20px;
-    border-radius:16px;
+
+     width:100%;
+
+    max-width:320px;
+
+    background:rgba(255,255,255,.18);
+
+    border:1px solid rgba(255,255,255,.25);
+
+    backdrop-filter:blur(8px);
+
+    border-radius:18px;
+
     text-align:center;
-    backdrop-filter:blur(6px);
+
+    padding:18px;
+
 }
 
 .exam-timer-box h3{
+
     font-size:16px;
-    margin-bottom:8px;
+
+    margin-bottom:10px;
+
+    font-weight:600;
+
 }
 
 #examTimer{
-    font-size:32px;
+
+    font-size:34px;
+
     font-weight:700;
-    color:#FFD54F;
+
+    letter-spacing:2px;
+
+}
+.completed-btn{
+
+    width:100%;
+
+    padding:14px;
+
+    background:#16a34a;
+
+    color:white;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-weight:600;
+
+    cursor:not-allowed;
+
+    opacity:.9;
+
 }
 
-/* ================= BODY ================= */
+/* ======================================================
+   WARNING BOX
+====================================================== */
 
+.warning-box{
+
+    min-width:170px;
+
+    background:#ffffff;
+
+    color:#dc2626;
+
+    border-radius:18px;
+
+    padding:18px;
+
+    text-align:center;
+
+    font-weight:700;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+
+}
+
+#warningCount{
+
+    display:block;
+
+    margin-top:10px;
+
+    font-size:24px;
+
+    color:#b91c1c;
+
+}
+/* ======================================================
+   PART 2B
+   STATUS SUMMARY
+====================================================== */
+
+.exam-status-summary{
+
+    display:flex;
+
+    gap:20px;
+
+    margin-bottom:30px;
+
+}
+
+.status-pill{
+
+    flex:1;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:18px 22px;
+
+    border-radius:18px;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    background:#ffffff;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+.status-pill span{
+
+    width:42px;
+
+    height:42px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    color:#fff;
+
+    font-size:18px;
+
+    font-weight:700;
+
+}
+
+.answered-pill span{
+
+    background:#16a34a;
+
+}
+
+.not-answered-pill span{
+
+    background:#ef4444;
+
+}
+
+.review-pill span{
+
+    background:#f59e0b;
+
+}
+
+
+/* ======================================================
+   EXAM BODY
+====================================================== */
 .exam-body{
+
     display:grid;
-    grid-template-columns:280px 1fr;
-    gap:25px;
-    align-items:start;
+
+    grid-template-columns:340px 1fr;
+
+    gap:30px;
+
+    align-items:flex-start;
+
 }
 
-/* Palette */
+
+/* ======================================================
+   QUESTION PALETTE
+====================================================== */
+
 .question-palette{
+
+    width:340px;
+
     background:#fff;
-    border-radius:20px;
+
+    border-radius:22px;
+
     padding:25px;
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+
 }
 
-.question-palette h3{
+.palette-header{
+
+    margin-bottom:20px;
+
+}
+
+.palette-header h3{
+
     color:#1e3a8a;
-    margin-bottom:18px;
-    font-size:22px;
+
+    margin-bottom:8px;
+
+}
+
+.palette-header p{
+
+    color:#64748b;
+
+    font-size:14px;
+
+    line-height:1.6;
+
 }
 
 .palette-grid{
+
     display:grid;
-    grid-template-columns:repeat(5,1fr);
+
+    grid-template-columns:repeat(5, 55px);
+
+    justify-content:center;
+
     gap:12px;
+
 }
 
+
+/* ======================================================
+   PALETTE BUTTONS
+====================================================== */
+
 .palette-btn{
-    width:42px;
-    height:42px;
+
+     width:55px;
+
+    height:55px;
+
+    font-size:16px;
+
+    font-weight:600;
+
     border:none;
-    border-radius:10px;
-    background:#eef4ff;
-    color:#2563eb;
-    font-weight:700;
+
+    border-radius:12px;
+
     cursor:pointer;
-    transition:.3s;
+
+    background:#e2e8f0;
+
+    color:#1e293b;
+
+    font-weight:700;
+
+    transition:.25s;
+
+}
+.question-panel{
+
+    width:100%;
+
+    min-width:0;
+
 }
 
 .palette-btn:hover{
-    background:#dbeafe;
+
+    transform:scale(1.08);
+
 }
 
-.palette-btn.active{
+.palette-btn.current{
+
     background:#2563eb;
+
     color:#fff;
+
 }
 
-/* Question panel */
-.question-panel{
+.palette-btn.answered{
+
+    background:#16a34a;
+
+    color:#fff;
+
+}
+
+.palette-btn.review{
+
+    background:#f59e0b;
+
+    color:#fff;
+
+}
+
+.palette-btn.notanswered{
+
+    background:#ef4444;
+
+    color:#fff;
+
+}
+
+
+/* ======================================================
+   PALETTE LEGEND
+====================================================== */
+
+.palette-legend{
+
+    margin-top:30px;
+
     display:flex;
+
     flex-direction:column;
-    gap:22px;
+
+    gap:12px;
+
+}
+
+.legend-item{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    color:#475569;
+
+    font-size:14px;
+
+}
+
+.legend-box{
+
+    width:18px;
+
+    height:18px;
+
+    border-radius:6px;
+
+}
+
+.current-box{
+
+    background:#2563eb;
+
+}
+
+.answered-box{
+
+    background:#16a34a;
+
+}
+
+.review-box{
+
+    background:#f59e0b;
+
+}
+
+.not-answered-box{
+
+    background:#ef4444;
+
+}
+
+
+/* ======================================================
+   QUESTION PANEL
+====================================================== */
+
+.question-panel{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:25px;
+
 }
 
 .question-card{
-    background:#fff;
-    border-radius:20px;
-    padding:30px;
-    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+    background:#ffffff;
+
+    border-radius:24px;
+
+    padding:35px;
+
+    box-shadow:0 12px 30px rgba(0,0,0,.08);
+
 }
 
-.question-card h2{
-    color:#1e3a8a;
-    margin-bottom:18px;
-    font-size:26px;
+
+/* ======================================================
+   QUESTION HEADER
+====================================================== */
+
+.question-top{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:30px;
+
 }
+
+.question-top h2{
+
+    color:#1e3a8a;
+
+    font-size:28px;
+
+}
+
+.question-tag{
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+    padding:8px 16px;
+
+    border-radius:30px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+
+/* ======================================================
+   QUESTION TEXT
+====================================================== */
 
 .question-text{
-    font-size:18px;
-    color:#374151;
-    line-height:1.7;
-    margin-bottom:25px;
+
+    font-size:22px;
+
+    line-height:1.8;
+
+    color:#1e293b;
+
+    margin-bottom:35px;
+
 }
+
+
+/* ======================================================
+   OPTIONS
+====================================================== */
 
 .options-list{
+
     display:flex;
+
     flex-direction:column;
-    gap:16px;
+
+    gap:18px;
+
 }
 
-.option-item{
+.option-card{
+
     display:flex;
+
     align-items:center;
-    gap:14px;
-    background:#f8fbff;
-    border:1px solid #e5eefc;
-    border-radius:14px;
-    padding:16px 18px;
+
+    gap:18px;
+
+    padding:18px 22px;
+
+    border:2px solid #dbe4f0;
+
+    border-radius:16px;
+
     cursor:pointer;
-    transition:.3s;
+
+    transition:.25s;
+
+    background:#fff;
+
 }
 
-.option-item:hover{
+.option-card:hover{
+
     border-color:#2563eb;
-    background:#eef4ff;
+
+    transform:translateY(-2px);
+
+    box-shadow:0 10px 20px rgba(37,99,235,.15);
+
 }
 
-.option-item input{
-    transform:scale(1.15);
+.option-card input{
+
+    transform:scale(1.3);
+
     cursor:pointer;
+
 }
 
-.option-item span{
-    font-size:16px;
-    color:#1f2937;
-    font-weight:500;
+.option-card.selected{
+
+    border-color:#2563eb;
+
+    background:#eff6ff;
+
 }
 
-/* Buttons */
+
+/* ======================================================
+   QUESTION ACTIONS
+====================================================== */
+
 .question-actions{
+
     display:flex;
+
     justify-content:space-between;
-    gap:15px;
+
+    align-items:center;
+
 }
+
+.middle-actions{
+
+    display:flex;
+
+    gap:15px;
+
+}
+/* ======================================================
+   PART 2C
+   BUTTONS
+====================================================== */
 
 .nav-btn{
-    padding:14px 28px;
+
     border:none;
-    border-radius:12px;
-    font-size:15px;
-    font-weight:700;
+
+    outline:none;
+
     cursor:pointer;
-    transition:.3s;
+
+    padding:14px 28px;
+
+    border-radius:12px;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    transition:.25s;
+
 }
 
 .primary-btn{
+
     background:#2563eb;
+
     color:#fff;
+
 }
 
 .primary-btn:hover{
+
     background:#1d4ed8;
+
+    transform:translateY(-2px);
+
 }
 
 .secondary-btn{
-    background:#e5e7eb;
-    color:#374151;
+
+    background:#e2e8f0;
+
+    color:#1e293b;
+
 }
 
 .secondary-btn:hover{
-    background:#d1d5db;
+
+    background:#cbd5e1;
+
 }
 
-/* Submit section */
+.review-btn{
+
+    background:#f59e0b;
+
+    color:#fff;
+
+}
+
+.review-btn:hover{
+
+    background:#d97706;
+
+}
+
+.clear-btn{
+
+    background:#ef4444;
+
+    color:#fff;
+
+}
+
+.clear-btn:hover{
+
+    background:#dc2626;
+
+}
+
+
+/* ======================================================
+   SUBMIT BUTTON
+====================================================== */
+
 .submit-section{
-    margin-top:28px;
+
+    margin-top:35px;
+
     display:flex;
+
     justify-content:flex-end;
+
 }
 
 .submit-btn{
-    padding:15px 34px;
-    background:#16a34a;
-    color:#fff;
+
     border:none;
-    border-radius:12px;
-    font-size:16px;
-    font-weight:700;
+
     cursor:pointer;
-    transition:.3s;
-    box-shadow:0 10px 25px rgba(22,163,74,.2);
+
+    padding:16px 40px;
+
+    font-size:17px;
+
+    font-weight:600;
+
+    border-radius:14px;
+
+    background:#16a34a;
+
+    color:white;
+
+    transition:.25s;
+
 }
 
 .submit-btn:hover{
+
     background:#15803d;
+
+    transform:translateY(-2px);
+
+}
+.view-btn{
+
+    border:none;
+
+    cursor:pointer;
+
+    padding:16px 40px;
+
+    font-size:17px;
+
+    font-weight:600;
+
+    border-radius:14px;
+
+    background:#16a34a;
+
+    color:white;
+
+    transition:.25s;
+
 }
 
-/* Responsive */
-@media(max-width:992px){
-    .exam-body{
-        grid-template-columns:1fr;
-    }
+.view-btn:hover{
+
+    background:#15803d;
+
+    transform:translateY(-2px);
+
 }
+
+
+/* ======================================================
+   MODAL OVERLAY
+====================================================== */
+
+.exam-modal-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(15,23,42,.75);
+
+    display:none;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:99999;
+
+    backdrop-filter:blur(6px);
+
+}
+
+.exam-modal-overlay.show{
+
+    display:flex;
+
+}
+
+
+/* ======================================================
+   MODAL
+====================================================== */
+
+.exam-modal{
+
+    width:620px;
+
+    max-width:95%;
+
+    background:#fff;
+
+    border-radius:22px;
+
+    padding:35px;
+
+    animation:popup .30s ease;
+
+    box-shadow:0 25px 60px rgba(0,0,0,.30);
+
+}
+
+@keyframes popup{
+
+    from{
+
+        transform:translateY(25px);
+
+        opacity:0;
+
+    }
+
+    to{
+
+        transform:translateY(0);
+
+        opacity:1;
+
+    }
+
+}
+
+
+/* ======================================================
+   MODAL HEADER
+====================================================== */
+
+.modal-header{
+
+    margin-bottom:30px;
+
+}
+
+.modal-header h2{
+
+    color:#1e3a8a;
+
+    text-align:center;
+
+}
+
+
+/* ======================================================
+   SUMMARY CARDS
+====================================================== */
+
+.modal-body{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:18px;
+
+}
+
+.summary-card{
+
+    background:#f8fafc;
+
+    border-radius:16px;
+
+    padding:22px;
+
+    text-align:center;
+
+}
+
+.summary-card h3{
+
+    color:#475569;
+
+    margin-bottom:15px;
+
+    font-size:15px;
+
+}
+
+.summary-card p{
+
+    font-size:34px;
+
+    color:#2563eb;
+
+    font-weight:700;
+
+}
+
+
+/* ======================================================
+   MODAL FOOTER
+====================================================== */
+
+.modal-footer{
+
+    margin-top:35px;
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:15px;
+
+}
+
+
+/* ======================================================
+   RESULT MODAL
+====================================================== */
+
+.result-modal{
+
+    width:650px;
+
+}
+
+.result-modal h2{
+
+    text-align:center;
+
+    color:#1e3a8a;
+
+    margin-bottom:30px;
+
+}
+
+
+/* ======================================================
+   RESULT TABLE
+====================================================== */
+
+.result-table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    margin-bottom:30px;
+
+}
+
+.result-table tr{
+
+    border-bottom:1px solid #e5e7eb;
+
+}
+
+.result-table td{
+
+    padding:16px;
+
+    font-size:16px;
+
+}
+
+.result-table td:first-child{
+
+    color:#475569;
+
+    font-weight:600;
+
+}
+
+.result-table td:last-child{
+
+    text-align:right;
+
+    font-weight:700;
+
+    color:#1e293b;
+
+}
+
+
+/* ======================================================
+   PASS / FAIL
+====================================================== */
+
+#resultStatus{
+
+    font-size:20px;
+
+    font-weight:700;
+
+}
+
+.pass{
+
+    color:#16a34a !important;
+
+}
+
+.fail{
+
+    color:#dc2626 !important;
+
+}
+
+
+/* ======================================================
+   RESPONSIVE
+====================================================== */
+
+@media(max-width:1200px){
+
+.exam-body{
+
+    grid-template-columns:1fr;
+
+}
+
+.question-palette{
+
+    position:relative;
+
+    top:0;
+
+}
+
+.palette-grid{
+
+    grid-template-columns:repeat(6,1fr);
+
+}
+
+}
+
 
 @media(max-width:768px){
-    .exam-header-card{
-        flex-direction:column;
-        align-items:flex-start;
-    }
 
-    .exam-header-left h1{
-        font-size:26px;
-    }
+.exam-header-card{
 
-    .question-card{
-        padding:22px;
-    }
+    flex-direction:column;
 
-    .question-card h2{
-        font-size:22px;
-    }
+    gap:25px;
 
-    .question-text{
-        font-size:16px;
-    }
+    text-align:center;
 
-    .question-actions{
-        flex-direction:column;
-    }
+}
 
-    .nav-btn,
-    .submit-btn{
-        width:100%;
-    }
+.exam-header-right{
+
+    flex-direction:column;
+
+}
+
+.exam-status-summary{
+
+    flex-direction:column;
+
+}
+
+.modal-body{
+
+    grid-template-columns:1fr;
+
+}
+
+.question-actions{
+
+    flex-direction:column;
+
+    gap:15px;
+
+}
+
+.middle-actions{
+
+    width:100%;
+
+    justify-content:center;
+
+    flex-wrap:wrap;
+
+}
+
+.palette-grid{
+
+    grid-template-columns:repeat(4,1fr);
+
+}
+
+.question-card{
+
+    padding:25px;
+
+}
+
+.question-text{
+
+    font-size:18px;
+
+}
+
+}
+
+
+@media(max-width:480px){
+
+.start-card{
+
+    width:95%;
+
+    padding:30px;
+
+}
+
+.exam-window-container{
+
+    padding:12px;
+
+}
+
+.palette-grid{
+
+    grid-template-columns:repeat(3,1fr);
+
+}
+
+.submit-btn{
+
+    width:100%;
+
+}
+
+.nav-btn{
+
+    width:100%;
+
+}
+
+.modal-footer{
+
+    flex-direction:column;
+
+}
+
 }

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Quiz Generator</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/quiz_generator.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>AI Quiz Generator</h1>
+
+   <div class="form-group">
+
+    <label>Subject</label>
+
+    <input
+        type="text"
+        id="subject"
+        list="subjectList"
+        placeholder="Select or type a subject">
+
+    <datalist id="subjectList">
+
+        <option value="Java">
+        <option value="Python">
+        <option value="C">
+        <option value="C++">
+        <option value="DBMS">
+        <option value="Operating Systems">
+        <option value="Computer Networks">
+        <option value="Software Engineering">
+        <option value="Data Structures">
+        <option value="Algorithms">
+        <option value="Web Technologies">
+        <option value="Machine Learning">
+        <option value="Artificial Intelligence">
+        <option value="Cloud Computing">
+        <option value="Verbal">
+        <option value="Aptitude">
+
+    </datalist>
+
+</div>
+
+    <div class="form-group">
+
+        <label>Topic</label>
+
+        <input
+            type="text"
+            id="topic"
+            placeholder="Example: OOP, JDBC, Normalization">
+
+    </div>
+
+    <div class="form-group">
+
+    <label>Difficulty</label>
+
+    <div class="difficulty-options">
+
+        <input type="radio" id="easy" name="difficulty" value="Easy">
+        <label for="easy">Easy</label>
+
+        <input type="radio" id="medium" name="difficulty" value="Medium" checked>
+        <label for="medium">Medium</label>
+
+        <input type="radio" id="hard" name="difficulty" value="Hard">
+        <label for="hard">Hard</label>
+
+    </div>
+
+</div>
+
+    <div class="form-group">
+
+    <label>Number of Questions</label>
+
+    <input
+        type="number"
+        id="count"
+        min="1"
+        max="150"
+        value="10"
+        placeholder="Enter number of questions">
+
+</div>
+<div class="form-group">
+    <label>Duration (Minutes)</label>
+
+    <input
+        type="number"
+        id="duration"
+        min="5"
+        max="300"
+        value="30"
+        class="form-control">
+</div>
+<div class="form-group">
+
+    <label>Available From</label>
+
+    <input
+        type="datetime-local"
+        id="startTime">
+
+</div>
+
+<div class="form-group">
+
+    <label>Available Until</label>
+
+    <input
+        type="datetime-local"
+        id="endTime">
+
+</div>
+
+    <button id="generateBtn">
+
+        Generate Quiz
+
+    </button>
+    <hr>
+
+<div id="quizPreview" style="display: none;">
+
+    <h2>AI Generated Quiz</h2>
+
+    <div id="questionsContainer"
+     class="questions-scroll"></div>
+
+    <br>
+
+    <button id="saveQuizBtn" class="btn btn-success">
+        Save Quiz
+    </button>
+
+</div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/quiz_generator.js') }}"></script>
+
+</body>
+
+</html>

@@ -9,88 +9,70 @@ Candidate Dashboard
 {% endblock %}
 
 {% block content %}
+<!-- BELOW NAVBAR -->
+
+<!-- ===================== DASHBOARD HEADER ===================== -->
+
+<div class="dashboard-header">
+
+    <div class="swiper dashboardSwiper">
+
+        <div class="swiper-wrapper">
+
+            <!-- ================= Welcome Slide ================= -->
+
+            <div class="swiper-slide">
+
+                <div class="welcome-card">
+
+                    <div class="welcome-left">
+
+                        <h1>
+                            Welcome Back,
+                            <span id="candidateName">Candidate</span>
+                        </h1>
+
+                        <p>
+                            Ready to begin your scheduled examination?
+                            Swipe to view your upcoming examinations and start them
+                            when they become available.
+                        </p>
+
+                    </div>
+
+                    <div class="welcome-right">
+
+                        <div class="candidate-avatar">
+
+                            <i class="fa-solid fa-user-graduate"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ===================================================
+                 JavaScript will append exam slides here.
+                 DO NOT add another div like #examSlides.
+            ==================================================== -->
+
+        </div>
+
+        <!-- Pagination -->
+        <div class="swiper-pagination"></div>
+
+        <!-- Navigation -->
+       <div class="swiper-pagination"></div>
+
+    </div>
+
+</div>
 
 <div class="dashboard-container">
-
-    <!-- ================= WELCOME CARD ================= -->
-
-    <section class="welcome-card">
-
-        <div class="welcome-left">
-
-            <h1>Welcome Back,
-                <span id="candidateName">
-                    Candidate
-                </span> 👋
-            </h1>
-
-            <p>
-                Ready to begin your scheduled examination?
-                Complete the environment check before starting your exam.
-            </p>
-
-        </div>
-
-        <div class="welcome-right">
-
-            <div class="candidate-avatar">
-
-                <i class="fa-solid fa-user-graduate"></i>
-
-            </div>
-
-        </div>
-
-    </section>
-
     <!-- ================= SESSION STATUS ================= -->
-
-    <section class="status-card">
-
-        <div class="status-item">
-
-            <i class="fa-solid fa-circle-check"></i>
-
-            <div>
-
-                <h4>Session</h4>
-
-                <p>Active</p>
-
-            </div>
-
-        </div>
-
-        <div class="status-item">
-
-            <i class="fa-solid fa-calendar-days"></i>
-
-            <div>
-
-                <h4>Last Login</h4>
-
-                <p>Today</p>
-
-            </div>
-
-        </div>
-
-        <div class="status-item">
-
-            <i class="fa-solid fa-user"></i>
-
-            <div>
-
-                <h4>Role</h4>
-
-                <p>Candidate</p>
-
-            </div>
-
-        </div>
-
-    </section>
-
     <!-- ================= CANDIDATE SERVICES ================= -->
 
     <section class="services-container">
@@ -207,27 +189,7 @@ Candidate Dashboard
     </section>
 
 
-    <!-- ================= ANNOUNCEMENTS ================= -->
 
-    <section class="announcement-card">
-
-        <h2>
-
-            <i class="fa-solid fa-bullhorn"></i>
-
-            Announcements
-
-        </h2>
-
-        <div class="announcement">
-
-            <i class="fa-solid fa-thumbtack"></i>
-
-            No announcements available.
-
-        </div>
-
-    </section>
 
     <!-- ================= INSTRUCTIONS ================= -->
 

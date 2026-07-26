@@ -10,12 +10,14 @@ function togglePassword() {
     if (password.type === "password") {
 
         password.type = "text";
+
         icon.classList.remove("fa-eye");
         icon.classList.add("fa-eye-slash");
 
     } else {
 
         password.type = "password";
+
         icon.classList.remove("fa-eye-slash");
         icon.classList.add("fa-eye");
 
@@ -30,8 +32,7 @@ function togglePassword() {
 
 function validateEmail(email) {
 
-    const regex =
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     return regex.test(email);
 
@@ -66,29 +67,24 @@ loginForm.addEventListener("submit", async function (e) {
 
     e.preventDefault();
 
-    const email =
-        document.getElementById("email").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const remember = document.getElementById("remember").checked;
 
-    const password =
-        document.getElementById("password").value;
-
-    const remember =
-        document.getElementById("remember").checked;
-
+    // -------------------------
+    // Validation
     // -------------------------
 
     if (!validateEmail(email)) {
 
         alert("Please enter a valid Email Address.");
-
         return;
 
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
 
-        alert("Password should contain at least 6 characters.");
-
+        alert("Password should contain at least 8 characters.");
         return;
 
     }
@@ -99,25 +95,19 @@ loginForm.addEventListener("submit", async function (e) {
 
     if (remember) {
 
-        localStorage.setItem(
-            "candidate_email",
-            email
-        );
+        localStorage.setItem("candidate_email", email);
 
     } else {
 
-        localStorage.removeItem(
-            "candidate_email"
-        );
+        localStorage.removeItem("candidate_email");
 
     }
 
     // -------------------------
-    // Button Loading
+    // Loading Button
     // -------------------------
 
-    const loginBtn =
-        document.querySelector(".login-btn");
+    const loginBtn = document.querySelector(".login-btn");
 
     loginBtn.disabled = true;
 
@@ -127,24 +117,23 @@ loginForm.addEventListener("submit", async function (e) {
     `;
 
     // -------------------------
-    // API CALL
+    // LOGIN API
     // -------------------------
 
     try {
 
-        /*
-        const response = await fetch("/login",{
+        const response = await fetch("/login", {
 
-            method:"POST",
+            method: "POST",
 
-            headers:{
-                "Content-Type":"application/json"
+            headers: {
+                "Content-Type": "application/json"
             },
 
-            body:JSON.stringify({
+            body: JSON.stringify({
 
-                email:email,
-                password:password
+                email: email,
+                password: password
 
             })
 
@@ -152,36 +141,32 @@ loginForm.addEventListener("submit", async function (e) {
 
         const result = await response.json();
 
-        if(result.success){
+        if (response.ok && result.status === "success") {
 
-            window.location.href="/dashboard";
+            alert(result.message);
 
-        }
+            window.location.href = "/dashboard";
 
-        else{
+        } else {
 
             alert(result.message);
 
         }
-        */
 
-        // Temporary Demo
+    } catch (error) {
 
-        setTimeout(() => {
+        console.error(error);
 
-            alert("Login Successful!");
+        alert("Unable to connect to the server.");
 
-            window.location.href = "/dashboard";
+    } finally {
 
-        }, 1500);
+        loginBtn.disabled = false;
 
-    }
-
-    catch (error) {
-
-        console.log(error);
-
-        alert("Something went wrong.");
+        loginBtn.innerHTML = `
+            <i class="fa-solid fa-right-to-bracket"></i>
+            Login
+        `;
 
     }
 

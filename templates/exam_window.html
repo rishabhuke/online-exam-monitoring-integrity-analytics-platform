@@ -5,94 +5,527 @@ Exam Window
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/exam_window.css') }}">
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/exam_window.css') }}">
 {% endblock %}
 
 {% block content %}
 
+<!-- ================= START OVERLAY ================= -->
+
+<div id="startOverlay" class="start-overlay">
+
+    <div class="start-card">
+
+        <h2>AI Online Examination</h2>
+
+        <p>Please read the instructions carefully before starting the exam.</p>
+
+        <ul class="instruction-list">
+
+            <li>📷 Camera access is mandatory.</li>
+
+            <li>🖥 The exam will run only in Fullscreen mode.</li>
+
+            <li>🚫 Do not switch tabs or minimize the browser.</li>
+
+            <li>⚠ Maximum 3 warnings are allowed.</li>
+
+            <li>📝 After 3 warnings, your exam will be submitted automatically.</li>
+
+        </ul>
+
+        <div id="cameraStatus" class="camera-status">
+
+            Camera Not Verified
+
+        </div>
+
+        <button
+            id="checkCameraBtn"
+            class="submit-btn">
+
+            Check Camera
+
+        </button>
+
+        <button
+            id="startExamBtn"
+            class="submit-btn"
+            style="display:none;">
+
+            Start Exam
+
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ================= EXAM CONTENT ================= -->
+
+<div id="examContent" style="display:none;">
+
 <div class="exam-window-container">
 
-    <!-- ================= EXAM HEADER ================= -->
+    <!-- HEADER -->
+
     <section class="exam-header-card">
+
         <div class="exam-header-left">
-            <h1>Java Programming Assessment</h1>
-            <p>Read each question carefully and choose the correct answer.</p>
+
+            <h1 id="examTitle">
+                AI Generated Examination
+            </h1>
+
+            <p>
+
+                Read every question carefully before selecting an answer.
+
+            </p>
+
         </div>
 
-        <div class="exam-timer-box">
-            <h3>Time Left</h3>
-            <div id="examTimer">60:00</div>
+        <div class="exam-header-right">
+
+            <div class="exam-timer-box">
+
+                <h3>Time Left</h3>
+
+                <div id="examTimer">
+
+                    00:00
+
+                </div>
+
+            </div>
+
+            <div class="warning-box">
+
+                Warnings
+
+                <span id="warningCount">
+
+                    0 / 3
+
+                </span>
+
+            </div>
+
         </div>
+
     </section>
 
-    <!-- ================= EXAM BODY ================= -->
+    <!-- STATUS -->
+
+    <section class="exam-status-summary">
+
+        <div class="status-pill answered-pill">
+
+            Answered
+
+            <span id="answeredCount">
+
+                0
+
+            </span>
+
+        </div>
+
+        <div class="status-pill not-answered-pill">
+
+            Not Answered
+
+            <span id="notAnsweredCount">
+
+                0
+
+            </span>
+
+        </div>
+
+        <div class="status-pill review-pill">
+
+            Marked Review
+
+            <span id="reviewCount">
+
+                0
+
+            </span>
+
+        </div>
+
+    </section>
+
+    <!-- BODY -->
+
     <section class="exam-body">
 
-        <!-- Question Navigation -->
-        <aside class="question-palette">
-            <h3>Questions</h3>
-            <div class="palette-grid">
-                <button class="palette-btn active">1</button>
-                <button class="palette-btn">2</button>
-                <button class="palette-btn">3</button>
-                <button class="palette-btn">4</button>
-                <button class="palette-btn">5</button>
-                <button class="palette-btn">6</button>
-                <button class="palette-btn">7</button>
-                <button class="palette-btn">8</button>
-                <button class="palette-btn">9</button>
-                <button class="palette-btn">10</button>
-            </div>
-        </aside>
+        <!-- Question Palette -->
 
-        <!-- Question Area -->
-        <div class="question-panel">
-            <div class="question-card">
-                <h2>Question 1</h2>
-                <p class="question-text">
-                    Which of the following is not a primitive data type in Java?
+        <aside class="question-palette">
+
+            <div class="palette-header">
+
+                <h3>Questions</h3>
+
+                <p>
+
+                    Jump directly to any question.
+
                 </p>
 
-                <div class="options-list">
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="A">
-                        <span>int</span>
-                    </label>
+            </div>
 
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="B">
-                        <span>String</span>
-                    </label>
+            <div
+                id="paletteGrid"
+                class="palette-grid">
 
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="C">
-                        <span>boolean</span>
-                    </label>
+            </div>
 
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="D">
-                        <span>double</span>
-                    </label>
+            <div class="palette-legend">
+
+                <div class="legend-item">
+
+                    <span class="legend-box current-box"></span>
+
+                    Current
+
                 </div>
+
+                <div class="legend-item">
+
+                    <span class="legend-box answered-box"></span>
+
+                    Answered
+
+                </div>
+
+                <div class="legend-item">
+
+                    <span class="legend-box review-box"></span>
+
+                    Review
+
+                </div>
+
+                <div class="legend-item">
+
+                    <span class="legend-box not-answered-box"></span>
+
+                    Not Answered
+
+                </div>
+
+            </div>
+
+        </aside>
+
+        <!-- QUESTION PANEL -->
+
+        <div class="question-panel">
+
+            <div class="question-card">
+
+                <div class="question-top">
+
+                    <h2 id="questionNumber">
+
+                        Question 1
+
+                    </h2>
+
+                    <span class="question-tag">
+
+                        MCQ
+
+                    </span>
+
+                </div>
+
+                <p
+                    id="questionText"
+                    class="question-text">
+
+                </p>
+
+                <div
+                    id="optionsList"
+                    class="options-list">
+
+                </div>
+
             </div>
 
             <div class="question-actions">
-                <button class="nav-btn secondary-btn">Previous</button>
-                <button class="nav-btn primary-btn">Next</button>
+
+                <button
+                    id="prevBtn"
+                    class="nav-btn secondary-btn">
+
+                    Previous
+
+                </button>
+
+                <div class="middle-actions">
+
+                    <button
+                        id="markReviewBtn"
+                        class="nav-btn review-btn">
+
+                        Mark For Review
+
+                    </button>
+
+                    <button
+                        id="clearResponseBtn"
+                        class="nav-btn clear-btn">
+
+                        Clear Response
+
+                    </button>
+
+                </div>
+
+                <button
+                    id="nextBtn"
+                    class="nav-btn primary-btn">
+
+                    Next
+
+                </button>
+
             </div>
+
         </div>
 
     </section>
 
-    <!-- ================= SUBMIT BAR ================= -->
     <section class="submit-section">
-        <button class="submit-btn">Submit Exam</button>
+
+        <button
+            id="submitExamBtn"
+            class="submit-btn">
+
+            Submit Exam
+
+        </button>
+
     </section>
+
+</div>
+
+</div>
+
+<!-- ================= SUBMIT PREVIEW ================= -->
+
+<div
+id="submitModal"
+class="exam-modal-overlay">
+
+    <div class="exam-modal">
+
+        <div class="modal-header">
+
+            <h2>
+
+                Confirm Submission
+
+            </h2>
+
+        </div>
+
+        <div class="modal-body">
+
+            <div class="summary-card">
+
+                <h3>
+
+                    Answered
+
+                </h3>
+
+                <p id="modalAnswered">
+
+                    0
+
+                </p>
+
+            </div>
+
+            <div class="summary-card">
+
+                <h3>
+
+                    Not Answered
+
+                </h3>
+
+                <p id="modalNotAnswered">
+
+                    0
+
+                </p>
+
+            </div>
+
+            <div class="summary-card">
+
+                <h3>
+
+                    Marked For Review
+
+                </h3>
+
+                <p id="modalReview">
+
+                    0
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="modal-footer">
+
+            <button
+                id="cancelSubmitBtn"
+                class="nav-btn secondary-btn">
+
+                Cancel
+
+            </button>
+
+            <button
+                id="confirmSubmitBtn"
+                class="submit-btn">
+
+                Confirm Submit
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= RESULT ================= -->
+
+<div
+id="successModal"
+class="exam-modal-overlay">
+
+    <div class="exam-modal result-modal">
+
+        <h2>
+
+            Exam Statistics
+
+        </h2>
+
+        <table class="result-table">
+
+            <tr>
+
+                <td>Correct Answers</td>
+
+                <td id="correctCount">
+
+                    0
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td>Wrong Answers</td>
+
+                <td id="wrongCount">
+
+                    0
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td>Total Questions</td>
+
+                <td id="totalCount">
+
+                    0
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td>Score</td>
+
+                <td id="scoreCount">
+
+                    0
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td>Percentage</td>
+
+                <td id="percentageCount">
+
+                    0%
+
+                </td>
+
+            </tr>
+
+            <tr>
+
+                <td>Status</td>
+
+                <td id="resultStatus">
+
+                    --
+
+                </td>
+
+            </tr>
+
+        </table>
+
+         <button id="viewAnswersBtn" class="view-btn">
+        View Answers
+    </button>
+
+    <button id="closeSuccessBtn" class="submit-btn">
+        Close
+    </button>
+
+    </div>
 
 </div>
 
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/exam_window.js') }}"></script>
+
+<script>
+
+const EXAM_ID="{{ exam_id }}";
+
+</script>
+
+<script
+src="{{ url_for('static', filename='js/exam_window.js') }}">
+</script>
+
 {% endblock %}

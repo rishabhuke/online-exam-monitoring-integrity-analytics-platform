@@ -112,110 +112,96 @@ function validateEmail(email) {
 // FORM SUBMIT
 // ==============================
 
+// ==============================
+// FORM SUBMIT
+// ==============================
+
 registerForm.addEventListener("submit", async function (e) {
 
     e.preventDefault();
 
     const name = document.getElementById("name").value.trim();
-
     const email = document.getElementById("email").value.trim();
-
     const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
 
-    const confirmPassword =
-        document.getElementById("confirmPassword").value;
-
-    // ------------------------------
+    // Validation
 
     if (name.length < 3) {
-
         alert("Name must contain at least 3 characters.");
-
         return;
-
     }
 
     if (!validateEmail(email)) {
-
         alert("Enter a valid email address.");
-
         return;
-
     }
 
-    if (password.length < 6) {
-
-        alert("Password must contain at least 6 characters.");
-
+    if (password.length < 8) {
+        alert("Password must contain at least 8 characters.");
         return;
-
     }
 
     if (password !== confirmPassword) {
-
         alert("Passwords do not match.");
-
         return;
-
     }
 
     if (capturedImage === "") {
-
         alert("Please capture your photograph.");
-
         return;
-
     }
 
-    // ------------------------------
-    // READY FOR BACKEND
-    // ------------------------------
-
     const candidate = {
-
         name: name,
-
         email: email,
-
         password: password,
-
-        photo: capturedImage
-
+        photo_data: capturedImage
     };
 
-    console.log(candidate);
+    try {
 
-    // ------------------------------
-    // Flask API
-    // ------------------------------
+        const response = await fetch("/register", {
 
-    /*
-    try{
+            method: "POST",
 
-        const response = await fetch("/register",{
-
-            method:"POST",
-
-            headers:{
-                "Content-Type":"application/json"
+            headers: {
+                "Content-Type": "application/json"
             },
 
-            body:JSON.stringify(candidate)
+            body: JSON.stringify(candidate)
 
         });
 
         const result = await response.json();
 
-        alert(result.message);
+        if (response.ok) {
+
+            alert(result.message);
+
+            registerForm.reset();
+
+            photoPreview.src = "";
+            photoPreview.style.display = "none";
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            window.location.href = "/login";
+
+        } else {
+
+            alert(result.message);
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Unable to connect to the server.");
 
     }
-    catch(error){
-
-        console.log(error);
-
-    }
-    */
-
-    alert("Registration form is ready!\nBackend API will be connected later.");
 
 });
