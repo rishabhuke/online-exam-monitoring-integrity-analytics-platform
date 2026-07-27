@@ -62,6 +62,18 @@ CREATE TABLE IF NOT EXISTS FaceAbsenceEvents (
     FOREIGN KEY(exam_id) REFERENCES Exams(id)
 );
 
+-- BrowserEvents Table (Milestone 2)
+-- Stores browser activity events captured from the exam page.
+CREATE TABLE IF NOT EXISTS BrowserEvents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id INTEGER,
+    exam_id INTEGER,
+    event_type TEXT NOT NULL,
+    event_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    details TEXT,
+    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
+    FOREIGN KEY(exam_id) REFERENCES Exams(id)
+);
 -- IntegrityFlags Table (Milestone 2)
 -- One row per suspicious-event flag raised by the rule-based detection
 -- engine (modules/detection_engine.py) when a configured threshold is
