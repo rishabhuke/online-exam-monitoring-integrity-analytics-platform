@@ -99,6 +99,19 @@ CREATE TABLE IF NOT EXISTS IntegrityFlags (
 )
 """)
 
+# BrowserEvents Table (Milestone 2)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS BrowserEvents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id INTEGER,
+    exam_id INTEGER,
+    event_type TEXT NOT NULL,
+    event_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    details TEXT,
+    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
+    FOREIGN KEY(exam_id) REFERENCES Exams(id)
+)
+""")
 conn.commit()
 conn.close()
 
