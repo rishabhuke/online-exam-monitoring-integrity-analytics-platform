@@ -27,6 +27,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 import modules.photo_capture as photo_capture
 import modules.detection_engine as detection_engine
+import modules.flags_storage as flags_storage
+import modules.monitoring_storage as monitoring_storage
 
 
 def make_fake_data_url():
@@ -43,6 +45,8 @@ def isolated_db(monkeypatch, tmp_path):
     test_db = tmp_path / "test.db"
     monkeypatch.setattr(photo_capture, "DATABASE", test_db)
     monkeypatch.setattr(detection_engine, "DATABASE", test_db)
+    monkeypatch.setattr(flags_storage, "DATABASE", test_db)
+    monkeypatch.setattr(monitoring_storage, "DATABASE", test_db)
 
     conn = sqlite3.connect(test_db)
     conn.execute("PRAGMA foreign_keys = ON")
@@ -242,7 +246,31 @@ def test_get_flags_scoped_to_candidate_and_exam(isolated_db, monkeypatch):
     assert len(detection_engine.get_flags(9, 1)) == 0  # candidate with no flags
 
 
-def test_evaluate_tab_switches_is_a_noop_stub(isolated_db):
-    """Pavani's browser event table doesn't exist yet - this must not error,
-    and must not raise anything, until that table lands."""
+def test_evaluate_tab_switches_below_threshold_raises_nothing(isolated_db):
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    assert detection_engine.evaluate_tab_switches(1, 1) == []
+    assert detection_engine.get_flags(1, 1) == []
+
+
+def test_evaluate_tab_switches_above_threshold_raises_flag(isolated_db, monkeypatch):
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_tab_switches": 2,
+    })
+
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    assert detection_engine.evaluate_tab_switches(1, 1) == []
+
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    raised = detection_engine.evaluate_tab_switches(1, 1)
+
+    assert "excessive_tab_switching" in raised
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["flag_type"] == "excessive_tab_switching"
+
+
+def test_evaluate_tab_switches_ignores_other_event_types(isolated_db):
+    monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
+    monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
+    monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
     assert detection_engine.evaluate_tab_switches(1, 1) == []

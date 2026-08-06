@@ -8,6 +8,7 @@ from routes.pages import pages_bp
 from routes.exam import exam_bp
 from routes.flags import flags_bp
 from routes.monitoring import monitoring_bp
+from routes.report import report_bp
 
 app = Flask(__name__)
 app.secret_key = "online_exam_monitoring_2026_secret"
@@ -19,6 +20,7 @@ app.register_blueprint(pages_bp)
 app.register_blueprint(exam_bp)
 app.register_blueprint(flags_bp)
 app.register_blueprint(monitoring_bp)
+app.register_blueprint(report_bp)
 
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE = BASE_DIR / "database.db"

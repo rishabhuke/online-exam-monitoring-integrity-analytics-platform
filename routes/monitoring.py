@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from modules import monitoring_storage
+from modules import monitoring_storage, detection_engine
 
 monitoring_bp = Blueprint(
     "monitoring",
@@ -60,17 +60,25 @@ def create_browser_event():
             "message": f"Missing fields: {', '.join(missing)}"
         }), 400
 
+    candidate_id = int(data["candidate_id"])
+    exam_id = int(data["exam_id"])
+
     event = monitoring_storage.create_browser_event(
-        candidate_id=int(data["candidate_id"]),
-        exam_id=int(data["exam_id"]),
+        candidate_id=candidate_id,
+        exam_id=exam_id,
         event_type=data["event_type"],
         details=data.get("details", ""),
         event_timestamp=data.get("event_timestamp")
     )
 
+    flags_raised = []
+    if data["event_type"] == "tab_switch":
+        flags_raised = detection_engine.evaluate_tab_switches(candidate_id, exam_id)
+
     return jsonify({
         "status": "success",
-        "event": event
+        "event": event,
+        "flags_raised": flags_raised
     }), 201
 
 

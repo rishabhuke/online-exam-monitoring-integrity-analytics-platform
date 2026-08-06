@@ -13,18 +13,27 @@ Currently wired up:
   and separately flags when *cumulative* absence across a session crosses
   max_cumulative_absent_seconds.
 
-Not yet wired up (blocked on other pieces):
-- Tab-switch / focus-loss counts - Pavani's browser event logging table
-  doesn't exist yet. evaluate_tab_switches() below is a stub that documents
-  the intended check; wire it up once that table lands (see its docstring).
+Tab-switch / focus-loss counts - now wired up against Pavani/Priyanshu's
+BrowserEvents table via modules/monitoring_storage.py. evaluate_tab_switches()
+counts "tab_switch" events logged for the session and compares against
+THRESHOLDS["max_tab_switches"]. Note the frontend capture that actually
+populates BrowserEvents (visibilitychange/blur listeners) is still Pavani's
+in-progress carryover task, so in practice this will raise zero flags until
+that lands - but the check itself is live and tested.
+
+IntegrityFlags reads/writes go through modules/flags_storage.py (Priyanshu's
+Milestone 2 task) rather than touching the table directly, so there's a
+single source of truth for flag storage instead of two modules writing to
+the same table independently.
 
 Thresholds are kept in one place (THRESHOLDS) so they can be tuned without
 touching the evaluation logic.
 """
 
 import sqlite3
-from datetime import datetime
 from pathlib import Path
+
+from modules import flags_storage, monitoring_storage
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATABASE = BASE_DIR / "database.db"
@@ -33,7 +42,7 @@ DATABASE = BASE_DIR / "database.db"
 THRESHOLDS = {
     "max_face_absent_seconds": 120,        # single continuous absence
     "max_cumulative_absent_seconds": 180,  # total absence across a session
-    "max_tab_switches": 3,                 # not yet enforced - see evaluate_tab_switches
+    "max_tab_switches": 3,
 }
 
 
@@ -46,20 +55,15 @@ def _get_db_connection() -> sqlite3.Connection:
 
 def _raise_flag(candidate_id: int, exam_id: int, flag_type: str, severity: str,
                  detail: str, threshold_breached: str) -> None:
-    conn = _get_db_connection()
-    try:
-        conn.execute(
-            """
-            INSERT INTO IntegrityFlags
-                (candidate_id, exam_id, flag_type, severity, detail, threshold_breached, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (candidate_id, exam_id, flag_type, severity, detail, threshold_breached,
-             datetime.now().isoformat()),
-        )
-        conn.commit()
-    finally:
-        conn.close()
+    """Delegates to flags_storage.create_flag() - see module docstring."""
+    flags_storage.create_flag(
+        candidate_id=candidate_id,
+        exam_id=exam_id,
+        flag_type=flag_type,
+        severity=severity,
+        detail=detail,
+        threshold_breached=threshold_breached,
+    )
 
 
 def evaluate_face_absence(candidate_id: int, exam_id: int, interval_duration_seconds: float) -> list:
@@ -113,35 +117,30 @@ def evaluate_face_absence(candidate_id: int, exam_id: int, interval_duration_sec
 
 def evaluate_tab_switches(candidate_id: int, exam_id: int) -> list:
     """
-    STUB - not wired up yet.
+    Counts "tab_switch" events logged in BrowserEvents for this session
+    (via monitoring_storage) and flags when THRESHOLDS["max_tab_switches"]
+    is breached. Safe to call repeatedly - callers should call it once per
+    new tab-switch event so it only re-raises when the count first crosses
+    the threshold (see routes/monitoring.py call site).
 
-    Pavani's browser event logging (tab-switch / focus-loss table) doesn't
-    exist yet. Once it does, this should:
-      1. Query the tab-switch count for this candidate/exam session from
-         that table.
-      2. Compare it against THRESHOLDS["max_tab_switches"].
-      3. Call _raise_flag(...) the same way evaluate_face_absence() does
-         above if the threshold is breached.
-
-    Left as a no-op stub so routes/exam.py can call it unconditionally
-    without erroring, and so wiring it up later is a small addition rather
-    than a new integration point.
+    Returns a list of flag_type strings that were raised (empty if none).
     """
+    events = monitoring_storage.get_browser_events(candidate_id=candidate_id, exam_id=exam_id)
+    tab_switch_count = sum(1 for e in events if e.get("event_type") == "tab_switch")
+
+    if tab_switch_count == THRESHOLDS["max_tab_switches"]:
+        _raise_flag(
+            candidate_id, exam_id,
+            flag_type="excessive_tab_switching",
+            severity="medium",
+            detail=f"{tab_switch_count} tab switches recorded this session",
+            threshold_breached=f"max_tab_switches={THRESHOLDS['max_tab_switches']}",
+        )
+        return ["excessive_tab_switching"]
+
     return []
 
 
 def get_flags(candidate_id: int, exam_id: int) -> list:
     """Returns all flags raised for a given candidate/exam session, oldest first."""
-    conn = _get_db_connection()
-    try:
-        rows = conn.execute(
-            """
-            SELECT * FROM IntegrityFlags
-            WHERE candidate_id = ? AND exam_id = ?
-            ORDER BY created_at
-            """,
-            (candidate_id, exam_id),
-        ).fetchall()
-        return [dict(r) for r in rows]
-    finally:
-        conn.close()
+    return flags_storage.get_flags_filtered(candidate_id=candidate_id, exam_id=exam_id)
