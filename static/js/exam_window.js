@@ -19,6 +19,62 @@ document.addEventListener("DOMContentLoaded", function () {
 
     updateTimer();
     const timerInterval = setInterval(updateTimer, 1000);
+// ==========================================================
+// Browser monitoring (Milestone 3)
+// Capture tab switches and focus loss.
+// ==========================================================
+let tabSwitchDetected = false;
+
+function logBrowserEvent(eventType, details) {
+    if (typeof EXAM_ID === "undefined") {
+        console.warn("Browser monitoring: EXAM_ID missing.");
+        return;
+    }
+
+    fetch("/api/monitoring/browser-event", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            exam_id: EXAM_ID,
+            event_type: eventType,
+            details: details,
+            event_timestamp: new Date().toISOString()
+        })
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.status !== "success") {
+                console.error("Browser event logging failed:", data);
+            }
+        })
+        .catch((error) => {
+            console.error("Browser event request failed:", error);
+        });
+}
+
+document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") {
+        tabSwitchDetected = true;
+
+        logBrowserEvent(
+            "TAB_SWITCH",
+            "Exam page became hidden."
+        );
+    } else {
+        tabSwitchDetected = false;
+    }
+});
+
+window.addEventListener("blur", function () {
+    if (!tabSwitchDetected && document.visibilityState === "visible") {
+        logBrowserEvent(
+            "FOCUS_LOSS",
+            "Exam window lost focus."
+        );
+    }
+});
 
     // ==========================================================
     // Face presence monitoring capture loop (Milestone 2)
