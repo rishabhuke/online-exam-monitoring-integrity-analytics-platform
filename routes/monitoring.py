@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from modules import monitoring_storage
 
 monitoring_bp = Blueprint(
@@ -47,7 +47,6 @@ def create_browser_event():
     data = request.get_json(silent=True) or {}
 
     required = [
-        "candidate_id",
         "exam_id",
         "event_type"
     ]
@@ -61,7 +60,7 @@ def create_browser_event():
         }), 400
 
     event = monitoring_storage.create_browser_event(
-        candidate_id=int(data["candidate_id"]),
+        candidate_id=int(session["candidate_id"]),
         exam_id=int(data["exam_id"]),
         event_type=data["event_type"],
         details=data.get("details", ""),
