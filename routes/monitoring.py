@@ -7,6 +7,12 @@ monitoring_bp = Blueprint(
     url_prefix="/api/monitoring"
 )
 
+monitoring_bp = Blueprint(
+    "monitoring",
+    __name__,
+    url_prefix="/api/monitoring"
+)
+
 
 @monitoring_bp.route("/face-event", methods=["POST"])
 def create_face_event():
