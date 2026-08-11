@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from modules import monitoring_storage, detection_engine
 
-
 monitoring_bp = Blueprint(
     "monitoring",
     __name__,
