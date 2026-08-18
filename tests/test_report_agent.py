@@ -4,9 +4,14 @@ Tests for the AI Integrity Report Agent (Milestone 3). Owner: Rishabh
 Run with:
     python -m pytest tests/test_report_agent.py -v
 
-No LLM/API key is available in CI, so these tests exercise the template
-fallback path (source == "template"), plus a stub-LLM test to confirm the
-LangChain chain wiring itself works without needing a real provider.
+No Ollama server is available in CI, so these tests exercise the template
+fallback path (source == "template") for get_default_llm()/generate_summary(),
+plus a stub-LLM test to confirm the LangChain chain wiring itself works
+without needing a real provider. The low/medium/high risk-scenario tests
+below validate generate_summary() end-to-end across the three risk bands
+called for in the brief, using the template path (deterministic, so no
+Ollama dependency), and a stub-LLM equivalent to confirm the LLM path
+produces the same risk_label/context regardless of wording source.
 """
 
 import os
@@ -107,3 +112,73 @@ def test_generate_summary_uses_llm_when_provided(isolated_db):
 
     assert result["source"] == "llm"
     assert result["summary"].startswith("stub summary for:")
+
+
+def test_get_default_llm_returns_none_without_ollama_server(isolated_db):
+    """No Ollama server in CI/this sandbox, so the reachability check in
+    get_default_llm() should fail closed and return None (never raise)."""
+    assert report_agent.get_default_llm() is None
+
+
+def test_generate_summary_falls_back_when_llm_none_and_no_ollama(isolated_db):
+    """With llm=None and no Ollama server reachable, generate_summary()
+    should silently use the template path rather than erroring."""
+    result = report_agent.generate_summary(1, 1)
+
+    assert result["source"] == "template"
+
+
+# --- Risk-scenario tests (low / medium / high) ---------------------------
+# Exercises generate_summary() end-to-end across the three risk bands the
+# brief calls out. Uses the template path (deterministic) for risk_label/
+# content correctness, and a stub LLM for the "low" case to confirm the LLM
+# code path doesn't alter risk_label regardless of wording source.
+
+def test_risk_scenario_low(isolated_db):
+    # No events, no flags -> Low.
+    result = report_agent.generate_summary(1, 1)
+
+    assert result["risk_label"] == "Low"
+    assert result["source"] == "template"
+    assert "no integrity flags were raised" in result["summary"]
+    assert "face presence was maintained throughout" in result["summary"]
+
+
+def test_risk_scenario_low_with_llm_stub(isolated_db):
+    # Same low-risk data, routed through a stub LLM - risk_label must match
+    # the template path even though the wording source differs.
+    result = report_agent.generate_summary(1, 1, llm=_StubLLM())
+
+    assert result["risk_label"] == "Low"
+    assert result["source"] == "llm"
+
+
+def test_risk_scenario_medium(isolated_db):
+    # A handful of tab switches plus one medium-severity flag -> Medium.
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    flags_storage.create_flag(1, 1, "excessive_tab_switching", "medium", "3 tab switches", "max_tab_switches=2")
+
+    result = report_agent.generate_summary(1, 1)
+
+    assert result["risk_label"] == "Medium"
+    assert result["source"] == "template"
+    assert "3 tab_switch" in result["summary"]
+    assert "1 integrity flag(s)" in result["summary"]
+
+
+def test_risk_scenario_high(isolated_db):
+    # Extended face absence plus a high-severity flag and a medium one
+    # (weights: high=3, medium=2 -> score 5) -> High.
+    monitoring_storage.create_face_event(1, 1, "2026-01-01T00:00:00", "2026-01-01T00:06:00", 360)
+    flags_storage.create_flag(1, 1, "face_absent_single_interval", "high", "absent 360s", "max_face_absent_seconds=120")
+    flags_storage.create_flag(1, 1, "excessive_tab_switching", "medium", "4 tab switches", "max_tab_switches=2")
+
+    result = report_agent.generate_summary(1, 1)
+
+    assert result["risk_label"] == "High"
+    assert result["source"] == "template"
+    assert "360s" in result["summary"]
+    assert "2 integrity flag(s)" in result["summary"]
+    assert "Overall integrity risk: High." in result["summary"]
