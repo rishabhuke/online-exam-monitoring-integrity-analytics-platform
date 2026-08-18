@@ -1,0 +1,62 @@
+<aside class="sidebar">
+    <div class="logo-section">
+        <div class="logo-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <div class="logo-text">
+            <h2>EXAMGUARD AI</h2>
+            <p>Admin Dashboard</p>
+        </div>
+    </div>
+
+    <nav class="sidebar-menu">
+
+        <a href="/admin/dashboard"
+           class="{% if active_page == 'dashboard' %}active{% endif %}">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <a href="/admin/ai-generated-reports"
+           class="{% if active_page in ['ai_reports', 'ai-generated-reports', 'ai_generated_reports'] %}active{% endif %}">
+            <i class="fa-solid fa-file-lines"></i>
+            <span>AI Generated Reports</span>
+        </a>
+
+        <a href="/admin/examinations"
+           class="{% if active_page == 'examinations' %}active{% endif %}">
+            <i class="fa-solid fa-file-circle-check"></i>
+            <span>Examinations</span>
+        </a>
+
+
+        <a href="/admin/status-of-candidates"
+           class="{% if active_page in ['candidate_status', 'status_of_candidates', 'status-of-candidates'] %}active{% endif %}">
+            <i class="fa-solid fa-users"></i>
+            <span>Status of Candidates</span>
+        </a>
+
+        <a href="/admin/violations-evidence"
+           class="{% if active_page in ['violations_evidence', 'violations-evidence'] %}active{% endif %}">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Violations & Evidence</span>
+        </a>
+
+        <a href="/admin/integrity-analysis"
+           class="{% if active_page in ['integrity_analysis', 'integrity-analysis'] %}active{% endif %}">
+            <i class="fa-solid fa-brain"></i>
+            <span>Integrity Analyticis</span>
+        </a>
+
+       
+
+    </nav>
+
+    <div class="sidebar-bottom">
+        <a href="/admin/logout" class="logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+</aside>

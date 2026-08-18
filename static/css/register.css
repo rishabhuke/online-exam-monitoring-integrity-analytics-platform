@@ -401,3 +401,173 @@ height:180px;
 }
 
 }
+/* ==========================================
+   MESSAGE MODAL
+========================================== */
+
+.message-modal{
+
+    position:fixed;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    display:none;
+
+    justify-content:center;
+    align-items:center;
+
+    background:rgba(0,0,0,.45);
+
+    backdrop-filter:blur(4px);
+
+    z-index:99999;
+
+}
+
+/* ========================================== */
+
+.message-box{
+
+    width:380px;
+
+    background:#ffffff;
+
+    border-radius:18px;
+
+    padding:35px 30px;
+
+    text-align:center;
+
+    box-shadow:0 15px 40px rgba(0,0,0,.25);
+
+    animation:popup .25s ease;
+
+}
+
+/* ========================================== */
+
+@keyframes popup{
+
+    from{
+
+        transform:scale(.8);
+
+        opacity:0;
+
+    }
+
+    to{
+
+        transform:scale(1);
+
+        opacity:1;
+
+    }
+
+}
+
+/* ========================================== */
+
+.message-icon{
+
+    width:80px;
+
+    height:80px;
+
+    margin:auto;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:42px;
+
+    font-weight:bold;
+
+    color:#fff;
+
+}
+
+/* Success */
+
+.message-success{
+
+    background:#22c55e;
+
+}
+
+/* Error */
+
+.message-error{
+
+    background:#ef4444;
+
+}
+
+/* ========================================== */
+
+#messageTitle{
+
+    margin-top:20px;
+
+    margin-bottom:12px;
+
+    color:#1f2937;
+
+    font-size:24px;
+
+}
+
+/* ========================================== */
+
+#messageText{
+
+    color:#6b7280;
+
+    font-size:16px;
+
+    line-height:1.6;
+
+}
+
+/* ========================================== */
+
+#messageBtn{
+
+    margin-top:30px;
+
+    width:120px;
+
+    height:42px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#2563eb;
+
+    color:white;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+#messageBtn:hover{
+
+    background:#1d4ed8;
+
+    transform:translateY(-2px);
+
+}

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>ExamGuard AI | Question Bank</title>
+
+    <!-- Existing Admin Dashboard CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+
+    <!-- Question Bank CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/question_bank.css') }}">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+
+<body>
+
+
+<!-- ==========================================================
+BACKGROUND
+========================================================== -->
+
+<div class="background">
+
+    <div class="circle circle1"></div>
+
+    <div class="circle circle2"></div>
+
+    <div class="circle circle3"></div>
+
+</div>
+
+
+<div class="dashboard-container">
+
+
+    <!-- ======================================================
+    SIDEBAR
+    ====================================================== -->
+
+    {% set active_page = 'question_bank' %}
+    {% include 'admin_sidebar.html' %}
+
+
+
+    <!-- ======================================================
+    MAIN CONTENT
+    ====================================================== -->
+
+    <main class="main-content question-bank-main">
+
+
+        <!-- ==================================================
+        TOPBAR
+        ================================================== -->
+
+        <header class="topbar">
+
+
+            <div class="left-top">
+
+
+                <button id="toggleSidebar">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+
+                <div class="question-bank-heading">
+
+                    <h1>
+
+                        <i class="fa-regular fa-folder-open"></i>
+
+                        Question Bank
+
+                    </h1>
+
+                    <p>
+
+                        Review AI-generated examination questions
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="right-top">
+
+
+                <div class="notification">
+
+                    <i class="fa-solid fa-bell"></i>
+
+                    <span id="notificationCount">0</span>
+
+                </div>
+
+
+                <div class="admin-profile">
+
+                    <img id="adminPhoto"
+                         src="{{ url_for('static', filename='images/admin.png') }}"
+                         alt="Admin">
+
+
+                    <div>
+
+                        <h4 id="adminName">
+                            Loading...
+                        </h4>
+
+                        <p id="adminRole">
+                            Administrator
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- ==================================================
+        PAGE HEADER
+        ================================================== -->
+
+        <section class="question-bank-header">
+
+
+            <div>
+
+                <h1>AI Question Bank</h1>
+
+                <p>
+                    Browse available AI-generated examinations
+                    and review their answer keys.
+                </p>
+
+            </div>
+
+
+            <a href="{{ url_for('admin_dashboard.quiz_generator_page') }}"
+               class="generate-btn">
+
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+
+                Generate New Quiz
+
+            </a>
+
+        </section>
+
+
+
+        <!-- ==================================================
+        STATISTICS
+        ================================================== -->
+
+        <section class="question-bank-stats">
+
+
+            <div class="qb-stat-card purple">
+
+                <div class="qb-stat-icon">
+
+                    <i class="fa-solid fa-file-circle-check"></i>
+
+                </div>
+
+                <div>
+
+                    <span>Available Exams</span>
+
+                    <strong id="totalExams">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="qb-stat-card blue">
+
+                <div class="qb-stat-icon">
+
+                    <i class="fa-solid fa-circle-question"></i>
+
+                </div>
+
+                <div>
+
+                    <span>Total Questions</span>
+
+                    <strong id="totalQuestions">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="qb-stat-card green">
+
+                <div class="qb-stat-icon">
+
+                    <i class="fa-solid fa-robot"></i>
+
+                </div>
+
+                <div>
+
+                    <span>AI Generated</span>
+
+                    <strong id="aiGeneratedCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+        SEARCH / FILTER
+        ================================================== -->
+
+        <section class="question-bank-toolbar">
+
+
+            <div class="qb-search">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="text"
+                    id="examSearch"
+                    placeholder="Search examinations..."
+                >
+
+            </div>
+
+
+            <select id="subjectFilter">
+
+                <option value="all">
+                    All Subjects
+                </option>
+
+            </select>
+
+
+            <select id="sortFilter">
+
+                <option value="newest">
+                    Newest First
+                </option>
+
+                <option value="oldest">
+                    Oldest First
+                </option>
+
+                <option value="title">
+                    Title A-Z
+                </option>
+
+                <option value="questions">
+                    Most Questions
+                </option>
+
+            </select>
+
+
+            <button id="refreshQuestionBank"
+                    class="refresh-qb-btn"
+                    title="Refresh">
+
+                <i class="fa-solid fa-rotate"></i>
+
+            </button>
+
+        </section>
+
+
+
+        <!-- ==================================================
+        EXAM CARDS
+        ================================================== -->
+
+        <section class="question-bank-content">
+
+            <div class="section-title">
+
+                <div>
+
+                    <h2>
+                        Available Examinations
+                    </h2>
+
+                    <p id="examCountText">
+                        Loading examinations...
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div id="examCards"
+                 class="exam-cards-grid">
+
+                <!-- JavaScript inserts cards -->
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+
+<!-- ==========================================================
+ANSWER MODAL
+========================================================== -->
+
+<div id="answerModal"
+     class="answer-modal">
+
+
+    <div class="answer-modal-overlay"></div>
+
+
+    <div class="answer-modal-container">
+
+
+        <!-- MODAL HEADER -->
+
+        <div class="answer-modal-header">
+
+
+            <div class="answer-title-area">
+
+                <div class="answer-modal-icon">
+
+                    <i class="fa-solid fa-list-check"></i>
+
+                </div>
+
+
+                <div>
+
+                    <h2 id="answerExamTitle">
+                        Examination
+                    </h2>
+
+                    <p id="answerExamMeta">
+                        Answer Key
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button id="closeAnswerModal"
+                    class="answer-close-btn"
+                    title="Close">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+
+        <!-- MODAL BODY -->
+
+        <div id="answerModalBody"
+             class="answer-modal-body">
+
+            <div class="answer-loading">
+
+                <div class="spinner"></div>
+
+                Loading questions...
+
+            </div>
+
+        </div>
+
+
+
+        <!-- MODAL FOOTER -->
+
+        <div class="answer-modal-footer">
+
+            <span id="answerQuestionCount">
+                0 questions
+            </span>
+
+
+            <button id="closeAnswerModalBottom"
+                    class="close-answer-btn">
+
+                Close
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<script src="{{ url_for('static', filename='js/question_bank.js') }}"></script>
+
+</body>
+
+</html>

@@ -1,24 +1,78 @@
+
 import sqlite3
 
-conn = sqlite3.connect("database.db")
+DB_PATH = "database.db"   # CHANGE if your DB path is different
 
+conn = sqlite3.connect(DB_PATH)
+conn.row_factory = sqlite3.Row
 cursor = conn.cursor()
 
-cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+tables = [
+    "Candidates",
+    "Exams",
+    "SessionLogs",
+    "ViolationLogs",
+    "ExamAttempts",
+    "IntegrityScores"
+]
 
-tables = cursor.fetchall()
+print("\n========== DATABASE CHECK ==========\n")
 
-print(tables)
-print("ExamAttempts")
-print("----------------")
+for table in tables:
+    try:
+        cursor.execute(f"SELECT COUNT(*) AS count FROM {table}")
+        count = cursor.fetchone()["count"]
+        print(f"{table}: {count}")
+    except Exception as e:
+        print(f"{table}: ERROR -> {e}")
 
-for row in cursor.execute("SELECT * FROM ExamAttempts"):
-    print(row)
+print("\n========== EXAMS ==========\n")
 
-print("\nAnswers")
-print("----------------")
+cursor.execute("""
+    SELECT
+        id,
+        title,
+        topic,
+        difficulty
+    FROM Exams
+    ORDER BY id
+""")
 
-for row in cursor.execute("SELECT * FROM Answers"):
-    print(row)
+for row in cursor.fetchall():
+    print(dict(row))
+
+print("\n========== INTEGRITY SCORES ==========\n")
+
+cursor.execute("""
+    SELECT *
+    FROM IntegrityScores
+    ORDER BY id
+""")
+
+rows = cursor.fetchall()
+
+if not rows:
+    print("NO INTEGRITY SCORES FOUND")
+
+for row in rows:
+    print(dict(row))
+
+print("\n========== VIOLATIONS ==========\n")
+
+cursor.execute("""
+    SELECT
+        id,
+        candidate_id,
+        exam_id,
+        violation_type,
+        face_count,
+        violation_time
+    FROM ViolationLogs
+    ORDER BY id DESC
+""")
+
+for row in cursor.fetchall():
+    print(dict(row))
 
 conn.close()
+

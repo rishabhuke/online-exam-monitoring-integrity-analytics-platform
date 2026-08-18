@@ -15,6 +15,49 @@ let stream = null;
 let capturedImage = "";
 
 // ==============================
+// MESSAGE MODAL
+// ==============================
+
+function showMessage(title, message, success = true, callback = null) {
+
+    const modal = document.getElementById("messageModal");
+    const icon = document.getElementById("messageIcon");
+    const titleText = document.getElementById("messageTitle");
+    const messageText = document.getElementById("messageText");
+    const button = document.getElementById("messageBtn");
+
+    titleText.textContent = title;
+    messageText.textContent = message;
+
+    if (success) {
+
+        icon.innerHTML = "✔";
+        icon.className = "message-icon message-success";
+
+    } else {
+
+        icon.innerHTML = "✖";
+        icon.className = "message-icon message-error";
+
+    }
+
+    modal.style.display = "flex";
+
+    button.onclick = function () {
+
+        modal.style.display = "none";
+
+        if (callback) {
+
+            callback();
+
+        }
+
+    };
+
+}
+
+// ==============================
 // START CAMERA
 // ==============================
 
@@ -30,9 +73,13 @@ startCameraBtn.addEventListener("click", async () => {
 
     } catch (error) {
 
-        alert("Unable to access webcam.\nPlease allow camera permission.");
-
         console.error(error);
+
+        showMessage(
+            "Camera Error",
+            "Unable to access webcam. Please allow camera permission.",
+            false
+        );
 
     }
 
@@ -46,7 +93,11 @@ captureBtn.addEventListener("click", () => {
 
     if (!stream) {
 
-        alert("Please start the camera first.");
+        showMessage(
+            "Camera Not Started",
+            "Please start the camera first.",
+            false
+        );
 
         return;
 
@@ -112,10 +163,6 @@ function validateEmail(email) {
 // FORM SUBMIT
 // ==============================
 
-// ==============================
-// FORM SUBMIT
-// ==============================
-
 registerForm.addEventListener("submit", async function (e) {
 
     e.preventDefault();
@@ -125,38 +172,77 @@ registerForm.addEventListener("submit", async function (e) {
     const password = document.getElementById("password").value;
     const confirmPassword = document.getElementById("confirmPassword").value;
 
+    // -------------------------
     // Validation
+    // -------------------------
 
     if (name.length < 3) {
-        alert("Name must contain at least 3 characters.");
+
+        showMessage(
+            "Invalid Name",
+            "Name must contain at least 3 characters.",
+            false
+        );
+
         return;
+
     }
 
     if (!validateEmail(email)) {
-        alert("Enter a valid email address.");
+
+        showMessage(
+            "Invalid Email",
+            "Enter a valid email address.",
+            false
+        );
+
         return;
+
     }
 
     if (password.length < 8) {
-        alert("Password must contain at least 8 characters.");
+
+        showMessage(
+            "Invalid Password",
+            "Password must contain at least 8 characters.",
+            false
+        );
+
         return;
+
     }
 
     if (password !== confirmPassword) {
-        alert("Passwords do not match.");
+
+        showMessage(
+            "Password Mismatch",
+            "Passwords do not match.",
+            false
+        );
+
         return;
+
     }
 
     if (capturedImage === "") {
-        alert("Please capture your photograph.");
+
+        showMessage(
+            "Photo Required",
+            "Please capture your photograph.",
+            false
+        );
+
         return;
+
     }
 
     const candidate = {
+
         name: name,
         email: email,
         password: password,
         photo_data: capturedImage
+
     };
 
     try {
@@ -177,22 +263,39 @@ registerForm.addEventListener("submit", async function (e) {
 
         if (response.ok) {
 
-            alert(result.message);
+            showMessage(
+                "Registration Successful",
+                result.message,
+                true,
+                function () {
 
-            registerForm.reset();
+                    registerForm.reset();
 
-            photoPreview.src = "";
-            photoPreview.style.display = "none";
+                    photoPreview.src = "";
+                    photoPreview.style.display = "none";
 
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
+                    capturedImage = "";
 
-            window.location.href = "/login";
+                    if (stream) {
+
+                        stream.getTracks().forEach(track => track.stop());
+
+                        stream = null;
+
+                    }
+
+                    window.location.href = "/login";
+
+                }
+            );
 
         } else {
 
-            alert(result.message);
+            showMessage(
+                "Registration Failed",
+                result.message,
+                false
+            );
 
         }
 
@@ -200,7 +303,11 @@ registerForm.addEventListener("submit", async function (e) {
 
         console.error(error);
 
-        alert("Unable to connect to the server.");
+        showMessage(
+            "Connection Error",
+            "Unable to connect to the server.",
+            false
+        );
 
     }
 

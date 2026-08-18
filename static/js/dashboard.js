@@ -145,7 +145,7 @@ function createExamSlide(exam) {
                 ${
     exam.exam_status === "Available"
     ? `
-        <a href="/exam/${exam.id}" class="exam-btn">
+        <a href="/start_exam/${exam.id}" class="exam-btn">
             <i class="fa-solid fa-play"></i>
             Start Exam
         </a>

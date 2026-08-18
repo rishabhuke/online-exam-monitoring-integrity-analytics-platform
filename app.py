@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
@@ -16,6 +17,10 @@ from datetime import timedelta
 from routes.api import api_bp
 from routes.auth import auth_bp
 from routes.pages import pages_bp
+from routes.integrity_analytics import integrity_bp
+from modules.integrity_scoring import save_integrity_score
+from routes.admin import admin_bp
+from routes.admin_dashboard import admin_dashboard_bp
 
 
 # ==========================================================
@@ -29,7 +34,10 @@ app = Flask(__name__)
 # APPLICATION CONFIGURATION
 # ==========================================================
 
-app.secret_key = "online_exam_monitoring_2026_secret"
+app.secret_key = os.getenv(
+    "SECRET_KEY",
+    "online_exam_monitoring_2026_secret"
+)
 
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 
@@ -41,6 +49,9 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 app.register_blueprint(api_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(pages_bp)
+app.register_blueprint(integrity_bp)
+app.register_blueprint(admin_bp) 
+app.register_blueprint(admin_dashboard_bp)
 
 
 # ==========================================================
@@ -124,8 +135,8 @@ def submit_exam():
 
              return jsonify({
 
-             "success": False,
-             "already_completed": True,
+             "success": True,
+             "already_completed": False,
 
              "score": existing["score"],
              "total": existing["total_questions"],
@@ -219,11 +230,28 @@ def submit_exam():
             percentage,
             status
         ))
-
+# ---------------------------------------------------
+# Save Exam Attempt
+# ---------------------------------------------------
         conn.commit()
 
+# ---------------------------------------------------
+# Calculate Integrity Score
+# ---------------------------------------------------
+
+        integrity = save_integrity_score(
+
+        candidate_id,
+
+        exam_id
+
+        )
+
+# ---------------------------------------------------
+# Return Result
+# ---------------------------------------------------
+
         return jsonify({
-            
 
             "success": True,
 
@@ -234,10 +262,20 @@ def submit_exam():
             "total": total_questions,
 
             "percentage": percentage,
+ 
+            "result": status,
 
-            "result": status
+            "integrity_score": integrity["score"],
+
+            "face_presence_ratio": integrity["ratio"],
+
+            "warning_count": integrity["warnings"],
+
+            "risk_label": integrity["risk"]
 
         }), 200
+
+
 
     except sqlite3.Error as error:
 

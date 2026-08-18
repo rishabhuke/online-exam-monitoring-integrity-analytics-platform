@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Candidate Intelligence | ExamGuard
+    </title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/candidate-integrity.css'
+        ) }}"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     PAGE LOADER
+====================================================== -->
+
+<div
+    id="analyticsLoader"
+    class="page-loader"
+>
+
+    <div class="loader-spinner"></div>
+
+    <span>
+        Loading candidate intelligence...
+    </span>
+
+</div>
+
+
+<!-- =====================================================
+     ERROR MESSAGE
+====================================================== -->
+
+<div
+    id="analyticsError"
+    class="analytics-error"
+    style="display:none;"
+></div>
+
+
+<!-- =====================================================
+     TOP HEADER
+====================================================== -->
+
+<header class="candidate-topbar">
+
+    <button
+        type="button"
+        class="back-btn"
+        onclick="history.back()"
+    >
+
+        <span>
+            ←
+        </span>
+
+        Back to Analytics
+
+    </button>
+
+
+    <div class="page-brand">
+
+        <strong>
+            ExamGuard
+        </strong>
+
+        <span>
+            Candidate Intelligence
+        </span>
+
+    </div>
+
+
+    <span class="live-status">
+
+        <span class="status-dot"></span>
+
+        Analysis
+
+    </span>
+
+</header>
+
+
+<!-- =====================================================
+     MAIN PAGE
+====================================================== -->
+
+<main
+    id="candidateIntegrityPage"
+    class="candidate-main"
+>
+
+
+    <!-- =================================================
+         CANDIDATE HERO
+    ================================================== -->
+
+    <section class="candidate-hero">
+
+
+        <!-- Candidate -->
+
+        <div class="candidate-profile">
+
+
+            <div
+                class="candidate-avatar"
+                id="candidateAvatar"
+            >
+                ?
+            </div>
+
+
+            <div class="candidate-details">
+
+                <span class="hero-label">
+                    CANDIDATE INTEGRITY PROFILE
+                </span>
+
+
+                <h1 id="candidateName">
+                    Loading candidate...
+                </h1>
+
+
+                <p id="candidateEmail">
+                    —
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- Examination -->
+
+        <div class="exam-context">
+
+            <span class="context-label">
+                EXAMINATION
+            </span>
+
+
+            <strong id="examTitle">
+                —
+            </strong>
+
+
+            <small id="examMeta">
+                —
+            </small>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         EXAM INFORMATION STRIP
+    ================================================== -->
+
+    <section class="exam-info-strip">
+
+
+        <div class="exam-info-item">
+
+            <span>
+                Difficulty
+            </span>
+
+            <strong id="examDifficulty">
+                —
+            </strong>
+
+        </div>
+
+
+        <div class="exam-info-item">
+
+            <span>
+                Questions
+            </span>
+
+            <strong id="examQuestions">
+                —
+            </strong>
+
+        </div>
+
+
+        <div class="exam-info-item">
+
+            <span>
+                Total Marks
+            </span>
+
+            <strong id="examMarks">
+                —
+            </strong>
+
+        </div>
+
+
+        <div class="exam-info-item">
+
+            <span>
+                Duration
+            </span>
+
+            <strong id="examDuration">
+                —
+            </strong>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         INTEGRITY SCORE
+    ================================================== -->
+
+    <section class="score-section">
+
+
+        <div class="score-main">
+
+
+            <!-- Score circle -->
+
+            <div
+                id="scoreCircle"
+                class="score-circle"
+            >
+
+                <div class="score-circle-inner">
+
+                    <strong id="integrityScore">
+                        0
+                    </strong>
+
+                    <small>
+                        /100
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- Progress SVG -->
+
+            <svg
+                class="score-progress-svg"
+                width="0"
+                height="0"
+                aria-hidden="true"
+            >
+
+                <circle
+                    id="integrityProgress"
+                    cx="0"
+                    cy="0"
+                    r="0"
+                ></circle>
+
+            </svg>
+
+
+            <!-- Score description -->
+
+            <div class="score-description">
+
+                <span class="panel-kicker">
+                    INTEGRITY SCORE
+                </span>
+
+
+                <h2 id="riskLabel">
+                    ANALYSING
+                </h2>
+
+
+                <p id="scoreDescription">
+                    Calculating behavioural integrity.
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- Score metrics -->
+
+        <div class="score-metrics">
+
+
+            <div class="score-metric">
+
+                <span>
+                    Face Presence
+                </span>
+
+                <strong id="facePresence">
+                    0%
+                </strong>
+
+            </div>
+
+
+            <div class="score-metric">
+
+                <span>
+                    Violations
+                </span>
+
+                <strong id="warningCount">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="score-metric">
+
+                <span>
+                    Exam Score
+                </span>
+
+                <strong id="examScore">
+                    —
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         EXAM RESULT DETAILS
+    ================================================== -->
+
+    <section class="result-strip">
+
+
+        <div class="result-item">
+
+            <span>
+                Score
+            </span>
+
+            <strong id="examRawScore">
+                —
+            </strong>
+
+        </div>
+
+
+        <div class="result-item">
+
+            <span>
+                Result
+            </span>
+
+            <strong id="examResult">
+                —
+            </strong>
+
+        </div>
+
+
+        <div class="result-item">
+
+            <span>
+                Risk
+            </span>
+
+            <strong id="aiRiskLabel">
+                —
+            </strong>
+
+        </div>
+
+
+        <div class="result-item">
+
+            <span>
+                Evidence
+            </span>
+
+            <strong id="aiEvidenceCount">
+                0
+            </strong>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         BEHAVIOURAL SIGNALS
+    ================================================== -->
+
+    <section class="section">
+
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="panel-kicker">
+                    BEHAVIOURAL SIGNALS
+                </span>
+
+                <h2>
+                    Examination Activity
+                </h2>
+
+            </div>
+
+
+            <span class="section-description">
+                Recorded during the examination
+            </span>
+
+        </div>
+
+
+
+        <div class="event-grid">
+
+
+            <!-- Tab switches -->
+
+            <div class="event-box">
+
+                <div class="event-icon tab-icon">
+                    ↔
+                </div>
+
+                <div class="event-content">
+
+                    <span>
+                        Tab Switches
+                    </span>
+
+                    <strong id="tabSwitchCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Browser activity
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Focus loss -->
+
+            <div class="event-box">
+
+                <div class="event-icon focus-icon">
+                    ◌
+                </div>
+
+                <div class="event-content">
+
+                    <span>
+                        Focus Loss
+                    </span>
+
+                    <strong id="focusLossCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Window focus events
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Face absence -->
+
+            <div class="event-box">
+
+                <div class="event-icon face-icon">
+                    ◉
+                </div>
+
+                <div class="event-content">
+
+                    <span>
+                        Face Absence
+                    </span>
+
+                    <strong id="faceAbsenceCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Presence events
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Fullscreen -->
+
+            <div class="event-box">
+
+                <div class="event-icon fullscreen-icon">
+                    ⛶
+                </div>
+
+                <div class="event-content">
+
+                    <span>
+                        Fullscreen Exit
+                    </span>
+
+                    <strong id="fullscreenExitCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Fullscreen violations
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Copy paste -->
+
+            <div class="event-box">
+
+                <div class="event-icon clipboard-icon">
+                    ▣
+                </div>
+
+                <div class="event-content">
+
+                    <span>
+                        Copy / Paste
+                    </span>
+
+                    <strong id="copyPasteCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Clipboard activity
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Screenshot -->
+
+            <div class="event-box">
+
+                <div class="event-icon screenshot-icon">
+                    ▤
+                </div>
+
+                <div class="event-content">
+
+                    <span>
+                        Screenshots
+                    </span>
+
+                    <strong id="screenshotCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Screenshot attempts
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Right click -->
+
+            <div class="event-box">
+
+                <div class="event-icon rightclick-icon">
+                    ⊙
+                </div>
+
+                <div class="event-content">
+
+                    <span>
+                        Right Click
+                    </span>
+
+                    <strong id="rightClickCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Context menu activity
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Identity mismatch -->
+
+            <div class="event-box">
+
+                <div class="event-icon identity-icon">
+                    ⚠
+                </div>
+
+                <div class="event-content">
+
+                    <span>
+                        Identity Mismatch
+                    </span>
+
+                    <strong id="identityMismatchCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Verification failures
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Multiple faces -->
+
+            <div class="event-box">
+
+                <div class="event-icon multiple-face-icon">
+                    👥
+                </div>
+
+                <div class="event-content">
+
+                    <span>
+                        Multiple Faces
+                    </span>
+
+                    <strong id="multipleFacesCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Multiple person detection
+                    </small>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Other -->
+
+            <div class="event-box">
+
+                <div class="event-icon other-icon">
+                    !
+                </div>
+
+                <div class="event-content">
+
+                    <span>
+                        Other Violations
+                    </span>
+
+                    <strong id="otherViolationCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Other suspicious activity
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         INCIDENT SUMMARY
+    ================================================== -->
+
+    <section class="section incident-summary-section">
+
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="panel-kicker">
+                    INCIDENT SUMMARY
+                </span>
+
+                <h2>
+                    Integrity Events
+                </h2>
+
+            </div>
+
+
+            <div class="summary-total">
+
+                <span>
+                    Total Warnings
+                </span>
+
+                <strong id="summaryWarningCount">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div
+            class="violation-list"
+            id="violationTimeline"
+        >
+
+            <div class="loading">
+                Loading incidents...
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         ALERT & EVIDENCE
+    ================================================== -->
+
+    <section class="section">
+
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="panel-kicker">
+                    ALERT & EVIDENCE
+                </span>
+
+                <h2>
+                    Captured Evidence
+                </h2>
+
+            </div>
+
+
+            <div class="summary-total">
+
+                <span>
+                    Evidence
+                </span>
+
+                <strong id="evidenceCount">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="evidenceGrid"
+            class="evidence-grid"
+        >
+
+            <div class="loading">
+                Loading evidence...
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         BEHAVIOUR TIMELINE
+    ================================================== -->
+
+
+
+
+    <!-- =================================================
+         AI INTEGRITY REPORT
+    ================================================== -->
+
+    <section class="behaviour-assessment">
+
+    <div class="assessment-header">
+
+        <div class="assessment-title">
+
+            <div class="assessment-ai-icon">
+                ✦
+            </div>
+
+            <div>
+                <span class="panel-kicker">
+                    LANGCHAIN AI ANALYSIS
+                </span>
+
+                <h2>
+                    Behavioural Assessment
+                </h2>
+
+                <p>
+                    AI-generated interpretation of
+                    examination behaviour
+                </p>
+            </div>
+
+        </div>
+
+        <div
+            id="assessmentRiskBadge"
+            class="assessment-risk-badge"
+        >
+            ANALYSING
+        </div>
+
+    </div>
+
+
+    <!-- THIS IS WHERE THE AI REPORT APPEARS -->
+
+    <div
+        id="behaviouralAssessment"
+        class="assessment-content"
+    >
+
+        <div class="assessment-loading">
+            Click "Generate AI Report" to analyse
+            this candidate.
+        </div>
+
+    </div>
+
+
+    
+
+
+    <div class="assessment-actions">
+
+        <button
+            type="button"
+            id="generateAIReport"
+            class="assessment-btn"
+        >
+            ✦ Generate AI Report
+        </button>
+
+    </div>
+
+</section>
+
+
+
+    <!-- =================================================
+         AI SUPPORTING METRICS
+    ================================================== -->
+
+
+</main>
+
+
+<!-- =====================================================
+     JAVASCRIPT
+====================================================== -->
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/candidate-integrity.js'
+    ) }}"
+    defer
+></script>
+
+
+</body>
+
+</html>

@@ -6,23 +6,46 @@
 
 <section class="hero">
 
+    <div class="floating-circle c1"></div>
+    <div class="floating-circle c2"></div>
+    <div class="floating-circle c3"></div>
+
     <div class="hero-content">
 
-        <h1>Online Exam Monitoring & Integrity Analytics Platform</h1>
+        <h1>
+           Development of Smart Examination Monitoring Platform 
+            <span>with Integrity Analysis & Reporting System</span>
+        </h1>
 
         <p>
-            Secure, AI-enabled online examination system with candidate authentication,
-            session management, integrity monitoring, and real-time analytics.
+            AI-powered secure online examination system with facial verification,
+            live monitoring, real-time analytics, automatic violation detection,
+            and comprehensive exam management.
+        </p>
+        <div class="access-cards">
+
+    <!-- Candidate Card -->
+    <div class="access-card candidate-card">
+
+        <div class="access-icon">
+            <i class="fa-solid fa-user-graduate"></i>
+        </div>
+
+        <h3>Candidate</h3>
+
+        <p>
+            Login or register to attend exams, view results,
+            and monitor your exam progress.
         </p>
 
-        <div class="hero-buttons">
+        <div class="access-buttons">
 
-            <a href="/login" class="btn">
+            <a href="/login" class="access-btn login-btn">
                 <i class="fa-solid fa-right-to-bracket"></i>
                 Login
             </a>
 
-            <a href="/register" class="btn btn-success">
+            <a href="/register" class="access-btn register-btn">
                 <i class="fa-solid fa-user-plus"></i>
                 Register
             </a>
@@ -31,7 +54,42 @@
 
     </div>
 
+
+    <!-- Admin Card -->
+    <div class="access-card admin-card">
+
+        <div class="access-icon admin-icon">
+            <i class="fa-solid fa-user-shield"></i>
+        </div>
+
+        <h3>Administrator</h3>
+
+        <p>
+            Manage examinations, candidates, monitoring,
+            violations, analytics, and reports.
+        </p>
+
+        <div class="access-buttons">
+
+            <a href="/admin/login" class="access-btn admin-login-btn">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Admin Login
+            </a>
+
+            <a href="/admin/signup" class="access-btn admin-signup-btn">
+                <i class="fa-solid fa-user-plus"></i>
+                Admin Signup
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+ 
+
 </section>
+
 
 <section class="features">
 
@@ -39,10 +97,11 @@
 
         <i class="fa-solid fa-camera"></i>
 
-        <h3>Webcam Verification</h3>
+        <h3>AI Face Verification</h3>
 
         <p>
-            Capture candidate photo during registration using OpenCV.
+            Authenticate every candidate before starting the examination using
+            facial recognition.
         </p>
 
     </div>
@@ -51,10 +110,11 @@
 
         <i class="fa-solid fa-user-shield"></i>
 
-        <h3>Secure Authentication</h3>
+        <h3>Integrity Monitoring</h3>
 
         <p>
-            Session-based login with protected dashboard access.
+            Detect multiple faces, missing faces, and suspicious activities
+            throughout the exam.
         </p>
 
     </div>
@@ -63,10 +123,11 @@
 
         <i class="fa-solid fa-clock"></i>
 
-        <h3>Timed Online Exams</h3>
+        <h3>Timed Assessments</h3>
 
         <p>
-            Countdown timer with automatic submission after time expires.
+            Smart countdown timer with automatic submission and question
+            navigation.
         </p>
 
     </div>
@@ -75,10 +136,11 @@
 
         <i class="fa-solid fa-chart-line"></i>
 
-        <h3>Integrity Analytics</h3>
+        <h3>Analytics Dashboard</h3>
 
         <p>
-            Store sessions and generate monitoring reports.
+            Analyze candidate performance, violations, and examination reports
+            in one place.
         </p>
 
     </div>

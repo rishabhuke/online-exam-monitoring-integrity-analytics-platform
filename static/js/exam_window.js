@@ -15,12 +15,22 @@ let questions = [];
 let questionState = [];
 
 let currentQuestionIndex = 0;
+let monitoringInterval = null;
 
 let examStarted = false;
 let submitting = false;
 
 let cameraVerified = false;
 let cameraStream = null;
+
+const video =
+    document.getElementById("cameraPreview");
+
+video.autoplay = true;
+video.playsInline = true;
+video.muted = true;
+let lastViolationTime = 0;
+const VIOLATION_COOLDOWN = 5000;
 
 let totalSeconds = 0;
 let timerInterval = null;
@@ -177,6 +187,9 @@ async function verifyCamera() {
                 audio: false
 
             });
+            video.srcObject = cameraStream;
+
+await video.play();
 
         cameraVerified = true;
 
@@ -189,6 +202,11 @@ async function verifyCamera() {
         checkCameraBtn.style.display = "none";
 
         startExamBtn.style.display = "inline-block";
+        startExamBtn.disabled = false;
+
+startExamBtn.style.opacity = "1";
+
+startExamBtn.style.cursor = "pointer";
 
     }
 
@@ -208,7 +226,26 @@ async function verifyCamera() {
 
 }
 
+let toastTimeout = null;
 
+function showWarningToast(message){
+
+    const toast = document.getElementById("warningToast");
+    const text = document.getElementById("warningMessage");
+
+    text.innerHTML = message;
+
+    toast.classList.add("show");
+
+    clearTimeout(toastTimeout);
+
+    toastTimeout = setTimeout(() => {
+
+        toast.classList.remove("show");
+
+    },3000);
+
+}
 /* ============================================================
    START EXAM
 ============================================================ */
@@ -216,39 +253,77 @@ async function verifyCamera() {
 async function startExam() {
 
     if (!cameraVerified) {
-
-        alert("Please verify your camera first.");
-
         return;
 
     }
 
-    try {
+    /* Capture Image */
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+
+    ctx.drawImage(video,0,0);
+
+    const image = canvas.toDataURL("image/jpeg");
+
+    /* Verify Candidate */
+
+    const response = await fetch("/api/verify_candidate",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+            image:image
+
+        })
+
+    });
+
+    const result = await response.json();
+
+   if (!result.verified) {
+
+    showWarningToast(
+        result.message || "Face verification failed. Face does not match the registered candidate."
+    );
+
+    startExamBtn.disabled = true;
+
+    startExamBtn.style.opacity = "0.6";
+    startExamBtn.style.cursor = "not-allowed";
+
+    return;
+
+}
+
+    try{
 
         await enterFullscreen();
 
     }
-
-    catch (error) {
-
-        alert("Fullscreen permission is required.");
+    catch(error){
 
         return;
 
     }
 
-    examStarted = true;
+   examStarted = true;
 
-    startOverlay.style.display = "none";
+startOverlay.style.display = "none";
 
-    examContent.style.display = "block";
+examContent.style.display = "block";
 
-    /*
-       Camera continues running in the background.
-       No preview is displayed.
-    */
+await loadExam();
 
-    loadExam();
+startFaceMonitoring();
 
 }
 
@@ -295,6 +370,14 @@ function updateWarningDisplay() {
 ============================================================ */
 
 function stopCamera() {
+
+    if (monitoringInterval) {
+
+        clearInterval(monitoringInterval);
+
+        monitoringInterval = null;
+
+    }
 
     if (!cameraStream) return;
 
@@ -364,8 +447,6 @@ async function loadExam() {
 
         if (!response.ok || !data.success) {
 
-            alert(data.message || "Unable to load exam.");
-
             return;
 
         }
@@ -404,8 +485,6 @@ initializeMonitoring();
     catch (error) {
 
         console.error(error);
-
-        alert("Unable to connect to server.");
 
     }
 
@@ -1025,9 +1104,161 @@ function initializeMonitoring() {
         "blur",
         handleWindowBlur
     );
+    document.addEventListener(
+    "contextmenu",
+    handleRightClick
+);
+document.addEventListener("copy", handleCopy);
+document.addEventListener("cut", handleCut);
+document.addEventListener("paste", handlePaste);
+
+}
+function handleCopy(event){
+
+    if (!examStarted || submitting) return;
+
+    event.preventDefault();
+
+    addViolation("Copy operation is not allowed.");
 
 }
 
+function handleCut(event){
+
+    if (!examStarted || submitting) return;
+
+    event.preventDefault();
+
+    addViolation("Cut operation is not allowed.");
+
+}
+
+function handlePaste(event){
+
+    if (!examStarted || submitting) return;
+
+    event.preventDefault();
+
+    addViolation("Paste operation is not allowed.");
+
+}
+function handleRightClick(event){
+
+    if (!examStarted || submitting) return;
+
+    event.preventDefault();
+
+    addViolation("Right-click is not allowed.");
+
+}
+/* ============================================================
+   FACE MONITORING
+============================================================ */
+
+function startFaceMonitoring() {
+
+    if (monitoringInterval) {
+        clearInterval(monitoringInterval);
+    }
+
+    monitoringInterval = setInterval(async () => {
+
+        if (!examStarted) return;
+        if (!cameraStream) return;
+
+        try {
+
+            const canvas =
+                document.createElement("canvas");
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const ctx =
+                canvas.getContext("2d");
+
+            ctx.drawImage(
+                video,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            const image =
+                canvas.toDataURL("image/jpeg", 0.75);
+
+            const response =
+                await fetch("/api/monitor_face", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        image: image,
+
+                        exam_id: EXAM_ID
+
+                    })
+
+                });
+
+            if (!response.ok) {
+                console.error(
+                    "Monitoring request failed"
+                );
+                return;
+            }
+
+            const data =
+                await response.json();
+
+            if (!data.success) {
+                console.error(
+                    data.message
+                );
+                return;
+            }
+
+            const result =
+                data.result;
+
+            console.log(
+                "Monitoring:",
+                result
+            );
+
+            /*
+             * FACE VIOLATION
+             */
+
+            if (
+                result.status === "violation"
+            ) {
+
+                addViolation(
+                    result.message
+                );
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Face Monitoring:",
+                error
+            );
+
+        }
+
+    }, 5000);
+}
 
 /* ============================================================
    FULLSCREEN EXIT DETECTION
@@ -1084,43 +1315,63 @@ function handleWindowBlur() {
    ADD WARNING
 ============================================================ */
 
-function addViolation(reason) {
+function addViolation(message){
+    const now = Date.now();
+
+if (now - lastViolationTime < VIOLATION_COOLDOWN) {
+    return;
+}
+
+lastViolationTime = now;
 
     warningCount++;
 
     updateWarningDisplay();
+    
 
-    console.warn(
-        `Violation ${warningCount}/${MAX_WARNINGS}: ${reason}`
+    showWarningToast(
+
+        `Warning ${warningCount} of ${MAX_WARNINGS}<br>${message}`
+
     );
 
-    alert(
-        `${reason}\n\nWarning ${warningCount} of ${MAX_WARNINGS}`
-    );
+    fetch("/api/log_violation",{
 
-    if (warningCount >= MAX_WARNINGS) {
+        method:"POST",
 
-        autoSubmitExam("Maximum warnings exceeded");
+        headers:{
 
-        return;
+            "Content-Type":"application/json"
+
+        },
+
+        body:JSON.stringify({
+
+            exam_id:EXAM_ID,
+
+            violation:message
+
+        })
+
+    });
+
+    if(warningCount>=MAX_WARNINGS){
+
+        showWarningToast(
+
+            "Maximum warnings reached.<br>Submitting exam..."
+
+        );
+
+        setTimeout(()=>{
+
+            autoSubmitExam();
+
+        },2000);
 
     }
 
-    setTimeout(() => {
-
-        if (
-            examStarted &&
-            !document.fullscreenElement
-        ) {
-
-            enterFullscreen();
-
-        }
-
-    }, 300);
-
 }
-
 
 /* ============================================================
    AUTO SUBMIT
@@ -1159,7 +1410,13 @@ function removeMonitoring() {
         "blur",
         handleWindowBlur
     );
-
+    document.removeEventListener(
+    "contextmenu",
+    handleRightClick
+);
+document.removeEventListener("copy", handleCopy);
+document.removeEventListener("cut", handleCut);
+document.removeEventListener("paste", handlePaste);
 }
 /* ============================================================
    PART 6
@@ -1332,9 +1589,6 @@ async function submitExam(reason = "User Submitted") {
     catch (error) {
 
         console.error(error);
-
-        alert(error.message || "Submission failed.");
-
         submitting = false;
 
     }

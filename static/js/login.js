@@ -60,7 +60,52 @@ window.onload = function () {
 // ======================================
 // LOGIN FORM
 // ======================================
+function showMessage(title, message, success = true, callback = null){
 
+    const modal = document.getElementById("messageModal");
+
+    const icon = document.getElementById("messageIcon");
+
+    const titleText = document.getElementById("messageTitle");
+
+    const messageText = document.getElementById("messageText");
+
+    const button = document.getElementById("messageBtn");
+
+    titleText.textContent = title;
+
+    messageText.textContent = message;
+
+    if(success){
+
+        icon.innerHTML = "✔";
+
+        icon.className = "message-icon message-success";
+
+    }
+    else{
+
+        icon.innerHTML = "✖";
+
+        icon.className = "message-icon message-error";
+
+    }
+
+    modal.style.display = "flex";
+
+    button.onclick = function(){
+
+        modal.style.display = "none";
+
+        if(callback){
+
+            callback();
+
+        }
+
+    };
+
+}
 const loginForm = document.getElementById("loginForm");
 
 loginForm.addEventListener("submit", async function (e) {
@@ -77,14 +122,22 @@ loginForm.addEventListener("submit", async function (e) {
 
     if (!validateEmail(email)) {
 
-        alert("Please enter a valid Email Address.");
+        showMessage(
+    "Invalid Email",
+    "Please enter a valid Email Address.",
+    false
+);  
         return;
 
     }
 
     if (password.length < 8) {
 
-        alert("Password should contain at least 8 characters.");
+        showMessage(
+    "Invalid Password",
+    "Password should contain at least 8 characters.",
+    false
+); 
         return;
 
     }
@@ -143,13 +196,24 @@ loginForm.addEventListener("submit", async function (e) {
 
         if (response.ok && result.status === "success") {
 
-            alert(result.message);
+            showMessage(
+    "Login Successful",
+    result.message,
+    true,
+    function(){
 
-            window.location.href = "/dashboard";
+        window.location.href="/dashboard";
+
+    }
+);
 
         } else {
 
-            alert(result.message);
+            showMessage(
+    "Login Failed",
+    result.message,
+    false
+);
 
         }
 
@@ -157,7 +221,11 @@ loginForm.addEventListener("submit", async function (e) {
 
         console.error(error);
 
-        alert("Unable to connect to the server.");
+        showMessage(
+    "Connection Error",
+    "Unable to connect to the server.",
+    false
+);
 
     } finally {
 

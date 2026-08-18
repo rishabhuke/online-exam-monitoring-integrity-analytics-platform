@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Integrity Analysis Center</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/integrity_analysis.css'
+        ) }}"
+    >
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/admin_sidebar.css'
+        ) }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- =====================================================
+         EXISTING SIDEBAR
+         ===================================================== -->
+
+    {% set active_page = 'integrity_analysis' %}
+
+    {% include 'admin_sidebar.html' %}
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+         ===================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- =================================================
+             TOP HEADER
+             ================================================= -->
+
+        <header class="top-header">
+
+            <div class="search-box">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="text"
+                    id="globalSearch"
+                    placeholder="Search candidates, exams, metrics..."
+                >
+
+                <span>Ctrl /</span>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <button class="icon-btn">
+                    <i class="fa-regular fa-bell"></i>
+                    <b>12</b>
+                </button>
+
+                <button
+                    class="icon-btn"
+                    id="themeBtn"
+                    type="button"
+                >
+                    <i class="fa-regular fa-moon"></i>
+                </button>
+
+
+                <div class="admin-profile">
+
+                    <div class="admin-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <div>
+                        <strong>Admin User</strong>
+                        <small>Super Administrator</small>
+                    </div>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =================================================
+             PAGE HEADER
+             ================================================= -->
+
+        <section class="page-header">
+
+            <div>
+
+                <div class="title-row">
+
+                    <h1>
+                        Integrity Analysis Center
+                    </h1>
+
+                    <span class="live-badge">
+                        <i class="fa-solid fa-circle"></i>
+                        LIVE
+                    </span>
+
+                    <span class="engine-badge">
+                        Analysis Engine
+                    </span>
+
+                </div>
+
+                <p>
+                    Algorithmic integrity scoring and behavioural analytics
+                </p>
+
+            </div>
+
+
+            <div class="analysis-status">
+
+                <span>
+                    <i class="fa-solid fa-circle"></i>
+                    Live analysis active
+                </span>
+
+                <small id="lastUpdated">
+                    Last updated: --
+                </small>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             FILTERS
+             ================================================= -->
+
+        <section class="filters">
+
+            <div class="filter-item">
+
+                <label for="examFilter">
+                    Select Examination
+                </label>
+
+                <select id="examFilter">
+
+                    <option value="">
+                        All Examinations
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <button
+                class="refresh-btn"
+                id="refreshBtn"
+                type="button"
+            >
+
+                <i class="fa-solid fa-rotate"></i>
+
+                Refresh
+
+            </button>
+
+        </section>
+
+
+        <!-- =================================================
+             SUMMARY CARDS
+             ================================================= -->
+
+        <section class="stats-grid">
+
+
+            <!-- Sessions -->
+
+            <div class="stat-card blue">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Sessions</span>
+
+                    <strong id="totalSessions">
+                        0
+                    </strong>
+
+                    <small>
+                        Total exam sessions
+                    </small>
+
+                </div>
+
+                <div class="mini-chart">
+                    <canvas id="sessionsMiniChart"></canvas>
+                </div>
+
+            </div>
+
+
+            <!-- Average Score -->
+
+            <div class="stat-card purple">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-gauge-high"></i>
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Avg Integrity Score</span>
+
+                    <strong id="averageScore">
+                        0
+                    </strong>
+
+                    <small>
+                        Average score
+                    </small>
+
+                </div>
+
+                <div class="mini-chart">
+                    <canvas id="scoreMiniChart"></canvas>
+                </div>
+
+            </div>
+
+
+            <!-- Low -->
+
+            <div class="stat-card green">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Low Risk</span>
+
+                    <strong id="lowRisk">
+                        0
+                    </strong>
+
+                    <small>
+                        Low risk sessions
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- Medium -->
+
+            <div class="stat-card orange">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Medium Risk</span>
+
+                    <strong id="mediumRisk">
+                        0
+                    </strong>
+
+                    <small>
+                        Medium risk sessions
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- High -->
+
+            <div class="stat-card red">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-shield-virus"></i>
+                </div>
+
+                <div class="stat-content">
+
+                    <span>High Risk</span>
+
+                    <strong id="highRisk">
+                        0
+                    </strong>
+
+                    <small>
+                        High risk sessions
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- Face Presence -->
+
+            <div class="stat-card cyan">
+
+                <div class="stat-icon">
+                    <i class="fa-solid fa-face-smile"></i>
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Face Presence</span>
+
+                    <strong id="facePresence">
+                        0%
+                    </strong>
+
+                    <small>
+                        Average face presence
+                    </small>
+
+                </div>
+
+                <div class="mini-chart">
+                    <canvas id="faceMiniChart"></canvas>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             MAIN ANALYSIS GRID
+             ================================================= -->
+
+        <section class="analysis-grid">
+
+
+            <!-- =================================================
+                 SESSION TABLE
+                 ================================================= -->
+
+            <div class="panel sessions-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Integrity Scores
+                        </h2>
+
+                        <span>
+                            Candidate / Session Level
+                        </span>
+
+                    </div>
+
+                    <div class="panel-badge">
+                        <i class="fa-solid fa-database"></i>
+                        Live Database
+                    </div>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Candidate</th>
+
+                                <th>Candidate ID</th>
+
+                                <th>Examination</th>
+
+                                <th>Total Events</th>
+
+                                <th>Severity Score</th>
+
+                                <th>Face Presence</th>
+
+                                <th>Integrity Score</th>
+
+                                <th>Risk Level</th>
+
+                                <th>Action</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="sessionsTable">
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 SCORING MODEL
+                 ================================================= -->
+
+            <div class="panel model-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Scoring Model Overview
+                        </h2>
+
+                        <span>
+                            Multi-factor integrity algorithm
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="model-list">
+
+
+                    <div class="model-step">
+
+                        <div class="model-icon purple-icon">
+                            <i class="fa-solid fa-chart-column"></i>
+                        </div>
+
+                        <span>
+                            Event Frequency
+                        </span>
+
+                        <b>
+                            Dynamic
+                        </b>
+
+                    </div>
+
+
+                    <div class="model-step">
+
+                        <div class="model-icon purple-icon">
+                            <i class="fa-solid fa-weight-hanging"></i>
+                        </div>
+
+                        <span>
+                            Severity Weighting
+                        </span>
+
+                        <b>
+                            Dynamic
+                        </b>
+
+                    </div>
+
+
+                    <div class="model-step">
+
+                        <div class="model-icon cyan-icon">
+                            <i class="fa-solid fa-face-smile"></i>
+                        </div>
+
+                        <span>
+                            Face Presence Ratio
+                        </span>
+
+                        <b>
+                            Dynamic
+                        </b>
+
+                    </div>
+
+
+                    <div class="model-step">
+
+                        <div class="model-icon green-icon">
+                            <i class="fa-solid fa-calculator"></i>
+                        </div>
+
+                        <span>
+                            Session Risk Calculation
+                        </span>
+
+                    </div>
+
+
+                    <div class="model-step">
+
+                        <div class="model-icon green-icon">
+                            <i class="fa-solid fa-arrow-down-up-across-line"></i>
+                        </div>
+
+                        <span>
+                            Normalization (0 - 100)
+                        </span>
+
+                    </div>
+
+
+                    <div class="model-step">
+
+                        <div class="model-icon purple-icon">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+
+                        <div class="model-final-text">
+
+                            <span>
+                                Integrity Score
+                            </span>
+
+                            <small>
+                                LOW / MEDIUM / HIGH
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 SCORE DISTRIBUTION
+                 ================================================= -->
+
+            <div class="panel distribution-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Integrity Score Distribution
+                        </h2>
+
+                        <span>
+                            Distribution of calculated scores
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="chart-container">
+
+                    <canvas
+                        id="distributionChart"
+                    ></canvas>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 RISK DISTRIBUTION
+                 ================================================= -->
+
+            <div class="panel risk-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Risk Distribution
+                        </h2>
+
+                        <span>
+                            Session risk classification
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="risk-content">
+
+                    <div class="risk-chart">
+
+                        <canvas
+                            id="riskChart"
+                        ></canvas>
+
+                    </div>
+
+
+                    <div class="risk-legend">
+
+                        <div class="legend-item">
+
+                            <span class="legend-dot low"></span>
+
+                            <div>
+                                <strong>Low Risk</strong>
+                                <small id="lowRiskPercent">
+                                    0%
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="legend-item">
+
+                            <span class="legend-dot medium"></span>
+
+                            <div>
+                                <strong>Medium Risk</strong>
+                                <small id="mediumRiskPercent">
+                                    0%
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="legend-item">
+
+                            <span class="legend-dot high"></span>
+
+                            <div>
+                                <strong>High Risk</strong>
+                                <small id="highRiskPercent">
+                                    0%
+                                </small>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 HEATMAP
+                 ================================================= -->
+
+            <div class="panel heatmap-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Event Frequency Heatmap
+                        </h2>
+
+                        <span>
+                            Frequency of violation events over time
+                        </span>
+
+                    </div>
+
+                    <span class="chart-info">
+                        24-hour analysis
+                    </span>
+
+                </div>
+
+
+                <div class="heatmap-wrapper">
+
+                    <div
+                        id="heatmapLabels"
+                        class="heatmap-labels"
+                    ></div>
+
+                    <div class="heatmap-main">
+
+                        <div
+                            id="heatmap"
+                            class="heatmap"
+                        ></div>
+
+                        <div
+                            id="heatmapHours"
+                            class="heatmap-hours"
+                        ></div>
+
+                    </div>
+
+                    <div class="heatmap-scale">
+
+                        <span>Low</span>
+
+                        <div class="scale-gradient"></div>
+
+                        <span>High</span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 CLUSTERING
+                 ================================================= -->
+
+            <div class="panel cluster-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Behavioral Clustering (K-Means)
+                        </h2>
+
+                        <span>
+                            Candidate behaviour patterns
+                        </span>
+
+                    </div>
+
+                    <span class="chart-info">
+                        Data Science
+                    </span>
+
+                </div>
+
+
+                <div class="cluster-content">
+
+                    <div class="cluster-chart-wrapper">
+
+                        <canvas
+                            id="clusterChart"
+                        ></canvas>
+
+                    </div>
+
+
+                    <div
+                        id="clusters"
+                        class="cluster-list"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 COHORT
+                 ================================================= -->
+
+            <div class="panel cohort-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Cohort Risk Profile
+                        </h2>
+
+                        <span>
+                            Risk analysis by examination cohort
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="cohort-table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Cohort / Examination
+                                </th>
+
+                                <th>
+                                    Sessions
+                                </th>
+
+                                <th>
+                                    Avg Score
+                                </th>
+
+                                <th>
+                                    High Risk
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="cohortTable">
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 RECENT ACTIVITY
+                 ================================================= -->
+
+            <div class="panel activity-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Recent Integrity Activity
+                        </h2>
+
+                        <span>
+                            Latest integrity events
+                        </span>
+
+                    </div>
+
+                    <span class="live-small">
+                        <i class="fa-solid fa-circle"></i>
+                        LIVE
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="recentActivity"
+                    class="activity-list"
+                ></div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/integrity_analysis.js'
+    ) }}"
+></script>
+
+</body>
+
+</html>

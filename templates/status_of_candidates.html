@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        ExamGuard AI | Candidate Status
+    </title>
+
+    <!-- Existing dashboard CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/admin_dashboard.css'
+        ) }}"
+    >
+
+    <!-- Candidate status CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/status_of_candidates.css'
+        ) }}"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<div class="background">
+
+    <div class="circle circle1"></div>
+    <div class="circle circle2"></div>
+    <div class="circle circle3"></div>
+
+</div>
+
+
+<div class="dashboard-container">
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    {% set active_page = 'status_of_candidates' %}
+    {% include 'admin_sidebar.html' %}
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- TOP BAR -->
+
+      <header class="top-header">
+
+    <!-- Search -->
+    <div class="header-search">
+        <i class="fas fa-search"></i>
+        <input
+            type="text"
+            id="globalSearch"
+            placeholder="Search candidates, exams, reports..."
+            autocomplete="off"
+        >
+        <span class="search-shortcut">⌘ K</span>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+
+        <!-- Notifications -->
+        <button class="header-icon-btn" title="Notifications">
+            <i class="far fa-bell"></i>
+            <span class="notification-badge" id="notificationCount">
+                0
+            </span>
+        </button>
+
+        <!-- Theme -->
+        <button
+            class="header-icon-btn theme-btn"
+            id="themeToggle"
+            title="Toggle theme"
+        >
+            <i class="fas fa-sun"></i>
+        </button>
+
+        <!-- Divider -->
+        <div class="header-divider"></div>
+
+        <!-- Admin Profile -->
+        <div class="admin-profile">
+
+            <div class="admin-avatar">
+                {% if session.get('admin_photo') %}
+                    <img
+                        src="{{ session.get('admin_photo') }}"
+                        alt="Admin"
+                    >
+                {% else %}
+                    <span>
+                        {{ session.get('admin_name', 'Admin')[0]|upper }}
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="admin-info">
+                <div class="admin-name">
+                    {{ session.get('admin_name', 'Admin User') }}
+                </div>
+
+                <div class="admin-role">
+                    Administrator
+                </div>
+            </div>
+
+            <i class="fas fa-chevron-down profile-arrow"></i>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+        <!-- =================================================
+             PAGE HEADER
+        ================================================== -->
+
+        <section class="candidate-page-header">
+
+            <div class="page-title-area">
+
+                <div class="page-title-icon">
+
+                    <i class="fa-solid fa-users"></i>
+
+                </div>
+
+                <div>
+
+                    <div class="title-line">
+
+                        <h1>
+                            Status of Each Candidate
+                        </h1>
+
+                        <span class="live-badge">
+
+                            <span></span>
+
+                            LIVE
+
+                        </span>
+
+                    </div>
+
+                    <p>
+                        Monitor candidate examination status
+                        and integrity activity in real-time
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <div class="breadcrumb">
+
+                    <span>
+                        Dashboard
+                    </span>
+
+                    <i class="fa-solid fa-chevron-right"></i>
+
+                    <strong>
+                        Status of Each Candidate
+                    </strong>
+
+                </div>
+
+
+                <button
+                    id="refreshButton"
+                    class="refresh-button"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-rotate"></i>
+
+                    Refresh
+
+                </button>
+
+
+                <div class="current-time">
+
+                    <strong id="currentTime">
+                        --
+                    </strong>
+
+                    <span id="currentDate">
+                        --
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             STATISTICS
+        ================================================== -->
+
+        <section class="statistics-grid">
+
+
+            <div class="stat-card purple">
+
+                <div class="stat-content">
+
+                    <span>
+                        Total Candidates
+                    </span>
+
+                    <strong id="totalCandidates">
+                        0
+                    </strong>
+
+                    <small id="totalPercentage">
+                        0%
+                    </small>
+
+                </div>
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-users"></i>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card green">
+
+                <div class="stat-content">
+
+                    <span>
+                        Online / Active
+                    </span>
+
+                    <strong id="onlineCandidates">
+                        0
+                    </strong>
+
+                    <small id="onlinePercentage">
+                        0%
+                    </small>
+
+                </div>
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-wifi"></i>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card orange">
+
+                <div class="stat-content">
+
+                    <span>
+                        Warning
+                    </span>
+
+                    <strong id="warningCandidates">
+                        0
+                    </strong>
+
+                    <small id="warningPercentage">
+                        0%
+                    </small>
+
+                </div>
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card red">
+
+                <div class="stat-content">
+
+                    <span>
+                        Violations Detected
+                    </span>
+
+                    <strong id="violationCandidates">
+                        0
+                    </strong>
+
+                    <small id="violationPercentage">
+                        0%
+                    </small>
+
+                </div>
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-shield-halved"></i>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card blue">
+
+                <div class="stat-content">
+
+                    <span>
+                        Offline / Disconnected
+                    </span>
+
+                    <strong id="offlineCandidates">
+                        0
+                    </strong>
+
+                    <small id="offlinePercentage">
+                        0%
+                    </small>
+
+                </div>
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-wifi-slash"></i>
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+        <!-- =================================================
+             FILTER BAR
+        ================================================== -->
+
+        <section class="filter-panel">
+
+
+            <div class="filter-group">
+
+                <label>
+                    Select Examination
+                </label>
+
+                <select id="examFilter">
+
+                    <option value="">
+                        All Active Exams
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="filter-group">
+
+                <label>
+                    Status
+                </label>
+
+                <select id="statusFilter">
+
+                    <option value="">
+                        All Status
+                    </option>
+
+                    <option value="Online">
+                        Online
+                    </option>
+
+                    <option value="Warning">
+                        Warning
+                    </option>
+
+                    <option value="Offline">
+                        Offline
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="filter-group">
+
+                <label>
+                    Risk Level
+                </label>
+
+                <select id="riskFilter">
+
+                    <option value="">
+                        All Risk Levels
+                    </option>
+
+                    <option value="Low">
+                        Low
+                    </option>
+
+                    <option value="Medium">
+                        Medium
+                    </option>
+
+                    <option value="High">
+                        High
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="candidate-search">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    id="candidateSearch"
+                    type="text"
+                    placeholder="Search by name, ID or email..."
+                >
+
+            </div>
+
+
+            <button
+                class="filter-icon-button"
+                id="resetFilters"
+                title="Reset filters"
+            >
+
+                <i class="fa-solid fa-filter-circle-xmark"></i>
+
+            </button>
+
+
+            <button
+                class="export-button"
+                id="exportReport"
+                type="button"
+            >
+
+                <i class="fa-solid fa-download"></i>
+
+                Export Report
+
+            </button>
+
+        </section>
+
+
+        <!-- =================================================
+             CANDIDATE TABLE + ACTIVITY
+        ================================================== -->
+
+        <section class="candidate-layout">
+
+
+            <!-- TABLE -->
+
+            <div class="candidate-table-card">
+
+
+                <div class="table-header">
+
+                    <div>
+
+                        <h2>
+
+                            <i class="fa-solid fa-user-check"></i>
+
+                            Candidate Status
+
+                        </h2>
+
+                        <span class="live-update">
+
+                            <span></span>
+
+                            Live Updates
+
+                        </span>
+
+                    </div>
+
+
+                    <span class="auto-refresh">
+
+                        Auto Refresh • Every 10s
+
+                    </span>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Candidate
+                                </th>
+
+                                <th>
+                                    Candidate ID
+                                </th>
+
+                                <th>
+                                    Examination
+                                </th>
+
+                                
+                                <th>
+                                    Current Status
+                                </th>
+
+                                <th>
+                                    Risk Level
+                                </th>
+
+                                <th>
+                                    Violations
+                                </th>
+
+                             
+
+                                <th>
+                                    Last Activity
+                                </th>
+
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="candidateTableBody">
+
+                            <tr>
+
+                                <td
+                                    colspan="10"
+                                    class="loading-row"
+                                >
+
+                                    <i class="fa-solid fa-spinner fa-spin"></i>
+
+                                    Loading candidates...
+
+                                </td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <!-- PAGINATION -->
+
+                <div class="table-footer">
+
+                    <span id="resultCount">
+                        Showing 0 candidates
+                    </span>
+
+
+                    <div class="pagination">
+
+                        <button
+                            id="prevPage"
+                            type="button"
+                        >
+
+                            <i class="fa-solid fa-chevron-left"></i>
+
+                        </button>
+
+
+                        <div id="pageNumbers"></div>
+
+
+                        <button
+                            id="nextPage"
+                            type="button"
+                        >
+
+                            <i class="fa-solid fa-chevron-right"></i>
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="rows-per-page">
+
+                        <span>
+                            Rows per page
+                        </span>
+
+                        <select id="rowsPerPage">
+
+                            <option value="7">
+                                7
+                            </option>
+
+                            <option value="10" selected>
+                                10
+                            </option>
+
+                            <option value="20">
+                                20
+                            </option>
+
+                            <option value="50">
+                                50
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RIGHT ACTIVITY -->
+
+            <aside class="activity-panel">
+
+
+                <div class="activity-card">
+
+                    <div class="activity-title">
+
+                        <h3>
+                            Realtime Activity
+                        </h3>
+
+                        <i class="fa-solid fa-chart-simple"></i>
+
+                    </div>
+
+
+                    <div
+                        class="activity-chart"
+                        id="activityChart"
+                    >
+
+                        <div class="chart-line"></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="activity-card feed-card">
+
+                    <div class="activity-title">
+
+                        <h3>
+                            Activity Feed
+                        </h3>
+
+                        <button
+                            id="viewAllActivity"
+                            type="button"
+                        >
+                            View All
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="activity-feed"
+                        id="activityFeed"
+                    >
+
+                        <div class="empty-activity">
+
+                            No recent activity
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="integrity-card">
+
+                    <div class="integrity-icon">
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                    </div>
+
+
+                    <h3>
+                        Integrity System
+                    </h3>
+
+                    <p>
+                        Monitoring Engine
+                    </p>
+
+                    <strong>
+                        <span></span>
+                        Active
+                    </strong>
+
+
+                    <div class="integrity-check">
+
+                        <div>
+                            <i class="fa-solid fa-check"></i>
+                            Face Detection
+                        </div>
+
+                        <div>
+                            <i class="fa-solid fa-check"></i>
+                            Behavior Analysis
+                        </div>
+
+                        <div>
+                            <i class="fa-solid fa-check"></i>
+                            Environment Check
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/status_of_candidates.js'
+    ) }}"
+></script>
+
+</body>
+
+</html>

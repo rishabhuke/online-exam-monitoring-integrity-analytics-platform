@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        ExamGuard | Admin Login
+    </title>
+
+    <!-- Google Font -->
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <!-- Admin Login CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin_login.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+    <!-- =====================================================
+         ANIMATED BACKGROUND
+    ====================================================== -->
+
+    <div class="background"></div>
+
+    <div class="glass-circle circle1"></div>
+    <div class="glass-circle circle2"></div>
+    <div class="glass-circle circle3"></div>
+
+
+    <!-- =====================================================
+         MAIN WRAPPER
+    ====================================================== -->
+
+    <div class="login-wrapper">
+
+
+        <!-- =================================================
+             LEFT INFORMATION PANEL
+        ================================================== -->
+
+        <section class="left-panel">
+
+            <div class="logo">
+                ExamGuard
+            </div>
+
+
+            <h2>
+                Administrator Portal
+            </h2>
+
+
+            <p class="intro-text">
+                Secure access to the ExamGuard administration
+                platform. Manage examinations, monitor integrity,
+                review candidate activity, and access centralized
+                analytics from one secure workspace.
+            </p>
+
+
+            <!-- FEATURES -->
+
+            <div class="features">
+
+
+                <!-- FEATURE 1 -->
+
+                <div class="feature-card">
+
+                    <div class="feature-icon">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+
+                    <div class="feature-text">
+
+                        <h4>
+                            Secure Access
+                        </h4>
+
+                        <p>
+                            Protected administrator authentication
+                            keeps examination data secure.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- FEATURE 2 -->
+
+                <div class="feature-card">
+
+                    <div class="feature-icon">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+
+                    <div class="feature-text">
+
+                        <h4>
+                            Integrity Analytics
+                        </h4>
+
+                        <p>
+                            Monitor candidate behavior and
+                            examination integrity from one dashboard.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- FEATURE 3 -->
+
+                <div class="feature-card">
+
+                    <div class="feature-icon">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </div>
+
+                    <div class="feature-text">
+
+                        <h4>
+                            Administration
+                        </h4>
+
+                        <p>
+                            Manage exams, candidates, reports,
+                            and administrative operations.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- FEATURE 4 -->
+
+                <div class="feature-card">
+
+                    <div class="feature-icon">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+
+                    <div class="feature-text">
+
+                        <h4>
+                            Enterprise Security
+                        </h4>
+
+                        <p>
+                            Secure sessions and protected
+                            administrator credentials.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             RIGHT LOGIN PANEL
+        ================================================== -->
+
+        <section class="right-panel">
+
+
+            <div class="login-card">
+
+
+                <!-- CARD ICON -->
+
+                <div class="login-icon">
+
+                    <i class="fa-solid fa-user-shield"></i>
+
+                </div>
+
+
+                <!-- HEADING -->
+
+                <h1>
+                    Welcome Back
+                </h1>
+
+
+                <p class="subtitle">
+                    Sign in to your ExamGuard administrator
+                    account to continue.
+                </p>
+
+
+                <!-- MESSAGE BOX -->
+
+                <div
+                    id="messageBox"
+                    class="message"
+                ></div>
+
+
+                <!-- LOGIN FORM -->
+
+                <form
+                    id="adminLoginForm"
+                    class="login-form"
+                    method="POST"
+                >
+
+
+                    <!-- USERNAME -->
+
+                    <div class="input-group">
+
+                        <label for="username">
+                            Username
+                        </label>
+
+                        <div class="input-box">
+
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                placeholder="Enter your username"
+                                autocomplete="username"
+                                required
+                            >
+
+                            <i class="fa-solid fa-user"></i>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PASSWORD -->
+
+                    <div class="input-group">
+
+                        <div class="label-row">
+
+                            <label for="password">
+                                Password
+                            </label>
+
+                            <a
+                                href="#"
+                                class="forgot-link"
+                            >
+                                Forgot Password?
+                            </a>
+
+                        </div>
+
+
+                        <div class="input-box password-wrapper">
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+
+
+                            <span
+                                class="password-toggle"
+                                onclick="togglePassword('password', this)"
+                            >
+
+                                <i class="fa-solid fa-eye"></i>
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- REMEMBER ME -->
+
+                    <div class="login-options">
+
+                        <label class="remember-me">
+
+                            <input
+                                type="checkbox"
+                                id="rememberMe"
+                                name="remember_me"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span>
+                                Remember me
+                            </span>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- LOGIN BUTTON -->
+
+                    <button
+                        type="submit"
+                        class="login-btn"
+                    >
+
+                        <span>
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                            Sign In
+                        </span>
+
+                    </button>
+
+
+                </form>
+
+
+                <!-- REGISTER -->
+
+                <div class="bottom-text">
+
+                    Don't have an administrator account?
+
+                    <a
+                        href="{{ url_for('admin.admin_signup_page') }}"
+                    >
+                        Create Account
+                    </a>
+
+                </div>
+
+
+                <!-- SECURITY BADGE -->
+
+                <div class="security-badge">
+
+                    <i class="fa-solid fa-shield-check"></i>
+
+                    <span>
+                        Secure Administrator Access
+                    </span>
+
+                </div>
+
+
+                <!-- FOOTER -->
+
+                <div class="footer-text">
+
+                    © 2026 ExamGuard
+
+                    <br>
+
+                    Authorized Personnel Only
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
+    <script>
+
+        function togglePassword(id, element) {
+
+            const input = document.getElementById(id);
+
+            const icon = element.querySelector("i");
+
+            if (input.type === "password") {
+
+                input.type = "text";
+
+                icon.className = "fa-solid fa-eye-slash";
+
+            } else {
+
+                input.type = "password";
+
+                icon.className = "fa-solid fa-eye";
+
+            }
+
+        }
+
+    </script>
+
+
+    <!-- Admin Login JS -->
+
+    <script
+        src="{{ url_for('static', filename='js/admin_login.js') }}"
+    ></script>
+
+</body>
+
+</html>

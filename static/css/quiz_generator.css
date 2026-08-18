@@ -1,216 +1,988 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,sans-serif;
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-body{
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+}
 
-    background:#f4f6f9;
+body {
+    font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
 
-    display:flex;
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(99, 102, 241, 0.18),
+            transparent 35%
+        ),
+        radial-gradient(
+            circle at bottom right,
+            rgba(139, 92, 246, 0.15),
+            transparent 35%
+        ),
+        #070b14;
 
-    justify-content:center;
+    color: #ffffff;
 
-    align-items:center;
+    /* IMPORTANT:
+       Do NOT use overflow: hidden here.
+       It prevents the starting form from being scrolled.
+    */
+    overflow-x: hidden;
+}
 
-    height:100vh;
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.page-wrapper {
+    width: 100%;
+    min-height: 100vh;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+
+    padding: 25px;
+
+    /* Allows the page to grow when content is taller
+       than the screen */
+    overflow-y: auto;
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+
+.container {
+    width: min(1200px, 96vw);
+
+    /* Do not force a fixed height */
+    min-height: calc(100vh - 50px);
+
+    display: flex;
+
+    gap: 25px;
+
+    position: relative;
+
+    align-items: flex-start;
+
+    transition:
+        all 0.7s cubic-bezier(
+            0.4,
+            0,
+            0.2,
+            1
+        );
+}
+
+
+/* =========================================================
+   FORM CARD
+========================================================= */
+
+.quiz-form {
+    width: 100%;
+    max-width: 620px;
+
+    margin: 0 auto;
+
+    padding: 35px;
+
+    background:
+        rgba(17, 24, 39, 0.72);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.10);
+
+    border-radius: 24px;
+
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+    transition:
+        width 0.7s ease,
+        max-width 0.7s ease,
+        transform 0.7s ease,
+        margin 0.7s ease;
+
+    /* IMPORTANT */
+    max-height: calc(100vh - 50px);
+
+    overflow-y: auto;
+
+    scrollbar-width: thin;
+    scrollbar-color:
+        rgba(99, 102, 241, 0.55)
+        rgba(255, 255, 255, 0.03);
+}
+
+
+/* =========================================================
+   FORM SCROLLBAR
+========================================================= */
+
+.quiz-form::-webkit-scrollbar {
+    width: 7px;
+}
+
+.quiz-form::-webkit-scrollbar-track {
+    background:
+        rgba(255, 255, 255, 0.03);
+
+    border-radius: 10px;
+}
+
+.quiz-form::-webkit-scrollbar-thumb {
+    background:
+        rgba(99, 102, 241, 0.55);
+
+    border-radius: 10px;
+}
+
+.quiz-form::-webkit-scrollbar-thumb:hover {
+    background:
+        rgba(99, 102, 241, 0.85);
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header-section {
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+}
+
+.icon-box {
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #6366f1,
+            #8b5cf6
+        );
+
+    font-size: 25px;
+
+    box-shadow:
+        0 10px 30px rgba(99, 102, 241, 0.35);
+}
+
+.header-section h1 {
+    font-size: 27px;
+
+    font-weight: 700;
+
+    letter-spacing: -0.5px;
+}
+
+.header-section p {
+    margin-top: 4px;
+
+    color: #94a3b8;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   FORM GROUP
+========================================================= */
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+.form-group input {
+    width: 100%;
+
+    height: 43px;
+
+    padding: 0 14px;
+
+    border-radius: 11px;
+
+    border:
+        1px solid rgba(255, 255, 255, 0.10);
+
+    outline: none;
+
+    background:
+        rgba(15, 23, 42, 0.85);
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    transition:
+        border 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s ease;
+}
+
+.form-group input::placeholder {
+    color: #64748b;
+}
+
+.form-group input:hover {
+    border-color:
+        rgba(99, 102, 241, 0.45);
+}
+
+.form-group input:focus {
+    border-color: #6366f1;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(99, 102, 241, 0.12);
+
+    transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   DATETIME INPUT
+========================================================= */
+
+.form-group input[type="datetime-local"] {
+    color-scheme: dark;
+}
+
+
+/* =========================================================
+   DIFFICULTY
+========================================================= */
+
+.difficulty-options {
+    display: flex;
+
+    gap: 8px;
+}
+
+.difficulty-options input {
+    display: none;
+}
+
+.difficulty-options label {
+    flex: 1;
+
+    text-align: center;
+
+    padding: 10px 8px;
+
+    margin: 0;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    color: #94a3b8;
+
+    background:
+        rgba(15, 23, 42, 0.75);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.08);
+
+    transition: all 0.25s ease;
+}
+
+.difficulty-options label:hover {
+    color: #ffffff;
+
+    border-color: #6366f1;
+
+    transform: translateY(-2px);
+}
+
+.difficulty-options input:checked + label {
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #4f46e5,
+            #7c3aed
+        );
+
+    border-color: transparent;
+
+    box-shadow:
+        0 8px 25px
+        rgba(99, 102, 241, 0.25);
+}
+
+
+/* =========================================================
+   GENERATE BUTTON
+========================================================= */
+
+#generateBtn {
+    width: 100%;
+
+    min-height: 48px;
+
+    margin-top: 5px;
+
+    margin-bottom: 5px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    color: white;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    background:
+        linear-gradient(
+            135deg,
+            #6366f1,
+            #8b5cf6
+        );
+
+    box-shadow:
+        0 10px 30px
+        rgba(99, 102, 241, 0.25);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+#generateBtn:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 15px 40px
+        rgba(99, 102, 241, 0.40);
+}
+
+#generateBtn:active {
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   QUIZ PREVIEW
+========================================================= */
+/* =========================================================
+   QUIZ PREVIEW
+========================================================= */
+
+#quizPreview {
+    display: none;
+
+    width: 0;
+    opacity: 0;
+
+    padding: 0;
+
+    overflow: hidden;
+
+    background:
+        rgba(17, 24, 39, 0.72);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.10);
+
+    border-radius: 24px;
+
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.45);
+
+    transition:
+        width 0.7s ease,
+        opacity 0.5s ease,
+        padding 0.7s ease;
+}
+
+
+/* =========================================================
+   AFTER QUIZ GENERATION
+========================================================= */
+
+.container.quiz-generated {
+    display: flex;
+
+    gap: 25px;
+
+    min-height: calc(100vh - 50px);
+
+    align-items: flex-start;
+}
+
+
+/* =========================================================
+   LEFT FORM AFTER GENERATION
+========================================================= */
+
+.container.quiz-generated .quiz-form {
+
+    flex: 0 0 42%;
+
+    width: auto;
+
+    max-width: none;
+
+    margin: 0;
+
+    padding: 28px;
+
+    max-height: calc(100vh - 50px);
+
+    overflow-y: auto;
+}
+
+
+/* =========================================================
+   RIGHT QUIZ PREVIEW AFTER GENERATION
+========================================================= */
+
+.container.quiz-generated #quizPreview {
+
+    display: flex;
+
+    flex-direction: column;
+
+    flex: 1;
+
+    width: auto;
+
+    height: calc(100vh - 50px);
+
+    max-height: calc(100vh - 50px);
+
+    opacity: 1;
+
+    padding: 28px;
+
+    overflow: hidden;
+
+    min-width: 0;
+}
+
+
+/* =========================================================
+   PREVIEW HEADER
+========================================================= */
+
+.preview-header {
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 18px;
+}
+
+
+.preview-header h2 {
+
+    font-size: 22px;
+}
+
+
+.preview-header p {
+
+    color: #64748b;
+
+    font-size: 12px;
+
+    margin-top: 4px;
+}
+
+
+.ai-badge {
+
+    padding: 7px 12px;
+
+    border-radius: 20px;
+
+    color: #c4b5fd;
+
+    background:
+        rgba(139, 92, 246, 0.12);
+
+    border:
+        1px solid
+        rgba(139, 92, 246, 0.25);
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   QUESTION SCROLL AREA
+========================================================= */
+
+.questions-scroll {
+
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+
+    padding-right: 10px;
+
+    scroll-behavior: smooth;
+
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        rgba(99, 102, 241, 0.55)
+        rgba(255, 255, 255, 0.03);
+}
+
+
+/* =========================================================
+   QUESTION SCROLLBAR
+========================================================= */
+
+.questions-scroll::-webkit-scrollbar {
+
+    width: 7px;
+}
+
+
+.questions-scroll::-webkit-scrollbar-track {
+
+    background:
+        rgba(255, 255, 255, 0.03);
+
+    border-radius: 10px;
+}
+
+
+.questions-scroll::-webkit-scrollbar-thumb {
+
+    background:
+        rgba(99, 102, 241, 0.55);
+
+    border-radius: 10px;
+}
+
+
+.questions-scroll::-webkit-scrollbar-thumb:hover {
+
+    background:
+        rgba(99, 102, 241, 0.85);
+}
+
+
+/* =========================================================
+   GENERATED QUESTION CARD
+========================================================= */
+
+.question-card {
+
+    padding: 18px;
+
+    margin-bottom: 14px;
+
+    border-radius: 16px;
+
+    background:
+        rgba(15, 23, 42, 0.75);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.07);
+
+    transition:
+        transform 0.25s ease,
+        border 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+.question-card:hover {
+
+    transform: translateY(-2px);
+
+    border-color:
+        rgba(99, 102, 241, 0.45);
+
+    box-shadow:
+        0 10px 30px
+        rgba(0, 0, 0, 0.25);
+}
+
+
+.question-number {
+
+    color: #818cf8;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    margin-bottom: 8px;
+}
+
+
+.question-text {
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+
+    margin-bottom: 14px;
+}
+
+
+/* =========================================================
+   OPTIONS
+========================================================= */
+
+.question-card .option {
+
+    padding: 10px 12px;
+
+    margin-top: 8px;
+
+    border-radius: 9px;
+
+    background:
+        rgba(30, 41, 59, 0.65);
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.05);
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+
+    transition: all 0.2s ease;
+}
+
+
+.question-card .option:hover {
+
+    background:
+        rgba(99, 102, 241, 0.12);
+
+    border-color:
+        rgba(99, 102, 241, 0.3);
+
+    color: white;
+}
+
+
+/* =========================================================
+   CORRECT ANSWER
+========================================================= */
+
+.correct-answer {
+
+    margin-top: 12px;
+
+    padding-top: 10px;
+
+    border-top:
+        1px solid
+        rgba(255, 255, 255, 0.06);
+
+    color: #86efac;
+
+    font-size: 12px;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   SAVE SECTION
+========================================================= */
+
+.save-section {
+
+    flex-shrink: 0;
+
+    padding-top: 16px;
+
+    margin-top: 12px;
+
+    border-top:
+        1px solid
+        rgba(255, 255, 255, 0.07);
+}
+
+
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
+
+#saveQuizBtn {
+
+    width: 100%;
+
+    height: 46px;
+
+    border: none;
+
+    border-radius: 11px;
+
+    cursor: pointer;
+
+    color: white;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+     background:
+        linear-gradient(
+            135deg,
+            #6366f1,
+            #8b5cf6
+        );
+
+    box-shadow:
+        0 10px 30px
+        rgba(99, 102, 241, 0.25);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+#saveQuizBtn:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 10px 30px
+        rgba(99, 102, 241, 0.25);
 
 }
 
-.container{
+.loading {
+    display: flex;
 
-    width:500px;
+    align-items: center;
+    justify-content: center;
 
-    background:white;
+    min-height: 150px;
 
-    padding:30px;
+    color: #94a3b8;
 
-    border-radius:10px;
-
-    box-shadow:0 5px 15px rgba(0,0,0,.2);
-
+    font-size: 14px;
 }
 
-h1{
 
-    text-align:center;
+/* =========================================================
+   ERROR
+========================================================= */
 
-    margin-bottom:25px;
+.error-message {
+    padding: 15px;
 
-    color:#1f3c88;
+    border-radius: 12px;
 
+    background:
+        rgba(239, 68, 68, 0.08);
+
+    border:
+        1px solid
+        rgba(239, 68, 68, 0.25);
+
+    color: #fca5a5;
+
+    font-size: 13px;
 }
 
-.form-group{
 
-    margin-bottom:20px;
+/* =========================================================
+   RESPONSIVE - TABLET
+========================================================= */
 
+@media (max-width: 900px) {
+
+    body {
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .page-wrapper {
+        min-height: 100vh;
+
+        height: auto;
+
+        padding: 15px;
+
+        overflow-y: visible;
+    }
+
+    .container {
+        width: 100%;
+
+        height: auto;
+
+        min-height: auto;
+
+        flex-direction: column;
+
+        gap: 20px;
+    }
+
+    .quiz-form {
+        max-width: none;
+
+        width: 100%;
+
+        max-height: none;
+
+        overflow-y: visible;
+
+        margin: 0;
+    }
+
+    .container.quiz-generated .quiz-form {
+        width: 100%;
+
+        max-height: none;
+
+        overflow-y: visible;
+    }
+
+    .container.quiz-generated #quizPreview {
+        width: 100%;
+
+        height: 600px;
+
+        max-height: 600px;
+    }
+
+    #quizPreview {
+        min-height: 500px;
+    }
 }
 
-label{
 
-    display:block;
+/* =========================================================
+   RESPONSIVE - MOBILE
+========================================================= */
 
-    margin-bottom:8px;
+@media (max-width: 600px) {
 
-    font-weight:bold;
+    .page-wrapper {
+        padding: 10px;
+    }
 
-}
+    .quiz-form {
+        padding: 22px;
 
-input,
-select{
+        border-radius: 18px;
+    }
 
-    width:100%;
+    .container.quiz-generated #quizPreview {
+        padding: 20px;
 
-    padding:12px;
+        border-radius: 18px;
+    }
 
-    border:1px solid #ccc;
+    .header-section {
+        gap: 12px;
+    }
 
-    border-radius:6px;
+    .icon-box {
+        width: 45px;
+        height: 45px;
 
-}
+        font-size: 21px;
+    }
 
-button{
+    .header-section h1 {
+        font-size: 23px;
+    }
 
-    width:100%;
+    .difficulty-options {
+        flex-direction: column;
+    }
 
-    padding:14px;
+    .preview-header {
+        align-items: flex-start;
 
-    background:#1f3c88;
+        flex-direction: column;
+    }
 
-    color:white;
-
-    border:none;
-
-    border-radius:6px;
-
-    cursor:pointer;
-
-    font-size:16px;
-
-}
-
-button:hover{
-
-    background:#16316b;
-
-}
-.difficulty-options{
-
-    display:flex;
-
-    gap:15px;
-
-    margin-top:10px;
-
-}
-
-.difficulty-options input{
-
-    display:none;
-
-}
-
-.difficulty-options label{
-
-    flex:1;
-
-    text-align:center;
-
-    padding:12px 18px;
-
-    background:#f5f7fb;
-
-    border:2px solid #d6dce8;
-
-    border-radius:8px;
-
-    cursor:pointer;
-
-    font-weight:600;
-
-    color:#444;
-
-    transition:0.3s;
-
-}
-
-.difficulty-options label:hover{
-
-    border-color:#1f3c88;
-
-    background:#eef3ff;
-
-}
-
-.difficulty-options input:checked + label{
-
-    background:#1f3c88;
-
-    color:#fff;
-
-    border-color:#1f3c88;
-
-    box-shadow:0 4px 12px rgba(31,60,136,0.25);
-
-}
-#quizPreview{
-
-    margin-top:40px;
-
-}
-
-.question-card{
-
-    background:white;
-
-    border-radius:10px;
-
-    padding:20px;
-
-    margin-bottom:20px;
-
-    border:1px solid #ddd;
-
-    box-shadow:0 2px 8px rgba(0,0,0,.1);
-
-}
-
-.question-card h3{
-
-    color:#1f3c88;
-
-}
-
-.question-card ul{
-
-    list-style:none;
-
-    padding-left:0;
-
-}
-
-.question-card li{
-
-    padding:6px 0;
-
-}
-
-.correct{
-
-    color:green;
-
-    font-weight:bold;
-
-}
-.questions-scroll{
-
-    max-height:600px;
-
-    overflow-y:auto;
-
-    padding-right:15px;
-
+    .ai-badge {
+        align-self: flex-start;
+    }
 }

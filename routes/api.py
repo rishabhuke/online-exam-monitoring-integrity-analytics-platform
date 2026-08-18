@@ -8,6 +8,11 @@ import sqlite3
 
 from pathlib import Path
 
+from modules.face_verification import FaceVerifier
+import os
+from modules.face_monitor import FaceMonitor
+import os
+
 from services.quiz_generator import generate_quiz
 
 api_bp = Blueprint("api", __name__)
@@ -15,6 +20,8 @@ api_bp = Blueprint("api", __name__)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 DATABASE = BASE_DIR / "database.db"
+verifier = FaceVerifier()
+monitor = FaceMonitor()
 
 
 def get_db():
@@ -196,172 +203,148 @@ def get_exam(exam_id):
 # Generate Quiz
 # ---------------------------------------------
 
-@api_bp.route("/generate_quiz", methods=["POST"])
-def generate():
+@api_bp.route("/api/monitor_face", methods=["POST"])
+def monitor_face():
+
+    if "candidate_id" not in session:
+
+        return jsonify({
+
+            "success": False,
+
+            "message": "Session expired."
+
+        }), 401
+
 
     try:
 
         data = request.get_json()
 
-        subject = data["subject"]
+        image = data.get("image")
 
-        topic = data["topic"]
+        exam_id = data.get("exam_id")
 
-        difficulty = data["difficulty"]
+        if not image:
 
-        count = data["count"]
+            return jsonify({
 
-        questions = generate_quiz(
+                "success": False,
 
-            subject,
+                "message": "Image is required."
 
-            topic,
+            }), 400
 
-            difficulty,
 
-            count
+        candidate_id = session["candidate_id"]
 
-        )
-
-        return jsonify({
-
-            "status": "success",
-
-            "questions": questions
-
-        })
-
-    except Exception as e:
-
-        return jsonify({
-
-            "status": "error",
-
-            "message": str(e)
-
-        }), 500
-    
-# ---------------------------------------------
-# Save Quiz
-# ---------------------------------------------
-
-    
-@api_bp.route("/save_quiz", methods=["POST"])
-def save_quiz():
-
-    try:
-
-        data = request.get_json()
-
-        subject = data["subject"]
-        topic = data["topic"]
-        duration = data["duration"]
-        difficulty = data["difficulty"]
-        start_time = data["start_time"]
-        end_time = data["end_time"]
-
-        questions = data["questions"]
 
         conn = get_db()
         cursor = conn.cursor()
+        
+        cursor.execute("""
 
-        title = subject
+            SELECT photo_path
 
-        description = f"{difficulty} Level AI Generated Quiz"
+            FROM Candidates
 
-        total_questions = len(questions)
+            WHERE id=?
 
-        total_marks = total_questions
+        """, (candidate_id,))
 
-        cursor.execute(
-    """
-    INSERT INTO Exams
-    (
-        title,
-        topic,
-        difficulty,
-        description,
-        duration,
-        total_questions,
-        total_marks,
-        start_time,
-        end_time
-    )
 
-    VALUES
-    (
-        ?,?,?,?,?,?,?,?,?
-    )
-    """,
-    (
-        title,
-        topic,
-        difficulty,
-        description,
-        duration,
-        total_questions,
-        total_marks,
-        start_time,
-        end_time
-    )
-)
+        row = cursor.fetchone()
 
-        exam_id = cursor.lastrowid
 
-        for q in questions:
+        if row is None:
 
-            cursor.execute(
-                """
-                INSERT INTO Questions
-                (
+            conn.close()
+
+            return jsonify({
+
+                "success": False,
+
+                "message": "Candidate not found."
+
+            }), 404
+
+
+        photo_path = row["photo_path"]
+
+
+        result = monitor.monitor(
+
+            registered_photo=photo_path,
+
+            live_image_base64=image,
+
+            candidate_id=candidate_id,
+
+            exam_id=exam_id
+
+        )
+
+
+        # -----------------------------
+        # Save Violation
+        # -----------------------------
+
+        if result["status"] == "violation":
+
+            cursor.execute("""
+
+                INSERT INTO ViolationLogs(
+
+                    candidate_id,
+
                     exam_id,
-                    question,
-                    option_a,
-                    option_b,
-                    option_c,
-                    option_d,
-                    correct_option
+
+                    violation_type,
+
+                    evidence_image,
+
+                    face_count,
+
+                    violation_time
+
                 )
 
-                VALUES
-                (
-                    ?,?,?,?,?,?,?
-                )
-                """,
-                (
-                    exam_id,
-                    q["question"],
-                    q["option_a"],
-                    q["option_b"],
-                    q["option_c"],
-                    q["option_d"],
-                    q["correct_option"]
-                )
-            )
+                VALUES(?,?,?,?,?,CURRENT_TIMESTAMP)
 
-        conn.commit()
+            """, (
 
-        cursor.close()
+                candidate_id,
+
+                exam_id,
+
+                result["type"],
+
+                result["evidence"],
+
+                0
+
+            ))
+
+            conn.commit()
+
 
         conn.close()
 
+
         return jsonify({
 
-            "status":"success",
+            "success": True,
 
-            "message":"Quiz Saved Successfully"
+            "result": result
 
         })
 
-    except Exception as e:
 
-        if 'conn' in locals():
-            conn.rollback()
-            conn.close()
+    except Exception as e:
 
         return jsonify({
 
-            "status": "error",
+            "success": False,
 
             "message": str(e)
 
@@ -658,6 +641,92 @@ def view_answers_api(exam_id):
             "message":str(e)
 
         }),500
+
+@api_bp.route("/api/verify_candidate", methods=["POST"])
+def verify_candidate():
+
+    if "candidate_id" not in session:
+
+        return jsonify({
+
+            "verified": False,
+            "message": "Unauthorized"
+
+        }), 401
+
+    data = request.get_json()
+
+    if not data:
+
+        return jsonify({
+
+            "verified": False,
+            "message": "Invalid request."
+
+        }), 400
+
+    image = data.get("image")
+
+    if not image:
+
+        return jsonify({
+
+            "verified": False,
+            "message": "Image not received."
+
+        }), 400
+
+    conn = get_db()
+
+    candidate = conn.execute(
+        """
+        SELECT photo_path
+        FROM Candidates
+        WHERE id = ?
+        """,
+        (session["candidate_id"],)
+    ).fetchone()
+
+    conn.close()
+
+    if candidate is None:
+
+        return jsonify({
+
+            "verified": False,
+            "message": "Candidate not found."
+
+        }), 404
+
+    photo_path = candidate["photo_path"]
+
+    if not photo_path:
+
+        return jsonify({
+
+            "verified": False,
+            "message": "Registration photo missing."
+
+        }), 404
+
+    if not os.path.exists(photo_path):
+
+        return jsonify({
+
+            "verified": False,
+            "message": "Registration image not found."
+
+        }), 404
+
+    result = verifier.verify(
+
+        photo_path,
+
+        image
+
+    )
+
+    return jsonify(result)
 
 @api_bp.route("/api/results", methods=["GET"])
 def get_results():

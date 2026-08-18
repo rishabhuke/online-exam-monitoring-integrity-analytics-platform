@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>ExamGuard AI | Examinations</title>
+
+    <!-- Existing dashboard CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+
+    <!-- Examination page CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/examinations.css') }}">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+
+<body>
+
+
+<!-- ==========================================================
+BACKGROUND
+========================================================== -->
+
+<div class="background">
+
+    <div class="circle circle1"></div>
+    <div class="circle circle2"></div>
+    <div class="circle circle3"></div>
+
+</div>
+
+
+<div class="dashboard-container">
+
+
+    <!-- ======================================================
+    EXISTING SIDEBAR
+    ====================================================== -->
+
+    {% set active_page = 'examinations' %}
+    {% include 'admin_sidebar.html' %}
+
+
+
+    <!-- ======================================================
+    MAIN CONTENT
+    ====================================================== -->
+
+    <main class="main-content examination-main">
+
+
+        <!-- ==================================================
+        TOPBAR
+        ================================================== -->
+
+        <header class="topbar">
+
+
+            <div class="left-top">
+
+
+                <button id="toggleSidebar">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+
+                <div class="examination-heading">
+
+                    <h1>
+
+                        <i class="fa-solid fa-file-circle-check"></i>
+
+                        Examinations
+
+                    </h1>
+
+                    <p>
+
+                        Manage and monitor your examinations
+
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="right-top">
+
+
+                <div class="notification">
+
+                    <i class="fa-solid fa-bell"></i>
+
+                    <span id="notificationCount">0</span>
+
+                </div>
+
+
+                <div class="admin-profile">
+
+                    <img id="adminPhoto"
+                         src="{{ url_for('static', filename='images/admin.png') }}"
+                         alt="Admin">
+
+
+                    <div>
+
+                        <h4 id="adminName">
+                            Loading...
+                        </h4>
+
+                        <p id="adminRole">
+                            Administrator
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- ==================================================
+        PAGE HEADER
+        ================================================== -->
+
+        <section class="exam-page-header">
+
+
+            <div>
+
+                <h1>Examinations</h1>
+
+                <p>
+                    Manage, monitor and review all examinations.
+                </p>
+
+            </div>
+
+
+             <a href="{{ url_for('admin_dashboard.quiz_generator_page') }}"
+
+               class="create-exam-btn">
+
+                <i class="fa-solid fa-plus"></i>
+
+                Create Examination
+
+            </a>
+
+        </section>
+
+
+
+        <!-- ==================================================
+        STATISTICS
+        ================================================== -->
+
+        <section class="exam-stat-grid">
+
+
+            <!-- TOTAL -->
+
+            <div class="exam-stat-card purple">
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-file-lines"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Total Examinations</span>
+
+                    <strong id="totalExaminations">
+                        0
+                    </strong>
+
+                    <small>
+                        All time
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- UPCOMING -->
+
+            <div class="exam-stat-card orange">
+
+                <div class="stat-icon">
+
+                    <i class="fa-regular fa-clock"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Upcoming Examinations</span>
+
+                    <strong id="upcomingExaminations">
+                        0
+                    </strong>
+
+                    <small>
+                        Starting soon
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- ACTIVE -->
+
+            <div class="exam-stat-card green">
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-play"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Active Examinations</span>
+
+                    <strong id="activeExaminations">
+                        0
+                    </strong>
+
+                    <small>
+                        Live now
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- COMPLETED -->
+
+            <div class="exam-stat-card blue">
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-check"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Completed Examinations</span>
+
+                    <strong id="completedExaminations">
+                        0
+                    </strong>
+
+                    <small>
+                        Finished
+                    </small>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+        MAIN EXAMINATION AREA
+        ================================================== -->
+
+        <section class="examination-layout">
+
+
+            <!-- =================================================
+            LEFT
+            ================================================= -->
+
+            <div class="examination-left">
+
+
+                <!-- FILTER BAR -->
+
+                <div class="filter-panel">
+
+
+                    <div class="search-wrapper">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input
+                            type="text"
+                            id="examSearch"
+                            placeholder="Search examinations..."
+                        >
+
+                    </div>
+
+
+                    <select id="statusFilter">
+
+                        <option value="all">
+                            All Status
+                        </option>
+
+                        <option value="active">
+                            Active
+                        </option>
+
+                        <option value="upcoming">
+                            Upcoming
+                        </option>
+
+                        <option value="completed">
+                            Completed
+                        </option>
+
+                        
+
+                    </select>
+
+
+                    <select id="subjectFilter">
+
+                        <option value="all">
+                            All Subjects
+                        </option>
+
+                    </select>
+
+
+                    <select id="sortFilter">
+
+                        <option value="newest">
+                            Newest First
+                        </option>
+
+                        <option value="oldest">
+                            Oldest First
+                        </option>
+
+                        <option value="title">
+                            Title A-Z
+                        </option>
+
+                        <option value="questions">
+                            Questions
+                        </option>
+
+                    </select>
+
+
+                    <button id="refreshExams"
+                            class="refresh-btn"
+                            title="Refresh">
+
+                        <i class="fa-solid fa-rotate"></i>
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- EXAM TABLE -->
+
+                <div class="exam-table-panel">
+
+
+                    <div class="table-heading">
+
+                        <div>
+
+                            <h2>All Examinations</h2>
+
+                            <p id="tableSummary">
+                                Loading examinations...
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table class="examination-table">
+
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Examination
+                                    </th>
+
+                                    <th>
+                                        Subject
+                                    </th>
+
+                                    <th>
+                                        Questions
+                                    </th>
+
+                                    <th>
+                                        Duration
+                                    </th>
+
+                                    <th>
+                                        Availability
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th>
+                                        Actions
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="examinationTableBody">
+
+                                <tr>
+
+                                    <td colspan="7">
+
+                                        <div class="table-loading">
+
+                                            <div class="spinner"></div>
+
+                                            Loading examinations...
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+
+                        </table>
+
+                    </div>
+
+
+
+                    <!-- PAGINATION -->
+
+                    <div class="pagination-section">
+
+
+                        <div id="paginationInfo">
+
+                            Showing 0 examinations
+
+                        </div>
+
+
+                        <div class="pagination-controls">
+
+                            <button id="previousPage">
+
+                                <i class="fa-solid fa-chevron-left"></i>
+
+                            </button>
+
+
+                            <div id="pageNumbers"></div>
+
+
+                            <button id="nextPage">
+
+                                <i class="fa-solid fa-chevron-right"></i>
+
+                            </button>
+
+                        </div>
+
+
+                        <div class="rows-control">
+
+                            Rows per page:
+
+                            <select id="rowsPerPage">
+
+                                <option value="6">
+                                    6
+                                </option>
+
+                                <option value="10">
+                                    10
+                                </option>
+
+                                <option value="15">
+                                    15
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =================================================
+            RIGHT SIDEBAR
+            ================================================= -->
+
+            <aside class="examination-right">
+
+
+                <!-- UPCOMING -->
+
+                <div class="side-panel">
+
+                    <div class="side-panel-header">
+
+                        <div>
+
+                            <i class="fa-regular fa-calendar"></i>
+
+                            <h2>
+                                Upcoming Examinations
+                            </h2>
+
+                        </div>
+
+                        <button id="viewAllUpcoming">
+
+                            View All
+
+                        </button>
+
+                    </div>
+
+
+                    <div id="upcomingExamList"
+                         class="upcoming-list">
+
+                        <div class="side-loading">
+
+                            Loading...
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- QUICK ACTIONS -->
+
+                <div class="side-panel">
+
+                    <div class="side-panel-title">
+
+                        <i class="fa-solid fa-bolt"></i>
+
+                        <h2>
+                            Quick Actions
+                        </h2>
+
+                    </div>
+
+
+                    <div class="quick-action-list">
+
+
+                        <!-- CREATE -->
+
+                        <a href="{{ url_for('admin_dashboard.quiz_generator_page') }}"
+                           class="quick-action">
+
+                            <span class="quick-action-icon">
+
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+
+                            </span>
+
+                            <span>
+                                Generate with AI
+                            </span>
+
+                        </a>
+
+                        <!-- QUESTION BANK -->
+
+                        
+                        
+
+
+                        <!-- AI -->
+
+                        
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- STATUS GUIDE -->
+
+                <div class="side-panel status-guide">
+
+                    <div class="side-panel-title">
+
+                        <i class="fa-solid fa-circle-info"></i>
+
+                        <h2>
+                            Examination Status Guide
+                        </h2>
+
+                    </div>
+
+
+                    <div class="guide-item">
+
+                        <span class="guide-dot active"></span>
+
+                        <div>
+
+                            <strong>Active</strong>
+
+                            <p>
+                                Examination is live and running
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="guide-item">
+
+                        <span class="guide-dot upcoming"></span>
+
+                        <div>
+
+                            <strong>Upcoming</strong>
+
+                            <p>
+                                Examination will start soon
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="guide-item">
+
+                        <span class="guide-dot completed"></span>
+
+                        <div>
+
+                            <strong>Completed</strong>
+
+                            <p>
+                                Examination has ended
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="guide-item">
+
+                        <span class="guide-dot draft"></span>
+
+                        <div>
+
+                            <strong>Draft</strong>
+
+                            <p>
+                                Examination is in draft mode
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="guide-item">
+
+                        <span class="guide-dot cancelled"></span>
+
+                        <div>
+
+                            <strong>Cancelled</strong>
+
+                            <p>
+                                Examination was cancelled
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+
+<!-- ==========================================================
+EXAM DETAILS MODAL
+========================================================== -->
+
+<div id="examModal"
+     class="exam-modal">
+
+
+    <div class="modal-overlay"></div>
+
+
+    <div class="exam-modal-content">
+
+
+        <button id="closeExamModal"
+                class="modal-close">
+
+            <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+
+        <div class="modal-icon">
+
+            <i class="fa-solid fa-file-lines"></i>
+
+        </div>
+
+
+        <h2 id="modalExamTitle">
+            Examination
+        </h2>
+
+
+        <p id="modalExamTopic">
+            Topic
+        </p>
+
+
+        <div class="modal-details">
+
+
+            <div>
+
+                <span>Subject</span>
+
+                <strong id="modalSubject">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>Difficulty</span>
+
+                <strong id="modalDifficulty">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>Questions</span>
+
+                <strong id="modalQuestions">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>Duration</span>
+
+                <strong id="modalDuration">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>Available From</span>
+
+                <strong id="modalStart">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>Available Until</span>
+
+                <strong id="modalEnd">
+                    -
+                </strong>
+
+            </div>
+
+
+        </div>
+
+
+        <div class="modal-description">
+
+            <span>Description</span>
+
+            <p id="modalDescription">
+                No description available.
+            </p>
+
+        </div>
+
+
+     <div class="modal-actions">
+
+    <button id="closeExamDetails"
+            class="modal-close-btn">
+
+        <i class="fa-solid fa-xmark"></i>
+
+        Close
+
+    </button>
+
+</div>
+
+    </div>
+
+</div>
+
+
+
+<script src="{{ url_for('static', filename='js/examinations.js') }}"></script>
+
+</body>
+
+</html>

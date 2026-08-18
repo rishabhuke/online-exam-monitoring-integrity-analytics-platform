@@ -1,239 +1,491 @@
-document
-.getElementById("generateBtn")
-.addEventListener("click", async function () {
+document.addEventListener("DOMContentLoaded", function () {
 
-    const subject =
-        document.getElementById("subject").value.trim();
+    // ==========================================================
+    // ELEMENTS
+    // ==========================================================
 
-    const topic =
-        document.getElementById("topic").value.trim();
+    const quizContainer = document.getElementById("quizContainer");
+    const generateBtn = document.getElementById("generateBtn");
+    const saveQuizBtn = document.getElementById("saveQuizBtn");
 
-    const difficulty =
-        document.querySelector(
-            'input[name="difficulty"]:checked'
-        ).value;
+    const quizPreview = document.getElementById("quizPreview");
+    const questionsContainer =
+        document.getElementById("questionsContainer");
 
-    const count =
-        parseInt(
-            document.getElementById("count").value
-        );
+
+    // ==========================================================
+    // VARIABLES
+    // ==========================================================
+
+    let generatedQuestions = [];
+    let generatedQuiz = null;
+
+
+    // ==========================================================
+    // GENERATE QUIZ
+    // ==========================================================
+
+    generateBtn.addEventListener("click", async function () {
+
+        const subject =
+            document.getElementById("subject").value.trim();
+
+        const topic =
+            document.getElementById("topic").value.trim();
+
+        const difficultyElement =
+            document.querySelector(
+                'input[name="difficulty"]:checked'
+            );
+
+        const difficulty =
+            difficultyElement
+                ? difficultyElement.value
+                : "Medium";
+
+        const count =
+            parseInt(
+                document.getElementById("count").value
+            );
+
         const duration =
-parseInt(document.getElementById("duration").value);
-const startTime =
-document.getElementById("startTime").value;
+            parseInt(
+                document.getElementById("duration").value
+            );
 
-const endTime =
-document.getElementById("endTime").value;
+        const startTime =
+            document.getElementById("startTime").value;
 
-if(startTime===""){
+        const endTime =
+            document.getElementById("endTime").value;
 
-    alert("Select Start Time");
 
-    return;
+        // ======================================================
+        // VALIDATION
+        // ======================================================
 
-}
-
-if(endTime===""){
-
-    alert("Select End Time");
-
-    return;
-
-}
-
-if(new Date(endTime) <= new Date(startTime)){
-
-    alert("End Time must be greater than Start Time");
-
-    return;
-
-}
-
-    if(subject===""){
-
-        alert("Enter Subject");
-
-        return;
-
-    }
-
-    if(topic===""){
-
-        alert("Enter Topic");
-
-        return;
-
-    }
-
-    if(isNaN(count)||count<1){
-
-        alert("Invalid Question Count");
-
-        return;
-
-    }
-
-    const quizData={
-
-        subject,
-
-        topic,
-
-        difficulty,
-
-        count,
-
-        duration
-
-    };
-
-    try{
-
-        const response=
-        await fetch("/generate_quiz",{
-
-            method:"POST",
-
-            headers:{
-
-                "Content-Type":"application/json"
-
-            },
-
-            body:JSON.stringify(quizData)
-
-        });
-
-        const result=
-        await response.json();
-
-        console.log(result);
-
-        if(result.status==="success"){
-
-           const preview =
-document.getElementById("quizPreview");
-
-const container =
-document.getElementById("questionsContainer");
-
-container.innerHTML = "";
-
-preview.style.display = "block";
-
-result.questions.forEach((q,index)=>{
-
-    container.innerHTML += `
-
-        <div class="question-card">
-
-            <h3>Question ${index+1}</h3>
-
-            <p>${q.question}</p>
-
-            <ul>
-
-                <li>A. ${q.option_a}</li>
-
-                <li>B. ${q.option_b}</li>
-
-                <li>C. ${q.option_c}</li>
-
-                <li>D. ${q.option_d}</li>
-
-            </ul>
-
-            <p class="correct">
-                Correct Answer :
-                ${q.correct_option}
-            </p>
-
-        </div>
-
-    `;
-
-});
-
-window.generatedQuiz = result.questions;
-
+        if (!subject) {
+            alert("Please enter a subject.");
+            return;
         }
 
-        else{
-
-            alert(result.message);
-
+        if (!topic) {
+            alert("Please enter a topic.");
+            return;
         }
 
-    }
+        if (!count || count < 1) {
+            alert("Please enter a valid number of questions.");
+            return;
+        }
 
-    catch(error){
+        if (!duration || duration < 5) {
+            alert("Please enter a valid duration.");
+            return;
+        }
 
-        console.error(error);
+        if (!startTime) {
+            alert("Please select start time.");
+            return;
+        }
 
-        alert("Server Error");
+        if (!endTime) {
+            alert("Please select end time.");
+            return;
+        }
 
-    }
 
-});
-document
-.getElementById("saveQuizBtn")
-.addEventListener("click", async function(){
+        // ======================================================
+        // BUTTON LOADING
+        // ======================================================
 
-    if(!window.generatedQuiz){
+        generateBtn.disabled = true;
 
-        alert("Generate Quiz First");
+        generateBtn.innerHTML = `
+            <span>⏳</span> Generating...
+        `;
 
-        return;
 
-    }
+        // ======================================================
+        // HIDE OLD PREVIEW WHILE GENERATING
+        // ======================================================
 
-    const data={
+        quizContainer.classList.remove("quiz-generated");
 
-    subject:
-    document.getElementById("subject").value,
+        questionsContainer.innerHTML = "";
 
-    topic:
-    document.getElementById("topic").value,
+        generatedQuestions = [];
+        generatedQuiz = null;
 
-    difficulty:
-    document.querySelector(
-        'input[name="difficulty"]:checked'
-    ).value,
 
-    duration:
-    parseInt(
-        document.getElementById("duration").value
-    ),
+        try {
 
-    start_time:
-    document.getElementById("startTime").value,
+            // ==================================================
+            // API REQUEST
+            // ==================================================
 
-    end_time:
-    document.getElementById("endTime").value,
+            const response = await fetch(
+                "/admin/api/generate-quiz",
+                {
+                    method: "POST",
 
-    questions:
-    window.generatedQuiz
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
 
-};
+                    body: JSON.stringify({
 
-    const response=
-    await fetch("/save_quiz",{
+                        subject: subject,
+                        topic: topic,
+                        difficulty: difficulty,
+                        count: count,
+                        duration: duration,
+                        start_time: startTime,
+                        end_time: endTime
 
-        method:"POST",
+                    })
+                }
+            );
 
-        headers:{
 
-            "Content-Type":"application/json"
+            // ==================================================
+            // READ RESPONSE
+            // ==================================================
 
-        },
+            const result = await response.json();
 
-        body:JSON.stringify(data)
+
+            console.log(
+                "QUIZ GENERATION RESPONSE:",
+                result
+            );
+
+
+            // ==================================================
+            // CHECK API RESPONSE
+            // ==================================================
+
+            if (
+                !response.ok ||
+                result.status !== "success"
+            ) {
+
+                alert(
+                    result.message ||
+                    result.error ||
+                    "Quiz generation failed."
+                );
+
+                return;
+            }
+
+
+            // ==================================================
+            // SAVE RESPONSE DATA
+            // ==================================================
+
+            generatedQuestions =
+                Array.isArray(result.questions)
+                    ? result.questions
+                    : [];
+
+            generatedQuiz =
+                result.quiz || {};
+
+
+            console.log(
+                "Generated questions:",
+                generatedQuestions
+            );
+
+            console.log(
+                "Generated quiz:",
+                generatedQuiz
+            );
+
+
+            // ==================================================
+            // CHECK QUESTIONS
+            // ==================================================
+
+            if (generatedQuestions.length === 0) {
+
+                alert(
+                    "Quiz generated, but no questions were returned."
+                );
+
+                return;
+            }
+
+
+            // ==================================================
+            // RENDER QUESTIONS
+            // ==================================================
+
+            renderQuestions(generatedQuestions);
+
+
+            // ==================================================
+            // IMPORTANT FIX
+            // ==================================================
+            // Add the class that activates the CSS layout.
+            //
+            // Without this class:
+            //
+            // #quizPreview {
+            //     width: 0;
+            //     opacity: 0;
+            //     padding: 0;
+            // }
+            //
+            // Therefore the preview remains invisible.
+            // ==================================================
+
+            quizContainer.classList.add("quiz-generated");
+
+
+            // ==================================================
+            // SHOW PREVIEW
+            // ==================================================
+
+            quizPreview.style.display = "flex";
+
+
+            // ==================================================
+            // SHOW SAVE BUTTON
+            // ==================================================
+
+            saveQuizBtn.style.display = "inline-block";
+
+
+            // ==================================================
+            // SCROLL PREVIEW TO TOP
+            // ==================================================
+
+            questionsContainer.scrollTop = 0;
+
+
+            console.log(
+                "Quiz preview displayed successfully."
+            );
+
+        }
+        catch (error) {
+
+            console.error(
+                "Quiz generation error:",
+                error
+            );
+
+            alert(
+                "Unable to generate quiz. Check the browser console."
+            );
+
+        }
+        finally {
+
+            generateBtn.disabled = false;
+
+            generateBtn.innerHTML = `
+                <span>✦</span> Generate Quiz
+            `;
+
+        }
 
     });
 
-    const result=
-    await response.json();
 
-    alert(result.message);
+    // ==========================================================
+    // RENDER QUESTIONS
+    // ==========================================================
+
+    function renderQuestions(questions) {
+
+        questionsContainer.innerHTML = "";
+
+
+        questions.forEach(function (question, index) {
+
+            const questionCard =
+                document.createElement("div");
+
+            questionCard.className =
+                "question-card";
+
+
+            questionCard.innerHTML = `
+
+                <div class="question-number">
+                    Question ${index + 1}
+                </div>
+
+                <div class="question-text">
+                    ${escapeHTML(question.question)}
+                </div>
+
+                <div class="options">
+
+                    <div class="option">
+                        <strong>A.</strong>
+                        ${escapeHTML(question.option_a)}
+                    </div>
+
+                    <div class="option">
+                        <strong>B.</strong>
+                        ${escapeHTML(question.option_b)}
+                    </div>
+
+                    <div class="option">
+                        <strong>C.</strong>
+                        ${escapeHTML(question.option_c)}
+                    </div>
+
+                    <div class="option">
+                        <strong>D.</strong>
+                        ${escapeHTML(question.option_d)}
+                    </div>
+
+                </div>
+
+                <div class="correct-answer">
+                    Correct Answer:
+                    ${escapeHTML(question.correct_option)}
+                </div>
+
+            `;
+
+
+            questionsContainer.appendChild(
+                questionCard
+            );
+
+        });
+
+    }
+
+
+    // ==========================================================
+    // ESCAPE HTML
+    // ==========================================================
+
+    function escapeHTML(value) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+            return "";
+        }
+
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    // ==========================================================
+    // SAVE QUIZ
+    // ==========================================================
+
+    saveQuizBtn.addEventListener(
+        "click",
+        async function () {
+
+            if (!generatedQuestions.length) {
+
+                alert(
+                    "Please generate questions before saving."
+                );
+
+                return;
+            }
+
+
+            saveQuizBtn.disabled = true;
+
+            saveQuizBtn.innerHTML =
+                "Saving...";
+
+
+            try {
+
+                const response = await fetch(
+                    "/admin/api/save-quiz",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            ...generatedQuiz,
+
+                            questions:
+                                generatedQuestions
+
+                        })
+                    }
+                );
+
+
+                const result =
+                    await response.json();
+
+
+                console.log(
+                    "SAVE QUIZ RESPONSE:",
+                    result
+                );
+
+
+                if (
+                    !response.ok ||
+                    result.status !== "success"
+                ) {
+
+                    alert(
+                        result.message ||
+                        result.error ||
+                        "Unable to save quiz."
+                    );
+
+                    return;
+                }
+
+
+                alert(
+                    "Quiz saved successfully!"
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Save quiz error:",
+                    error
+                );
+
+                alert(
+                    "Error while saving quiz."
+                );
+
+            }
+            finally {
+
+                saveQuizBtn.disabled = false;
+
+                saveQuizBtn.innerHTML =
+                    "✓ Save Quiz";
+
+            }
+
+        }
+    );
 
 });

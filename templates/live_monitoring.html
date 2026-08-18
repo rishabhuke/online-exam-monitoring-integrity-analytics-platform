@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ExamGuard AI | Live Monitoring</title>
+
+
+    <!-- Existing Admin Dashboard CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin_dashboard.css') }}"
+    >
+
+    <!-- Live Monitoring CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/live_monitoring.css') }}"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     BACKGROUND
+========================================================= -->
+
+<div class="background">
+
+    <div class="circle circle1"></div>
+    <div class="circle circle2"></div>
+    <div class="circle circle3"></div>
+
+</div>
+
+
+
+<div class="dashboard-container">
+
+
+    <!-- =====================================================
+         SIDEBAR
+         YOUR PREVIOUS SIDEBAR IS KEPT
+    ====================================================== -->
+
+    {% set active_page = 'live_monitoring' %}
+    {% include 'admin_sidebar.html' %}
+
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- =================================================
+             TOP BAR
+        ================================================== -->
+
+        <header class="topbar">
+
+
+            <div class="left-top">
+
+
+                <button
+                    type="button"
+                    id="toggleSidebar"
+                >
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+
+
+                <div class="monitoring-page-title">
+
+
+                    <div class="monitoring-title-icon">
+
+                        <i class="fa-solid fa-video"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <div class="title-row">
+
+                            <h1>
+                                Live Monitoring
+                            </h1>
+
+
+                            <span class="live-badge">
+
+                                <span></span>
+
+                                LIVE
+
+                            </span>
+
+                        </div>
+
+
+                        <p>
+                            Real-time monitoring of active examination
+                        </p>
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <div class="right-top">
+
+
+                <div class="notification">
+
+                    <i class="fa-solid fa-bell"></i>
+
+                    <!-- Backend can update this later -->
+                    <span id="notificationCount"></span>
+
+                </div>
+
+
+
+                <div class="admin-profile">
+
+
+                    <img
+                        id="adminPhoto"
+                        src="{{ url_for('static', filename='images/admin.png') }}"
+                        alt="Admin"
+                    >
+
+
+                    <div>
+
+                        <h4 id="adminName">
+                            {{ session.get('admin_name', '') }}
+                        </h4>
+
+                        <p id="adminRole">
+                            {{ session.get('admin_role', '') }}
+                        </p>
+
+                    </div>
+
+
+                    <i class="fa-solid fa-chevron-down profile-arrow"></i>
+
+
+                </div>
+
+
+            </div>
+
+
+        </header>
+
+
+
+        <!-- =================================================
+             PAGE CONTENT
+        ================================================== -->
+
+        <section class="monitoring-content">
+
+
+            <!-- =================================================
+                 EXAM SUMMARY
+            ================================================== -->
+
+            <section class="exam-summary">
+
+
+                <!-- SELECTED EXAM -->
+
+                <div class="selected-exam">
+
+
+                    <span class="summary-label">
+                        Selected Exam
+                    </span>
+
+
+                    <!-- Populated by JS -->
+
+                    <h2 id="selectedExamName">
+                        Loading examination...
+                    </h2>
+
+
+                    <div class="exam-live-info">
+
+                        <span class="green-dot"></span>
+
+                        <span id="examLiveStatus">
+                            Checking status...
+                        </span>
+
+                        <span class="separator">
+                            |
+                        </span>
+
+                        <span>
+
+                            Ends in
+
+                            <strong id="examCountdown">
+                                --
+                            </strong>
+
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- TOTAL STUDENTS -->
+
+                <div class="summary-stat">
+
+
+                    <div class="summary-icon purple">
+
+                        <i class="fa-solid fa-users"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Total Students
+                        </span>
+
+                        <strong id="totalStudents">
+                            0
+                        </strong>
+
+                        <small>
+                            Attending
+                        </small>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- MONITORED -->
+
+                <div class="summary-stat">
+
+
+                    <div class="summary-icon green">
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Monitored
+                        </span>
+
+                        <strong id="monitoredStudents">
+                            0
+                        </strong>
+
+                        <small>
+                            Online
+                        </small>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- VIOLATIONS -->
+
+                <div class="summary-stat">
+
+
+                    <div class="summary-icon red">
+
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Violations
+                        </span>
+
+                        <strong id="liveViolationCount">
+                            0
+                        </strong>
+
+                        <small>
+                            Live
+                        </small>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- EVIDENCE -->
+
+                <div class="summary-stat">
+
+
+                    <div class="summary-icon blue">
+
+                        <i class="fa-solid fa-image"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Evidence Captured
+                        </span>
+
+                        <strong id="evidenceCount">
+                            0
+                        </strong>
+
+                        <small>
+                            Today
+                        </small>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- SYSTEM STATUS -->
+
+                <div class="system-status">
+
+
+                    <div class="system-header">
+
+                        <span>
+                            System Status
+                        </span>
+
+                        <i class="fa-solid fa-circle-check"></i>
+
+                    </div>
+
+
+                    <div class="status-line">
+
+                        <span class="status-dot"></span>
+
+                        <span id="systemStatus">
+                            Checking...
+                        </span>
+
+                    </div>
+
+
+                    <div class="monitor-engine">
+
+                        Monitoring Engine
+
+                    </div>
+
+
+                    <div class="status-line">
+
+                        <span class="status-dot"></span>
+
+                        <span id="monitoringEngineStatus">
+                            Checking...
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+            </section>
+
+
+
+            <!-- =================================================
+                 MAIN MONITORING GRID
+            ================================================== -->
+
+            <section class="monitoring-grid">
+
+
+                <!-- =================================================
+                     STUDENT LIST
+                ================================================== -->
+
+                <aside class="students-panel">
+
+
+                    <div class="panel-heading">
+
+                        <h2>
+
+                            Students in this Exam
+
+                            <span id="studentListCount">
+                                (0)
+                            </span>
+
+                        </h2>
+
+                    </div>
+
+
+
+                    <!-- SEARCH -->
+
+                    <div class="student-search">
+
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+
+                        <input
+                            type="text"
+                            id="studentSearch"
+                            placeholder="Search student..."
+                            autocomplete="off"
+                        >
+
+
+                        <button
+                            type="button"
+                            id="studentFilter"
+                        >
+
+                            <i class="fa-solid fa-filter"></i>
+
+                        </button>
+
+
+                    </div>
+
+
+
+                    <!-- =================================================
+                         IMPORTANT
+
+                         NO STATIC STUDENTS HERE.
+
+                         JavaScript will create students from:
+
+                         data.students
+                    ================================================== -->
+
+                    <div
+                        class="student-list"
+                        id="studentList"
+                    >
+
+                        <div class="loading-students">
+
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+
+                            <span>
+                                Loading students...
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <button
+                        type="button"
+                        class="load-more"
+                        id="loadMoreStudents"
+                    >
+
+                        Load more students
+
+                        <i class="fa-solid fa-chevron-down"></i>
+
+                    </button>
+
+
+                </aside>
+
+
+
+                <!-- =================================================
+                     CENTER MONITOR
+                ================================================== -->
+
+                <section class="center-monitor">
+
+
+                    <!-- STUDENT HEADER -->
+
+                    <div class="student-monitor-header">
+
+
+                        <h2>
+
+                            Student:
+
+                            <strong id="monitorStudentName">
+                                No student selected
+                            </strong>
+
+                            <span id="monitorStudentId">
+                                --
+                            </span>
+
+                        </h2>
+
+
+                        <div
+                            class="verified"
+                            id="verificationStatus"
+                        >
+
+                            ID Verification
+
+                            <i class="fa-solid fa-circle-question"></i>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <!-- =================================================
+                         CAMERA
+                    ================================================== -->
+
+                    <div class="camera-container">
+
+
+                        <div class="camera-header">
+
+
+                            <span class="live-camera-badge">
+
+                                <span></span>
+
+                                LIVE
+
+                            </span>
+
+
+                            <button
+                                type="button"
+                                class="fullscreen-btn"
+                                id="fullscreenCamera"
+                            >
+
+                                <i class="fa-solid fa-expand"></i>
+
+                            </button>
+
+
+                        </div>
+
+
+
+                        <!--
+
+                            IMPORTANT:
+
+                            This is only the display element.
+
+                            The student's browser is responsible
+                            for accessing its own camera.
+
+                            Admin receives the stream/frame here.
+
+                        -->
+
+                        <img
+                            id="studentVideo"
+                            src=""
+                            alt="Live Candidate Feed"
+                            style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"
+                        >
+
+
+
+                        <!-- Empty camera state -->
+
+                        <div
+                            class="camera-placeholder"
+                            id="cameraPlaceholder"
+                        >
+
+                            <div class="camera-placeholder-icon">
+
+                                <i class="fa-solid fa-video"></i>
+
+                            </div>
+
+
+                            <h3 id="cameraPlaceholderTitle">
+                                Waiting for student camera
+                            </h3>
+
+
+                            <p id="cameraPlaceholderMessage">
+                                Select a student to view the live camera.
+                            </p>
+
+                        </div>
+
+
+
+                        <!-- Connection strength -->
+
+                        <div
+                            class="connection-strength"
+                            id="connectionStrength"
+                        >
+
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <!-- =================================================
+                         LIVE STATUS
+                    ================================================== -->
+
+                    <div class="live-status-card">
+
+
+                        <h3>
+                            Live Status
+                        </h3>
+
+
+                        <div class="status-grid">
+
+
+                            <!-- FACE -->
+
+                            <div class="live-status-item">
+
+                                <span>
+                                    Face Detected
+                                </span>
+
+                                <strong
+                                    id="faceStatus"
+                                    class="success"
+                                >
+
+                                    <i class="fa-solid fa-circle-check"></i>
+
+                                    --
+
+                                </strong>
+
+                            </div>
+
+
+
+                            <!-- LOOKING AT SCREEN -->
+
+                            <div class="live-status-item">
+
+                                <span>
+                                    Looking at Screen
+                                </span>
+
+                                <strong
+                                    id="screenStatus"
+                                    class="success"
+                                >
+
+                                    <i class="fa-solid fa-circle-check"></i>
+
+                                    --
+
+                                </strong>
+
+                            </div>
+
+
+
+                            <!-- MULTIPLE FACES -->
+
+                            <div class="live-status-item">
+
+                                <span>
+                                    Multiple Faces
+                                </span>
+
+                                <strong
+                                    id="multipleFaceStatus"
+                                    class="success"
+                                >
+
+                                    <i class="fa-solid fa-circle-check"></i>
+
+                                    --
+
+                                </strong>
+
+                            </div>
+
+
+
+                            <!-- CAMERA -->
+
+                            <div class="live-status-item">
+
+                                <span>
+                                    Camera Status
+                                </span>
+
+                                <strong
+                                    id="cameraStatus"
+                                    class="success"
+                                >
+
+                                    <i class="fa-solid fa-circle-check"></i>
+
+                                    --
+
+                                </strong>
+
+                            </div>
+
+
+
+                            <!-- MIC -->
+
+                            <div class="live-status-item">
+
+                                <span>
+                                    Mic Status
+                                </span>
+
+                                <strong
+                                    id="micStatus"
+                                    class="disabled"
+                                >
+
+                                    <i class="fa-solid fa-circle-xmark"></i>
+
+                                    --
+
+                                </strong>
+
+                            </div>
+
+
+
+                            <!-- CONNECTION -->
+
+                            <div class="live-status-item">
+
+                                <span>
+                                    Connection
+                                </span>
+
+                                <strong
+                                    id="connectionStatus"
+                                    class="success"
+                                >
+
+                                    <i class="fa-solid fa-circle-check"></i>
+
+                                    --
+
+                                </strong>
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <!-- =================================================
+                         SESSION INFO
+                    ================================================== -->
+
+                    <div class="session-card">
+
+
+                        <h3>
+                            Session Info
+                        </h3>
+
+
+                        <div class="session-grid">
+
+
+                            <div>
+
+                                <span>
+                                    Started At
+                                </span>
+
+                                <strong id="sessionStartedAt">
+                                    --
+                                </strong>
+
+                            </div>
+
+
+
+                            <div>
+
+                                <span>
+                                    Time Elapsed
+                                </span>
+
+                                <strong id="sessionElapsed">
+                                    --
+                                </strong>
+
+                            </div>
+
+
+
+                            <div>
+
+                                <span>
+                                    Remaining Time
+                                </span>
+
+                                <strong id="sessionRemaining">
+                                    --
+                                </strong>
+
+                            </div>
+
+
+
+                            <div>
+
+                                <span>
+                                    Question
+                                </span>
+
+                                <strong id="sessionQuestion">
+                                    --
+                                </strong>
+
+                            </div>
+
+
+
+                            <div>
+
+                                <span>
+                                    Last Activity
+                                </span>
+
+                                <strong id="lastActivity">
+                                    --
+                                </strong>
+
+                            </div>
+
+
+
+                            <div>
+
+                                <span>
+                                    Browser
+                                </span>
+
+                                <strong id="studentBrowser">
+                                    --
+                                </strong>
+
+                            </div>
+
+
+
+                            <div>
+
+                                <span>
+                                    IP Address
+                                </span>
+
+                                <strong id="studentIp">
+                                    --
+                                </strong>
+
+                            </div>
+
+
+
+                            <div>
+
+                                <span>
+                                    Device
+                                </span>
+
+                                <strong id="studentDevice">
+                                    --
+                                </strong>
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </section>
+
+
+
+                <!-- =================================================
+                     RIGHT PANEL
+                ================================================== -->
+
+                <aside class="right-monitor">
+
+
+                    <!-- =================================================
+                         LIVE VIOLATIONS
+                    ================================================== -->
+
+                    <div class="right-panel-card">
+
+
+                        <div class="right-panel-header">
+
+
+                            <h2>
+
+                                <span class="red-dot"></span>
+
+                                Live Violations
+
+                            </h2>
+
+
+                            <a href="/admin/violations-evidence">
+
+                                View All
+
+                            </a>
+
+
+                        </div>
+
+
+
+                        <!--
+
+                            NO STATIC VIOLATIONS.
+
+                            JavaScript will render backend data.
+
+                        -->
+
+                        <div
+                            class="violation-list"
+                            id="violationList"
+                        >
+
+                            <div class="loading-state">
+
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                                Loading violations...
+
+                            </div>
+
+                        </div>
+
+
+
+                        <a
+                            class="view-all-link"
+                            href="/admin/violations-evidence"
+                        >
+
+                            View all violations
+
+                            <i class="fa-solid fa-chevron-right"></i>
+
+                        </a>
+
+
+                    </div>
+
+
+
+                    <!-- =================================================
+                         RECENT EVIDENCE
+                    ================================================== -->
+
+                    <div
+                        class="right-panel-card evidence-card"
+                    >
+
+
+                        <div class="right-panel-header">
+
+
+                            <h2>
+                                Recent Evidence
+                            </h2>
+
+
+                            <a href="/admin/violations">
+
+                                View All
+
+                            </a>
+
+
+                        </div>
+
+
+
+                        <!--
+
+                            NO STATIC EVIDENCE.
+
+                            JavaScript will render backend data.
+
+                        -->
+
+                        <div
+                            class="evidence-grid"
+                            id="evidenceGrid"
+                        >
+
+                            <div class="loading-state">
+
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                                Loading evidence...
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+
+                </aside>
+
+
+            </section>
+
+
+
+            <!-- =================================================
+                 BOTTOM BAR
+            ================================================== -->
+
+            <div class="monitoring-footer">
+
+
+                <div class="monitoring-message">
+
+
+                    <div class="footer-shield">
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                    </div>
+
+
+                    <span id="monitoringMessage">
+
+                        Monitoring status will appear here.
+
+                    </span>
+
+
+                </div>
+
+
+
+                <button
+                    type="button"
+                    class="end-session-btn"
+                    id="endMonitoring"
+                >
+
+                    <i class="fa-solid fa-stop"></i>
+
+                    End Monitoring Session
+
+                </button>
+
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+
+<!-- =========================================================
+     PAGE JAVASCRIPT
+========================================================= -->
+
+<script
+    src="{{ url_for('static', filename='js/live_monitoring.js') }}"
+></script>
+
+
+</body>
+
+</html>

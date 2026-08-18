@@ -163,8 +163,24 @@ href="{{ url_for('static', filename='css/exam_window.css') }}">
     <section class="exam-body">
 
         <!-- Question Palette -->
+         <aside class="left-sidebar">
 
-        <aside class="question-palette">
+    <div class="camera-container">
+
+        <div class="camera-header">
+            Live Camera
+        </div>
+
+        <video
+            id="cameraPreview"
+            autoplay
+            playsinline
+            muted>
+        </video>
+
+    </div>
+
+        <div class="question-palette">
 
             <div class="palette-header">
 
@@ -219,10 +235,12 @@ href="{{ url_for('static', filename='css/exam_window.css') }}">
                 </div>
 
             </div>
+            </div>
 
         </aside>
 
         <!-- QUESTION PANEL -->
+         
 
         <div class="question-panel">
 
@@ -411,7 +429,14 @@ class="exam-modal-overlay">
     </div>
 
 </div>
-
+<!-- Warning Toast -->
+<div id="warningToast" class="warning-toast">
+    <span id="warningIcon">⚠</span>
+    <div class="warning-content">
+        <h4>Warning</h4>
+        <p id="warningMessage"></p>
+    </div>
+</div>
 <!-- ================= RESULT ================= -->
 
 <div

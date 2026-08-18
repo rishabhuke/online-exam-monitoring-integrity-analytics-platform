@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Violations & Evidence | ExamGuard</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/violations_evidence.css') }}"
+    >
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/status_of_candidates.css') }}">
+
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- ================================================= -->
+    <!-- EXISTING SIDEBAR -->
+    <!-- ================================================= -->
+
+    {% set active_page = 'violations_evidence' %}
+    {% include 'admin_sidebar.html' %}
+
+
+    <!-- ================================================= -->
+    <!-- MAIN -->
+    <!-- ================================================= -->
+
+    <main class="main">
+
+        <!-- HEADER -->
+
+        <header class="top-header">
+
+            <div class="top-search">
+
+                <span>⌕</span>
+
+                <input
+                    id="globalSearch"
+                    type="text"
+                    placeholder="Search candidate by name, ID or email..."
+                >
+
+                <kbd>Ctrl /</kbd>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <button
+                    class="icon-button"
+                    id="notificationBtn"
+                >
+                    ♧
+                    <span class="notification-count">
+                        0
+                    </span>
+                </button>
+
+
+                <button
+                    class="icon-button"
+                    id="themeBtn"
+                >
+                    ☾
+                </button>
+
+
+                <div class="profile">
+
+                    <div class="profile-avatar">
+                        AD
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Admin User
+                        </strong>
+
+                        <small>
+                            Super Administrator
+                        </small>
+
+                    </div>
+
+                    <span>
+                       ⌄
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ================================================= -->
+        <!-- PAGE HEADER -->
+        <!-- ================================================= -->
+
+        <section class="page-header">
+
+            <div>
+
+                <div class="title-row">
+
+                    <h1>
+                        Violations & Evidence
+                    </h1>
+
+                    <span class="live-badge">
+                        ● LIVE
+                    </span>
+
+                </div>
+
+                <p>
+                    Review and investigate integrity events
+                    detected during examinations
+                </p>
+
+            </div>
+
+
+            <div class="header-right">
+
+                <button
+                    class="refresh-btn"
+                    id="refreshBtn"
+                >
+                    ↻ Refresh
+                </button>
+
+                <span class="last-updated">
+                    Last updated:
+                    <b id="lastUpdated">--</b>
+                    <i></i>
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- VIOLATION CARDS -->
+        <!-- ================================================= -->
+
+        <section
+            class="violation-grid"
+            id="violationCards"
+        >
+
+            <!-- JavaScript renders cards -->
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- ANALYTICS STRIP -->
+        <!-- ================================================= -->
+
+        <section class="analytics-strip">
+
+            <div class="severity-panel">
+
+                <div class="section-title">
+                    Severity Distribution
+                </div>
+
+                <div class="severity-content">
+
+                    <div class="donut">
+
+                        <div class="donut-center">
+                            <strong id="totalSeverity">
+                                0
+                            </strong>
+
+                            <span>
+                                Events
+                            </span>
+                        </div>
+
+                    </div>
+
+
+                    <div class="severity-list">
+
+                        <div>
+                            <i class="dot high"></i>
+                            High Severity
+
+                            <strong id="highCount">
+                                0
+                            </strong>
+                        </div>
+
+                        <div>
+                            <i class="dot medium"></i>
+                            Medium Severity
+
+                            <strong id="mediumCount">
+                                0
+                            </strong>
+                        </div>
+
+                        <div>
+                            <i class="dot low"></i>
+                            Low Severity
+
+                            <strong id="lowCount">
+                                0
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="evidence-summary">
+
+                <div class="section-title">
+                    Evidence Captured
+                </div>
+
+                <div class="evidence-summary-items">
+
+                    <div class="summary-item">
+
+                        <div class="summary-icon purple">
+                            ▣
+                        </div>
+
+                        <div>
+
+                            <strong id="totalEvidence">
+                                0
+                            </strong>
+
+                            <span>
+                                Total Evidence
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="summary-item">
+
+                        <div class="summary-icon green">
+                            ✓
+                        </div>
+
+                        <div>
+
+                            <strong id="verifiedEvidence">
+                                0
+                            </strong>
+
+                            <span>
+                                Verified
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="summary-item">
+
+                        <div class="summary-icon orange">
+                            ◷
+                        </div>
+
+                        <div>
+
+                            <strong id="pendingEvidence">
+                                0
+                            </strong>
+
+                            <span>
+                                Pending
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- FILTERS -->
+        <!-- ================================================= -->
+
+        <section class="filters">
+
+            <div class="filter-field search-field">
+
+                <label>
+                    Search Candidate
+                </label>
+
+                <div class="input-wrap">
+
+                    <span>⌕</span>
+
+                    <input
+                        id="candidateSearch"
+                        type="text"
+                        placeholder="Search by name, ID or email..."
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="filter-field">
+
+                <label>
+                    Select Examination
+                </label>
+
+                <select id="examFilter">
+
+                    <option value="ALL">
+                        All Examinations
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="filter-field">
+
+                <label>
+                    Violation Category
+                </label>
+
+                <select id="categoryFilter">
+
+                    <option value="ALL">
+                        All Categories
+                    </option>
+
+                    <option value="TAB_SWITCH">
+                        Tab Switches
+                    </option>
+
+                    <option value="FOCUS_LOSS">
+                        Focus Loss
+                    </option>
+
+                    <option value="FACE_ABSENCE">
+                        Face Absence
+                    </option>
+
+                    <option value="FULLSCREEN_EXIT">
+                        Fullscreen Exit
+                    </option>
+
+                    <option value="COPY_PASTE">
+                        Copy / Paste
+                    </option>
+
+                    <option value="SCREENSHOT">
+                        Screenshots
+                    </option>
+
+                    <option value="RIGHT_CLICK">
+                        Right Click
+                    </option>
+
+                    <option value="IDENTITY_MISMATCH">
+                        Identity Mismatch
+                    </option>
+
+                    <option value="MULTIPLE_FACES">
+                        Multiple Faces
+                    </option>
+
+                    <option value="OTHER">
+                        Other Violations
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="filter-field">
+
+                <label>
+                    Severity
+                </label>
+
+                <select id="severityFilter">
+
+                    <option value="ALL">
+                        All Severity
+                    </option>
+
+                    <option value="HIGH">
+                        High
+                    </option>
+
+                    <option value="MEDIUM">
+                        Medium
+                    </option>
+
+                    <option value="LOW">
+                        Low
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <button
+                class="filter-btn"
+                id="filterBtn"
+            >
+                ⚱ Filter
+            </button>
+
+
+            <button
+                class="reset-btn"
+                id="resetBtn"
+            >
+                Reset
+            </button>
+
+
+            <button
+                class="export-btn"
+                id="exportBtn"
+            >
+                ↓ Export Report
+            </button>
+
+        </section>
+
+
+        <!-- ================================================= -->
+        <!-- CONTENT GRID -->
+        <!-- ================================================= -->
+
+        <section class="content-grid">
+
+
+            <!-- EVENT HISTORY -->
+
+            <div class="panel event-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Integrity Event History
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+
+                            <th>
+                                Candidate
+                            </th>
+
+                            <th>
+                                Candidate ID
+                            </th>
+
+                            <th>
+                                Examination
+                            </th>
+
+                            <th>
+                                Violation Type
+                            </th>
+
+                            <th>
+                                Severity
+                            </th>
+
+                            <th>
+                                Detected At
+                            </th>
+
+                            <th>
+                                Evidence
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+                        <tbody
+                            id="eventsTable"
+                        >
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <div class="pagination">
+
+                    <span id="paginationInfo">
+                        Showing 0 events
+                    </span>
+
+                    <div id="paginationButtons"></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RIGHT COLUMN -->
+
+            <div class="right-column">
+
+
+                <!-- RECENT EVIDENCE -->
+
+                <div class="panel recent-panel">
+
+                    <div class="panel-header">
+
+                        <h2>
+                            Recent Evidence
+                        </h2>
+
+                        <button
+                            id="viewAllEvidence"
+                            class="view-all"
+                        >
+                            View All
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="evidence-grid"
+                        id="recentEvidence"
+                    >
+
+                    </div>
+
+                </div>
+
+
+                <!-- TIMELINE -->
+
+                <div class="panel timeline-panel">
+
+                    <div class="panel-header">
+
+                        <h2>
+                            Integrity Activity Timeline
+                        </h2>
+
+                        <span class="live-feed">
+                            ∿ Live Feed
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="timeline"
+                        id="timeline"
+                    >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ================================================= -->
+    <!-- EVIDENCE DETAILS DRAWER -->
+    <!-- ================================================= -->
+
+    <aside
+        class="evidence-drawer"
+        id="evidenceDrawer"
+    >
+
+        <div class="drawer-header">
+
+            <h2>
+                Evidence Details
+            </h2>
+
+            <button id="closeDrawer">
+                ×
+            </button>
+
+        </div>
+
+
+        <div
+            class="drawer-image"
+            id="drawerImage"
+        >
+
+            <span>
+                No Evidence
+            </span>
+
+        </div>
+
+
+        <div class="drawer-section">
+
+            <h3>
+                Event Information
+            </h3>
+
+            <div class="info-list">
+
+                <div>
+                    <span>♙ Candidate</span>
+                    <strong id="detailCandidate">
+                        --
+                    </strong>
+                </div>
+
+                <div>
+                    <span>▣ Candidate ID</span>
+                    <strong id="detailCandidateId">
+                        --
+                    </strong>
+                </div>
+
+                <div>
+                    <span>▤ Examination</span>
+                    <strong id="detailExam">
+                        --
+                    </strong>
+                </div>
+
+                <div>
+                    <span>⚠ Violation Type</span>
+                    <strong id="detailType">
+                        --
+                    </strong>
+                </div>
+
+                <div>
+                    <span>◉ Severity</span>
+                    <strong id="detailSeverity">
+                        --
+                    </strong>
+                </div>
+
+                <div>
+                    <span>◷ Detected At</span>
+                    <strong id="detailTime">
+                        --
+                    </strong>
+                </div>
+
+                <div>
+                    <span>◎ Face Count</span>
+                    <strong id="detailFaces">
+                        --
+                    </strong>
+                </div>
+
+                <div>
+                    <span>▣ Evidence ID</span>
+                    <strong id="detailEvidence">
+                        --
+                    </strong>
+                </div>
+
+                <div>
+                    <span>● Status</span>
+                    <strong id="detailStatus">
+                        --
+                    </strong>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="drawer-section">
+
+            <h3>
+                Related Events
+            </h3>
+
+            <div
+                class="related-events"
+                id="relatedEvents"
+            >
+
+            </div>
+
+        </div>
+
+
+        <div class="drawer-actions">
+
+            <button
+                class="drawer-close-btn"
+                id="drawerCloseBtn"
+            >
+                Close
+            </button>
+
+            <button class="view-candidate-btn">
+                View Candidate
+            </button>
+
+            <button class="view-full-btn">
+                View Full Evidence
+            </button>
+
+            <button
+                class="export-evidence-btn"
+                id="exportEvidenceBtn"
+            >
+                ↓ Export Evidence
+            </button>
+
+        </div>
+
+    </aside>
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/violations_evidence.js') }}"
+></script>
+
+</body>
+
+</html>

@@ -125,13 +125,18 @@ body{
 
     left:15px;
 
-    top:50%;
+    top:0;
 
-    transform:translateY(-50%);
+    height:100%;
+
+    display:flex;
+
+    align-items:center;
 
     color:#2563eb;
 
 }
+
 
 .input-box input,
 .password-box input{
@@ -164,22 +169,31 @@ body{
 /* =========================================
    PASSWORD TOGGLE
 ========================================= */
-
 .togglePassword{
 
     position:absolute;
 
-    right:18px;
+    top:0;
 
-    top:50%;
+    right:15px;
 
-    transform:translateY(-50%);
+    height:100%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
 
     cursor:pointer;
 
     color:#666;
 
     font-size:18px;
+
+    width:40px;
+
+    transition:.3s;
 
 }
 
@@ -378,5 +392,104 @@ gap:10px;
 align-items:flex-start;
 
 }
+
+}
+/* ===============================
+   MESSAGE MODAL
+================================= */
+
+.message-modal{
+
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(0,0,0,.45);
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:9999;
+
+}
+
+.message-box{
+
+    width:360px;
+
+    background:#fff;
+
+    border-radius:14px;
+
+    padding:30px;
+
+    text-align:center;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+
+    animation:popup .25s ease;
+
+}
+
+@keyframes popup{
+
+    from{
+
+        transform:scale(.8);
+
+        opacity:0;
+
+    }
+
+    to{
+
+        transform:scale(1);
+
+        opacity:1;
+
+    }
+
+}
+
+.message-icon{
+
+    font-size:55px;
+
+    margin-bottom:15px;
+
+}
+
+.message-success{
+
+    color:#16a34a;
+
+}
+
+.message-error{
+
+    color:#dc2626;
+
+}
+
+#messageBtn{
+
+    margin-top:20px;
+
+    padding:10px 25px;
+
+    border:none;
+
+    border-radius:8px;
+
+    background:#2563eb;
+
+    color:white;
+
+    cursor:pointer;
+
+    font-size:15px;
 
 }

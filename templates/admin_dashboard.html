@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamGuard AI | Admin Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+
+<!-- ==========================================================
+BACKGROUND
+========================================================== -->
+
+<div class="background">
+    <div class="circle circle1"></div>
+    <div class="circle circle2"></div>
+    <div class="circle circle3"></div>
+</div>
+
+<div class="dashboard-container">
+
+    <!-- ==========================================================
+    SIDEBAR
+    ========================================================== -->
+
+    {% set active_page = 'dashboard' %}
+    {% include 'admin_sidebar.html' %}
+
+    <!-- ==========================================================
+    MAIN
+    ========================================================== -->
+
+    <main class="main-content">
+
+        <!-- ================= HEADER ================= -->
+
+        <header class="topbar">
+
+            <div class="left-top">
+
+                <button id="toggleSidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text"
+                           placeholder="Search candidates, exams, reports...">
+                </div>
+
+            </div>
+
+            <div class="right-top">
+
+                <div class="notification">
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notificationCount">0</span>
+                </div>
+
+                <div class="admin-profile">
+
+                    <img id="adminPhoto"
+                         src="{{ url_for('static', filename='images/admin.png') }}"
+                         alt="Admin">
+
+                    <div>
+
+                        <h4 id="adminName">Loading...</h4>
+
+                        <p id="adminRole">Administrator</p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ================= TITLE ================= -->
+
+        <section class="page-title">
+
+            <div>
+
+                <h1>Welcome Back 👋</h1>
+
+                <p>
+                    Here's the latest examination analytics and integrity status.
+                </p>
+
+            </div>
+
+            <div class="date-box">
+
+                <div id="currentDate"></div>
+
+                <div id="currentTime"></div>
+
+            </div>
+
+        </section>
+
+        <!-- ================= KPI ================= -->
+
+        <section class="cards-grid">
+
+            <div class="dashboard-card">
+                <i class="fa-solid fa-users"></i>
+
+                <div>
+
+                    <h3>Total Candidates</h3>
+
+                    <h2 id="totalCandidates">--</h2>
+
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <i class="fa-solid fa-file-circle-check"></i>
+
+                <div>
+
+                    <h3>Total Exams</h3>
+
+                    <h2 id="totalExams">--</h2>
+
+                </div>
+
+            </div>
+
+            <div class="dashboard-card">
+                <i class="fa-solid fa-play"></i>
+
+                <div>
+
+                    <h3>Running Exams</h3>
+
+                    <h2 id="runningExams">--</h2>
+
+                </div>
+
+            </div>
+
+            <div class="dashboard-card">
+
+                <i class="fa-solid fa-check-circle"></i>
+
+                <div>
+
+                    <h3>Completed Today</h3>
+
+                    <h2 id="completedToday">--</h2>
+
+                </div>
+
+            </div>
+
+            <div class="dashboard-card red">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <div>
+
+                    <h3>Integrity Violations</h3>
+
+                    <h2 id="violationCount">--</h2>
+
+                </div>
+
+            </div>
+
+            <div class="dashboard-card orange">
+
+                <i class="fa-solid fa-user-secret"></i>
+
+                <div>
+
+                    <h3>High Risk Candidates</h3>
+
+                    <h2 id="highRiskCandidates">--</h2>
+
+                </div>
+
+            </div>
+
+            <div class="dashboard-card purple">
+
+                <i class="fa-solid fa-file-lines"></i>
+
+                <div>
+
+                    <h3>AI Reports</h3>
+
+                    <h2 id="reportCount">--</h2>
+
+                </div>
+
+            </div>
+
+            <div class="dashboard-card green">
+
+                <i class="fa-solid fa-shield-heart"></i>
+
+                <div>
+
+                    <h3>Average Integrity</h3>
+
+                    <h2 id="averageIntegrity">--%</h2>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ================= CONTENT ================= -->
+
+        <section class="dashboard-grid">
+
+            <!-- LEFT -->
+
+            <div class="left-content">
+
+                <!-- Live Exams -->
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <h2>Live Examination Overview</h2>
+
+                        <a href="/admin/examinations">View All</a>
+
+                    </div>
+
+                    <table>
+
+                        <thead>
+
+                        <tr>
+
+                            <th>Exam</th>
+
+                            <th>Status</th>
+
+                            <th>Candidates</th>
+
+                            <th>Violations</th>
+
+                            <th>Progress</th>
+
+                        </tr>
+
+                        </thead>
+
+                        <tbody id="liveExamTable">
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <!-- Charts -->
+
+                <div class="chart-row">
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+                            <h2>Integrity Trend</h2>
+                        </div>
+
+                        <canvas id="trendChart"></canvas>
+
+                    </div>
+
+                    <div class="panel">
+
+                        <div class="panel-header">
+                            <h2>Risk Distribution</h2>
+                        </div>
+
+                        <canvas id="riskChart"></canvas>
+
+                    </div>
+
+                </div>
+
+                <!-- Recent Activity -->
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <h2>Recent Activity</h2>
+
+                    </div>
+
+                    <div id="recentActivity">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- RIGHT -->
+
+            <div class="right-content">
+
+                <!-- AI Integrity -->
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <h2>AI Integrity Summary</h2>
+
+                    </div>
+
+                    <div class="score-circle">
+
+                        <div id="overallIntegrity">
+                            --
+                        </div>
+
+                    </div>
+
+                    <ul id="integritySummary">
+
+                    </ul>
+
+                </div>
+
+                <!-- Alerts -->
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <h2>Live Alerts</h2>
+
+                    </div>
+
+                    <div id="liveAlerts">
+
+                    </div>
+
+                </div>
+
+                <!-- Quick Actions -->
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <h2>Quick Actions</h2>
+
+                    </div>
+
+                    <div class="quick-actions">
+
+                        <a href="/admin/quiz-generator">
+                            <i class="fa-solid fa-plus"></i>
+                            Create Exam
+                        </a>
+
+                        <a href="/admin/status-of-candidates">
+                            <i class="fa-solid fa-users"></i>
+                            Candidates
+                        </a>
+
+                        <a href="/admin/quiz-generator">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            AI Quiz
+                        </a>
+
+                        <a href="/admin/ai-generated-reports">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            Reports
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
+
+</body>
+</html>

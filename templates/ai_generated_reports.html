@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <!-- Common/Admin CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin_dashboard.css') }}"
+    >
+
+    <!-- Sidebar CSS - LOAD AFTER COMMON CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin_sidebar.css') }}"
+    >
+
+    <!-- AI Reports page CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/ai_generated_reports.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="app-shell">
+
+    <!-- =====================================================
+         PREDEFINED SIDEBAR
+    ====================================================== -->
+
+    {% set active_page = 'ai_reports' %}
+    {% include 'admin_sidebar.html' %}
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <header class="top-header">
+
+            <div class="page-title">
+
+                <div class="title-row">
+
+                    <h2>
+                        AI Generated Reports
+                    </h2>
+
+                    <span class="live-badge">
+                        <span></span>
+                        AI ENGINE
+                    </span>
+
+                </div>
+
+                <p>
+                    Generate intelligent integrity reports from
+                    examination behaviour, violations and scoring analytics.
+                </p>
+
+            </div>
+
+
+            <div class="header-actions">
+
+                <div class="search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        type="text"
+                        id="globalSearch"
+                        placeholder="Search reports..."
+                        autocomplete="off"
+                    >
+
+                    <kbd>Ctrl /</kbd>
+
+                </div>
+
+
+                <button
+                    class="icon-button"
+                    id="refreshBtn"
+                    type="button"
+                    title="Refresh"
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+
+
+                <button
+                    class="icon-button"
+                    id="notificationBtn"
+                    type="button"
+                    title="Notifications"
+                >
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+
+
+                <div class="admin-profile">
+
+                    <div class="admin-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+
+                    <div>
+                        <strong id="adminName">Administrator</strong>
+                        <small id="adminRole">Administrator</small>
+                    </div>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =================================================
+             SUMMARY CARDS
+        ================================================== -->
+
+        <section class="summary-grid">
+
+            <div class="summary-card">
+
+                <div class="summary-icon purple">
+                    <i class="fa-solid fa-file-lines"></i>
+                </div>
+
+                <div>
+                    <span>Total Reports</span>
+                    <strong id="totalReports">0</strong>
+                    <small>Generated reports</small>
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon blue">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+
+                <div>
+                    <span>Candidate Reports</span>
+                    <strong id="candidateReports">0</strong>
+                    <small>Individual assessments</small>
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon cyan">
+                    <i class="fa-solid fa-building-columns"></i>
+                </div>
+
+                <div>
+                    <span>Exam Reports</span>
+                    <strong id="examReports">0</strong>
+                    <small>Examination summaries</small>
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon green">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+
+                <div>
+                    <span>AI Engine</span>
+                    <strong id="aiEngineStatus">Active</strong>
+                    <small id="aiEngineMessage">
+                        AI service is running
+                    </small>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             GENERATOR AREA
+        ================================================== -->
+
+        <section class="generator-layout">
+
+
+            <!-- GENERATOR -->
+
+            <div class="generator-card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            REPORT GENERATOR
+                        </span>
+
+                        <h2>
+                            Create AI Report
+                        </h2>
+
+                        <p>
+                            Select examination data to generate
+                            an AI-powered integrity assessment.
+                        </p>
+
+                    </div>
+
+
+                    <div class="ai-status">
+                        <span></span>
+                        <span id="generatorAiStatus">
+                            AI Ready
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <!-- REPORT TYPE -->
+
+                <div class="report-type">
+    <label>Report Type</label>
+
+    <div class="type-options">
+
+        <button
+            type="button"
+            class="type-option active"
+            data-type="candidate"
+            id="candidateReportType"
+        >
+            <i class="fa-solid fa-user-shield"></i>
+
+            <div>
+                <strong>Candidate Report</strong>
+                <small>Individual integrity assessment</small>
+            </div>
+        </button>
+
+
+        <button
+            type="button"
+            class="type-option"
+            data-type="exam"
+            id="examReportType"
+        >
+            <i class="fa-solid fa-chart-pie"></i>
+
+            <div>
+                <strong>Examination Report</strong>
+                <small>Complete examination analysis</small>
+            </div>
+        </button>
+
+    </div>
+</div>
+
+
+                <!-- SELECTORS -->
+
+              <div class="form-grid">
+
+    <!-- EXAMINATION -->
+    <div class="form-field">
+        <label for="examSelect">
+            Examination
+        </label>
+
+        <div class="select-wrapper">
+
+            <i class="fa-solid fa-file-circle-check"></i>
+
+            <select id="examSelect">
+                <option value="">
+                    Loading examinations...
+                </option>
+            </select>
+
+            <i class="fa-solid fa-chevron-down"></i>
+
+        </div>
+    </div>
+
+
+    <!-- CANDIDATE -->
+    <div
+        class="form-field candidate-field"
+        id="candidateField"
+    >
+
+        <label for="candidateSelect">
+            Candidate
+        </label>
+
+        <div class="select-wrapper">
+
+            <i class="fa-solid fa-user"></i>
+
+            <select id="candidateSelect">
+
+                <option value="">
+                    Select examination first
+                </option>
+
+            </select>
+
+            <i class="fa-solid fa-chevron-down"></i>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+                <!-- OPTIONS -->
+
+                <div class="report-options">
+
+                    <label class="check-option">
+
+                        <input
+                            type="checkbox"
+                            id="includeViolations"
+                            checked
+                        >
+
+                        <span class="custom-check"></span>
+
+                        Include violation analysis
+
+                    </label>
+
+
+                    <label class="check-option">
+
+                        <input
+                            type="checkbox"
+                            id="includeIntegrity"
+                            checked
+                        >
+
+                        <span class="custom-check"></span>
+
+                        Include integrity scoring
+
+                    </label>
+
+
+                    <label class="check-option">
+
+                        <input
+                            type="checkbox"
+                            id="includeRecommendations"
+                            checked
+                        >
+
+                        <span class="custom-check"></span>
+
+                        Include AI recommendations
+
+                    </label>
+
+                </div>
+
+
+                <!-- GENERATE BUTTON -->
+
+                <button
+                    type="button"
+                    id="generateReportBtn"
+                    class="generate-btn"
+                >
+
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+
+                    Generate AI Report
+
+                    <span class="generate-arrow">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+
+                </button>
+
+
+                <div
+                    id="reportLoading"
+                    class="loading"
+                >
+
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+
+                    Generating AI Report...
+
+                </div>
+
+
+                <div
+                    id="generationStatus"
+                    class="generation-status"
+                ></div>
+
+
+                <!-- =================================================
+                     METRICS NOW DIRECTLY AFTER GENERATE BUTTON
+                ================================================== -->
+
+                <div
+                    id="generatedMetrics"
+                    class="generated-metrics hidden"
+                >
+
+                    <div class="generated-metric">
+
+                        <span>
+                            Integrity Score
+                        </span>
+
+                        <div>
+                            <strong id="reportScore">--</strong>
+                            <small>/ 100</small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="generated-metric">
+
+                        <span>
+                            Risk Level
+                        </span>
+
+                        <strong
+                            id="reportRisk"
+                            class="risk-badge"
+                        >
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="generated-metric">
+
+                        <span>
+                            Face Presence
+                        </span>
+
+                        <strong id="reportFace">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="generated-metric">
+
+                        <span>
+                            Warnings
+                        </span>
+
+                        <strong id="reportWarnings">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 AI INFORMATION CARD
+            ================================================== -->
+
+            <div class="ai-info-card">
+
+                <div class="ai-orbit">
+
+                    <div class="orbit-ring"></div>
+
+                    <div class="ai-core">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+
+                </div>
+
+
+                <h3>
+                    AI Integrity Agent
+                </h3>
+
+
+                <p>
+                    The AI reporting engine transforms structured
+                    examination data into a concise, evidence-based
+                    integrity assessment.
+                </p>
+
+
+                <div class="agent-steps">
+
+                    <div>
+                        <span>01</span>
+                        <p>Collect session events</p>
+                    </div>
+
+                    <div>
+                        <span>02</span>
+                        <p>Analyze integrity score</p>
+                    </div>
+
+                    <div>
+                        <span>03</span>
+                        <p>Generate natural language report</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             GENERATED REPORT
+        ================================================== -->
+
+        <section
+            id="reportPreviewSection"
+            class="report-preview-section hidden"
+        >
+
+            <div class="preview-header">
+
+                <div>
+
+                    <span class="section-label">
+                        GENERATED REPORT
+                    </span>
+
+                    <h2 id="previewTitle">
+                        AI Integrity Assessment
+                    </h2>
+
+                    <p id="previewSubtitle">
+                        Generated by ExamGuard AI
+                    </p>
+
+                </div>
+
+
+                <div class="preview-actions">
+
+                    <button
+                        type="button"
+                        class="download-btn pdf"
+                        id="downloadPdfBtn"
+                        disabled
+                    >
+                        <i class="fa-solid fa-file-pdf"></i>
+                        PDF
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="download-btn word"
+                        id="downloadWordBtn"
+                        disabled
+                    >
+                        <i class="fa-solid fa-file-word"></i>
+                        Word
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="download-btn csv"
+                        id="downloadCsvBtn"
+                        disabled
+                    >
+                        <i class="fa-solid fa-file-csv"></i>
+                        CSV
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="report-body">
+
+                <div class="report-content-card">
+
+                    <div class="report-content-header">
+
+                        <h3>
+                            <i class="fa-solid fa-sparkles"></i>
+                            AI Assessment
+                        </h3>
+
+                        <span id="reportGeneratedTime">
+                            --
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        id="reportContent"
+                        class="report-content"
+                    >
+                        No report generated yet.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             REPORT HISTORY
+        ================================================== -->
+
+        <section class="history-section">
+
+            <div class="history-header">
+
+                <div>
+
+                    <span class="section-label">
+                        REPORT ARCHIVE
+                    </span>
+
+                    <h2>
+                        Generated Report History
+                    </h2>
+
+                    <p>
+                        Previously generated AI reports and
+                        downloadable document versions.
+                    </p>
+
+                </div>
+
+
+                <div class="history-controls">
+
+                    <select id="historyType">
+
+                        <option value="all">
+                            All Reports
+                        </option>
+
+                        <option value="candidate">
+                            Candidate Reports
+                        </option>
+
+                        <option value="exam">
+                            Examination Reports
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="history-table-wrapper">
+
+                <table class="history-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Report</th>
+
+                            <th>Candidate / Exam</th>
+
+                            <th>Risk Level</th>
+
+                            <th>Integrity Score</th>
+
+                            <th>Face Presence</th>
+
+                            <th>Generated At</th>
+
+                            <th>Downloads</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="reportHistory">
+
+                        <tr>
+
+                            <td
+                                colspan="8"
+                                class="empty-state"
+                            >
+
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                                <p>
+                                    Loading report history...
+                                </p>
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =====================================================
+     VIEW REPORT MODAL
+====================================================== -->
+
+<div
+    id="reportViewModal"
+    class="report-modal hidden"
+>
+
+    <div
+        class="report-modal-overlay"
+        id="reportModalOverlay"
+    ></div>
+
+
+    <div class="report-modal-box">
+
+        <div class="report-modal-header">
+
+            <div>
+
+                <span class="section-label">
+                    SAVED AI REPORT
+                </span>
+
+                <h2 id="modalReportTitle">
+                    AI Integrity Report
+                </h2>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="closeReportModal"
+                class="modal-close"
+                aria-label="Close"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <div class="report-modal-body">
+
+            <div
+                id="modalReportContent"
+                class="modal-report-content"
+            >
+                Loading report...
+            </div>
+
+        </div>
+
+
+        <div class="report-modal-footer">
+
+            <button
+                type="button"
+                id="modalCloseButton"
+                class="modal-close-btn"
+            >
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div
+    id="toast"
+    class="toast"
+></div>
+
+
+<script
+    src="{{ url_for('static', filename='js/ai_generated_reports.js') }}"
+></script>
+
+</body>
+
+</html>

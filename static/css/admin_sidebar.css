@@ -1,0 +1,673 @@
+/* =========================================================
+   EXAMGUARD AI
+   ADMIN SIDEBAR
+   Shared sidebar for all admin pages
+   ========================================================= */
+
+:root {
+    --sidebar-width: 228px;
+
+    --sidebar-bg-top: #031127;
+    --sidebar-bg-bottom: #020d1f;
+
+    --sidebar-text: #b8c7df;
+    --sidebar-muted: #7185a6;
+    --sidebar-icon: #8498ba;
+
+    --sidebar-active: #2563eb;
+    --sidebar-active-dark: #315fe0;
+
+    --sidebar-cyan: #67e8f9;
+
+    --sidebar-border: rgba(78, 120, 180, 0.16);
+
+    --sidebar-transition: 0.25s ease;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar {
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: var(--sidebar-width);
+    height: 100vh;
+
+    padding: 22px 12px 18px;
+
+    display: flex;
+    flex-direction: column;
+
+    z-index: 1000;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(3, 17, 39, 0.98),
+            rgba(2, 13, 31, 0.98)
+        );
+
+    border-right:
+        1px solid
+        var(--sidebar-border);
+
+    box-shadow:
+        10px 0 40px
+        rgba(0, 0, 0, 0.18);
+
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    transition:
+        width var(--sidebar-transition),
+        transform var(--sidebar-transition);
+}
+
+
+/* =========================================================
+   LOGO SECTION
+   ========================================================= */
+
+.logo-section {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding:
+        0 7px 24px;
+
+    border-bottom:
+        1px solid
+        rgba(100, 116, 139, 0.13);
+
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   LOGO ICON
+   ========================================================= */
+
+.logo-icon {
+
+    width: 38px;
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    color: white;
+
+    font-size: 1.15rem;
+
+    background:
+        linear-gradient(
+            145deg,
+            #2563eb,
+            #1d4ed8
+        );
+
+    clip-path:
+        polygon(
+            50% 0%,
+            92% 15%,
+            92% 57%,
+            78% 80%,
+            50% 100%,
+            22% 80%,
+            8% 57%,
+            8% 15%
+        );
+
+    box-shadow:
+        0 0 25px
+        rgba(37, 99, 235, 0.45);
+}
+
+
+/* =========================================================
+   LOGO TEXT
+   ========================================================= */
+
+.logo-section h2 {
+
+    color: #f8fafc;
+
+    font-size: 0.98rem;
+
+    font-weight: 800;
+
+    letter-spacing: 0.3px;
+
+    white-space: nowrap;
+}
+
+
+.logo-section p {
+
+    margin-top: 3px;
+
+    color: var(--sidebar-muted);
+
+    font-size: 0.64rem;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   SIDEBAR MENU
+   ========================================================= */
+
+.sidebar-menu {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    margin-top: 21px;
+
+    overflow-y: auto;
+
+    overflow-x: hidden;
+
+    padding-right: 2px;
+}
+
+
+/* Hide sidebar menu scrollbar */
+
+.sidebar-menu::-webkit-scrollbar {
+    width: 3px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+
+    background: #193a66;
+
+    border-radius: 5px;
+}
+
+
+/* =========================================================
+   MENU LINKS
+   ========================================================= */
+
+.sidebar-menu a,
+.sidebar-bottom a {
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    min-height: 43px;
+
+    padding:
+        0 13px;
+
+    border-radius: 8px;
+
+    color: var(--sidebar-text);
+
+    font-size: 0.75rem;
+
+    font-weight: 500;
+
+    white-space: nowrap;
+
+    transition:
+        background var(--sidebar-transition),
+        color var(--sidebar-transition),
+        transform var(--sidebar-transition),
+        box-shadow var(--sidebar-transition);
+}
+
+
+/* =========================================================
+   MENU ICONS
+   ========================================================= */
+
+.sidebar-menu a i,
+.sidebar-bottom a i {
+
+    width: 20px;
+
+    min-width: 20px;
+
+    text-align: center;
+
+    flex-shrink: 0;
+
+    color: var(--sidebar-icon);
+
+    font-size: 0.9rem;
+
+    transition:
+        color var(--sidebar-transition),
+        transform var(--sidebar-transition);
+}
+
+
+/* =========================================================
+   HOVER
+   ========================================================= */
+
+.sidebar-menu a:hover,
+.sidebar-bottom a:hover {
+
+    color: white;
+
+    background:
+        rgba(37, 99, 235, 0.10);
+
+    transform:
+        translateX(3px);
+}
+
+
+.sidebar-menu a:hover i,
+.sidebar-bottom a:hover i {
+
+    color: #60a5fa;
+
+    transform:
+        scale(1.08);
+}
+
+
+/* =========================================================
+   ACTIVE MENU ITEM
+   ========================================================= */
+
+.sidebar-menu a.active {
+
+    color: white;
+
+    background:
+        linear-gradient(
+            100deg,
+            var(--sidebar-active),
+            var(--sidebar-active-dark)
+        );
+
+    box-shadow:
+        0 7px 22px
+        rgba(37, 99, 235, 0.28);
+}
+
+
+/* Active left indicator */
+
+.sidebar-menu a.active::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+
+    width: 3px;
+    height: 23px;
+
+    border-radius:
+        0 4px 4px 0;
+
+    background:
+        var(--sidebar-cyan);
+
+    box-shadow:
+        0 0 12px
+        rgba(34, 211, 238, 0.8);
+}
+
+
+/* Active icon */
+
+.sidebar-menu a.active i {
+
+    color: white;
+}
+
+
+/* =========================================================
+   SIDEBAR BOTTOM
+   ========================================================= */
+
+.sidebar-bottom {
+
+    margin-top: auto;
+
+    padding-top: 14px;
+
+    border-top:
+        1px solid
+        rgba(100, 116, 139, 0.12);
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+.sidebar-bottom .logout {
+
+    margin-top: 3px;
+
+    color: #ff6b6b;
+}
+
+
+.sidebar-bottom .logout i {
+
+    color: #ef4444;
+}
+
+
+.sidebar-bottom .logout:hover {
+
+    color: #fca5a5;
+
+    background:
+        rgba(239, 68, 68, 0.08);
+
+    transform:
+        translateX(3px);
+}
+
+
+/* =========================================================
+   COLLAPSED SIDEBAR
+   ========================================================= */
+
+.sidebar.collapsed {
+
+    width: 70px;
+}
+
+
+/* Logo when collapsed */
+
+.sidebar.collapsed .logo-section {
+
+    justify-content: center;
+
+    padding-left: 0;
+    padding-right: 0;
+}
+
+
+.sidebar.collapsed .logo-section > div:last-child {
+
+    display: none;
+}
+
+
+/* Menu when collapsed */
+
+.sidebar.collapsed .sidebar-menu a,
+.sidebar.collapsed .sidebar-bottom a {
+
+    justify-content: center;
+
+    padding:
+        0 10px;
+}
+
+
+.sidebar.collapsed .sidebar-menu a i,
+.sidebar.collapsed .sidebar-bottom a i {
+
+    margin: 0;
+
+    width: 20px;
+}
+
+
+/* Hide text */
+
+.sidebar.collapsed .sidebar-menu a span,
+.sidebar.collapsed .sidebar-bottom a span {
+    display: none;
+}
+
+
+/* Remove translation when collapsed */
+
+.sidebar.collapsed .sidebar-menu a:hover,
+.sidebar.collapsed .sidebar-bottom a:hover {
+
+    transform: none;
+}
+
+
+/* =========================================================
+   MOBILE OVERLAY
+   ========================================================= */
+
+.sidebar-overlay {
+
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 999;
+
+    background:
+        rgba(0, 0, 0, 0.55);
+
+    backdrop-filter:
+        blur(3px);
+}
+
+
+.sidebar-overlay.active {
+
+    display: block;
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    :root {
+        --sidebar-width: 70px;
+    }
+
+
+    .sidebar {
+
+        width: 70px;
+
+        padding:
+            22px 10px 18px;
+    }
+
+
+    .logo-section {
+
+        justify-content: center;
+
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+
+    .logo-section > div:last-child {
+
+        display: none;
+    }
+
+
+    .sidebar-menu a,
+    .sidebar-bottom a {
+
+        justify-content: center;
+
+        padding:
+            0 10px;
+
+        font-size: 0;
+    }
+
+
+    .sidebar-menu a span,
+    .sidebar-bottom a span {
+
+        display: none;
+    }
+
+
+    .sidebar-menu a i,
+    .sidebar-bottom a i {
+
+        margin: 0;
+
+        width: 20px;
+
+        font-size: 0.95rem;
+    }
+
+
+    .sidebar-menu a:hover,
+    .sidebar-bottom a:hover {
+
+        transform: none;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 650px) {
+
+    :root {
+        --sidebar-width: 0px;
+    }
+
+
+    .sidebar {
+
+        width: 245px;
+
+        transform:
+            translateX(-100%);
+
+        padding:
+            22px 12px 18px;
+
+        box-shadow:
+            15px 0 50px
+            rgba(0, 0, 0, 0.5);
+    }
+
+
+    .sidebar.mobile-open {
+
+        transform:
+            translateX(0);
+    }
+
+
+    .sidebar .logo-section {
+
+        justify-content: flex-start;
+
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+
+
+    .sidebar .logo-section > div:last-child {
+
+        display: block;
+    }
+
+
+    .sidebar .sidebar-menu a,
+    .sidebar .sidebar-bottom a {
+
+        justify-content: flex-start;
+
+        padding:
+            0 13px;
+
+        font-size: 0.75rem;
+    }
+
+
+    .sidebar .sidebar-menu a span,
+    .sidebar .sidebar-bottom a span {
+
+        display: inline;
+    }
+
+
+    .sidebar .sidebar-menu a i,
+    .sidebar .sidebar-bottom a i {
+
+        margin: 0;
+
+        width: 20px;
+
+        font-size: 0.9rem;
+    }
+
+
+    .sidebar .sidebar-menu a:hover,
+    .sidebar .sidebar-bottom a:hover {
+
+        transform:
+            translateX(3px);
+    }
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 420px) {
+
+    .sidebar {
+
+        width: 230px;
+    }
+}

@@ -143,6 +143,3 @@ def view_answers(exam_id):
         exam_id=exam_id
     )
 
-@pages_bp.route("/quiz_generator")
-def quiz_generator():
-    return render_template("quiz_generator.html")
