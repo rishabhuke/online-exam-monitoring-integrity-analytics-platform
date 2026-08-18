@@ -40,8 +40,8 @@ from langchain_core.prompts import PromptTemplate
 from modules import flags_storage, monitoring_storage
 
 # Ollama model name, overridable via env var so different machines can use
-# whatever model they've pulled (e.g. "llama3", "mistral", "phi3").
-OLLAMA_MODEL = os.environ.get("REPORT_AGENT_OLLAMA_MODEL", "llama3")
+# whatever model they've pulled (e.g. "llama3.2", "mistral", "phi3").
+OLLAMA_MODEL = os.environ.get("REPORT_AGENT_OLLAMA_MODEL", "llama3.2")
 
 REPORT_PROMPT = PromptTemplate.from_template(
     "You are an exam-integrity assistant helping an invigilator review a "
