@@ -73,7 +73,8 @@ def test_build_session_context_aggregates_events_and_flags(isolated_db):
     assert context["risk_label"] == "Medium"
 
 
-def test_generate_summary_falls_back_to_template_without_llm(isolated_db):
+def test_generate_summary_falls_back_to_template_without_llm(isolated_db, monkeypatch):
+    monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
     result = report_agent.generate_summary(1, 1)
 
     assert result["source"] == "template"
@@ -81,7 +82,8 @@ def test_generate_summary_falls_back_to_template_without_llm(isolated_db):
     assert "Overall integrity risk: Low." in result["summary"]
 
 
-def test_generate_summary_reflects_flagged_session(isolated_db):
+def test_generate_summary_reflects_flagged_session(isolated_db, monkeypatch):
+    monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
     monitoring_storage.create_face_event(1, 1, "2026-01-01T00:00:00", "2026-01-01T00:04:00", 240)
     flags_storage.create_flag(1, 1, "face_absent_single_interval", "high", "absent 240s", "max_face_absent_seconds=120")
 
@@ -114,9 +116,11 @@ def test_generate_summary_uses_llm_when_provided(isolated_db):
     assert result["summary"].startswith("stub summary for:")
 
 
-def test_get_default_llm_returns_none_without_ollama_server(isolated_db):
-    """No Ollama server in CI/this sandbox, so the reachability check in
-    get_default_llm() should fail closed and return None (never raise)."""
+def test_get_default_llm_returns_none_without_any_provider_configured(isolated_db, monkeypatch):
+    """No GROQ_API_KEY and no Ollama server reachable -> get_default_llm()
+    should fail closed and return None (never raise), regardless of what's
+    actually set in the shell running the tests."""
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     assert report_agent.get_default_llm() is None
 
 
@@ -127,9 +131,10 @@ def test_get_groq_llm_returns_none_without_api_key(isolated_db, monkeypatch):
     assert report_agent._get_groq_llm() is None
 
 
-def test_generate_summary_falls_back_when_llm_none_and_no_ollama(isolated_db):
-    """With llm=None and no Ollama server reachable, generate_summary()
-    should silently use the template path rather than erroring."""
+def test_generate_summary_falls_back_when_llm_none_and_no_ollama(isolated_db, monkeypatch):
+    """With llm=None and no provider reachable, generate_summary() should
+    silently use the template path rather than erroring."""
+    monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
     result = report_agent.generate_summary(1, 1)
 
     assert result["source"] == "template"
@@ -137,11 +142,14 @@ def test_generate_summary_falls_back_when_llm_none_and_no_ollama(isolated_db):
 
 # --- Risk-scenario tests (low / medium / high) ---------------------------
 # Exercises generate_summary() end-to-end across the three risk bands the
-# brief calls out. Uses the template path (deterministic) for risk_label/
-# content correctness, and a stub LLM for the "low" case to confirm the LLM
-# code path doesn't alter risk_label regardless of wording source.
+# brief calls out. Uses the template path (deterministic, forced via
+# monkeypatch so these pass regardless of what's configured in the shell)
+# for risk_label/content correctness, and a stub LLM for the "low" case to
+# confirm the LLM code path doesn't alter risk_label regardless of wording
+# source.
 
-def test_risk_scenario_low(isolated_db):
+def test_risk_scenario_low(isolated_db, monkeypatch):
+    monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
     # No events, no flags -> Low.
     result = report_agent.generate_summary(1, 1)
 
@@ -160,7 +168,8 @@ def test_risk_scenario_low_with_llm_stub(isolated_db):
     assert result["source"] == "llm"
 
 
-def test_risk_scenario_medium(isolated_db):
+def test_risk_scenario_medium(isolated_db, monkeypatch):
+    monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
     # A handful of tab switches plus one medium-severity flag -> Medium.
     monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
     monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
@@ -175,7 +184,8 @@ def test_risk_scenario_medium(isolated_db):
     assert "1 integrity flag(s)" in result["summary"]
 
 
-def test_risk_scenario_high(isolated_db):
+def test_risk_scenario_high(isolated_db, monkeypatch):
+    monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
     # Extended face absence plus a high-severity flag and a medium one
     # (weights: high=3, medium=2 -> score 5) -> High.
     monitoring_storage.create_face_event(1, 1, "2026-01-01T00:00:00", "2026-01-01T00:06:00", 360)

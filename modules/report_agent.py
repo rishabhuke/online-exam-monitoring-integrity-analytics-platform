@@ -42,10 +42,11 @@ from langchain_core.prompts import PromptTemplate
 
 from modules import flags_storage, monitoring_storage
 
-# Groq model name, overridable via env var. llama-3.1-8b-instant is Groq's
-# fast/free-tier-friendly default; swap for a larger model if quality
-# matters more than latency for your use case.
-GROQ_MODEL = os.environ.get("REPORT_AGENT_GROQ_MODEL", "llama-3.1-8b-instant")
+# Groq model name, overridable via env var. openai/gpt-oss-20b is fast and
+# free-tier-friendly (llama-3.1-8b-instant was the original choice but Groq
+# deprecated it); swap for a larger model if quality matters more than
+# latency for your use case.
+GROQ_MODEL = os.environ.get("REPORT_AGENT_GROQ_MODEL", "openai/gpt-oss-20b")
 
 # Ollama model name, kept as an offline fallback. Overridable via env var so
 # different machines can use whatever model they've pulled.
