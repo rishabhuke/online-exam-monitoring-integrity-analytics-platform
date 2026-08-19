@@ -9,7 +9,6 @@ Usage:
     python check_db.py --cleanup
 """
 
-import os
 import sqlite3
 import argparse
 from pathlib import Path
