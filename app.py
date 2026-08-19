@@ -58,7 +58,7 @@ def submit_exam():
         return redirect(url_for("auth.login"))
 
     data = request.get_json(silent=True)
-    print(f"[DEBUG] submit_exam called. candidate_id: {session.get('candidate_id')}, payload: {data}")
+    print(f"[DEBUG] submit_exam called. candidate_id: {session.get('candidate_id')}")
 
     if data is None or "answers" not in data or not isinstance(data["answers"], list):
         print("[DEBUG] submit_exam: Invalid payload structure - 'answers' list missing or None.")
