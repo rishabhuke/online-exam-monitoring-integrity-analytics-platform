@@ -80,10 +80,19 @@ def clean_database():
         # Disable foreign keys temporarily to clear all tables cleanly
         cursor.execute("PRAGMA foreign_keys = OFF")
         
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        existing_tables = {row["name"] for row in cursor.fetchall()}
+        has_sqlite_sequence = "sqlite_sequence" in existing_tables
+
         for table in TABLES:
+            if table not in existing_tables:
+                print(f"Skipping missing table: {table}")
+                continue
+
             cursor.execute(f"DELETE FROM {table}")
-            # Reset autoincrement sequences
-            cursor.execute("DELETE FROM sqlite_sequence WHERE name = ?", (table,))
+            # Reset autoincrement sequences (only if sqlite_sequence exists)
+            if has_sqlite_sequence:
+                cursor.execute("DELETE FROM sqlite_sequence WHERE name = ?", (table,))
             print(f"Cleared table: {table}")
             
         cursor.execute("PRAGMA foreign_keys = ON")
