@@ -12,12 +12,15 @@ language summary for the invigilator, per the brief's example:
 Design notes:
 - Built with LangChain (PromptTemplate + a pluggable chat-model chain) so an
   actual LLM can be dropped in once the team decides which one to use.
-- Provider decision: Ollama (langchain-ollama), chosen because it's free -
-  runs locally, no API key, no per-token cost, no vendor rate limit. The
-  trade-off is it requires Ollama installed and a model pulled on whatever
-  machine runs the app (see get_default_llm() below); there's no cloud
-  fallback if that's not set up, which is why the template fallback still
-  exists and is still the default when no LLM is configured or reachable.
+- Provider: Groq (langchain-groq), chosen for speed - free tier, no card
+  required, and their inference hardware is built for low latency (roughly
+  1-2s for a short summary vs. 60-75s measured locally on Ollama/llama3.2 on
+  a MacBook Air). Requires GROQ_API_KEY set as an env var and an internet
+  connection - unlike Ollama, which is fully offline but was too slow for
+  this use case (an invigilator clicking through many candidate reports).
+  get_default_llm() tries Groq first, then falls back to Ollama (still
+  useful for offline dev/demo), then to the template if neither is
+  configured/reachable.
 - generate_summary() falls back to a deterministic, template-based summary
   (_fallback_summary) built from the same structured context the LLM prompt
   would receive, whenever no LLM is passed in or the LLM call fails. This
@@ -39,9 +42,16 @@ from langchain_core.prompts import PromptTemplate
 
 from modules import flags_storage, monitoring_storage, scoring
 
-# Ollama model name, overridable via env var so different machines can use
-# whatever model they've pulled (e.g. "llama3.2", "mistral", "phi3").
+# Groq model name, overridable via env var. openai/gpt-oss-20b is fast and
+# free-tier-friendly (llama-3.1-8b-instant was the original choice but Groq
+# deprecated it); swap for a larger model if quality matters more than
+# latency for your use case.
+GROQ_MODEL = os.environ.get("REPORT_AGENT_GROQ_MODEL", "openai/gpt-oss-20b")
+
+# Ollama model name, kept as an offline fallback. Overridable via env var so
+# different machines can use whatever model they've pulled.
 OLLAMA_MODEL = os.environ.get("REPORT_AGENT_OLLAMA_MODEL", "llama3.2")
+
 
 REPORT_PROMPT = PromptTemplate.from_template(
     "You are an exam-integrity assistant helping an invigilator review a "
@@ -132,13 +142,43 @@ def _fallback_summary(context: Dict[str, Any]) -> str:
 
 
 def get_default_llm() -> Optional[Any]:
-    """Returns a ChatOllama instance if langchain-ollama is installed and an
-    Ollama server is reachable, else None (caller falls back to template).
+    """Returns the best available LLM: Groq first (fast, needs GROQ_API_KEY
+    + internet), then Ollama (offline, needs a local server), else None
+    (caller falls back to the template).
 
-    This is the "free provider" path: no API key, runs on localhost:11434
-    by default. Kept separate from generate_summary() so callers/tests can
-    still pass their own `llm` (or a stub) without touching Ollama at all.
+    Kept separate from generate_summary() so callers/tests can still pass
+    their own `llm` (or a stub) without touching either provider.
     """
+    groq_llm = _get_groq_llm()
+    if groq_llm is not None:
+        return groq_llm
+    return _get_ollama_llm()
+
+
+def _get_groq_llm() -> Optional[Any]:
+    """Returns a ChatGroq instance if langchain-groq is installed and
+    GROQ_API_KEY is set and reachable, else None."""
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return None
+
+    try:
+        from langchain_groq import ChatGroq
+    except ImportError:
+        return None
+
+    try:
+        llm = ChatGroq(model=GROQ_MODEL, api_key=api_key)
+        llm.invoke("ping")  # cheap reachability check, fails fast if key/network is bad
+        return llm
+    except Exception:
+        return None
+
+
+def _get_ollama_llm() -> Optional[Any]:
+    """Returns a ChatOllama instance if langchain-ollama is installed and an
+    Ollama server is reachable, else None. Fully offline fallback path -
+    no API key, runs on localhost:11434 by default."""
     try:
         from langchain_ollama import ChatOllama
     except ImportError:
@@ -158,7 +198,7 @@ def generate_summary(candidate_id: int, exam_id: int, llm: Optional[Any] = None)
 
     If `llm` is provided (any LangChain-compatible chat model / Runnable),
     it's used with REPORT_PROMPT to generate the summary. If `llm` is None,
-    this tries get_default_llm() (Ollama) once; if that's unavailable or the
+    this tries get_default_llm() (Groq, then Ollama) once; if neither is
     call fails, it falls back to a deterministic template summary built from
     the same context - see module docstring for why.
 
