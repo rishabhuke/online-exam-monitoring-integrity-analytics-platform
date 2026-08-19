@@ -26,13 +26,11 @@ Design notes:
   would receive, whenever no LLM is passed in or the LLM call fails. This
   keeps the module fully testable offline and keeps app behaviour identical
   either way - only the wording source changes.
-- Integrity Scoring Module (Priyanshu, Milestone 3) isn't merged yet, so
-  build_session_context() computes a lightweight fallback risk label
-  in-house (severity-weighted flag count vs. face-absence ratio isn't
-  available without exam duration, so this only uses flag severity/counts).
-  Swap _fallback_risk_label() out for a call into his scoring module once
-  that PR lands - the interface (candidate_id, exam_id) -> risk label is
-  meant to be a drop-in replacement.
+- build_session_context() now delegates overall risk calculation to
+  modules.scoring.calculate_session_score(candidate_id, exam_id) and
+  reads the returned "risk_label" for both LLM and template summaries.
+  Summary wording remains local to this module, but risk-level logic is
+  centralized in the scoring module.
 """
 
 import os
