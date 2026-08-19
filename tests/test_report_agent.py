@@ -120,6 +120,13 @@ def test_get_default_llm_returns_none_without_ollama_server(isolated_db):
     assert report_agent.get_default_llm() is None
 
 
+def test_get_groq_llm_returns_none_without_api_key(isolated_db, monkeypatch):
+    """No GROQ_API_KEY set -> _get_groq_llm() should return None without
+    even trying to import/call langchain_groq."""
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    assert report_agent._get_groq_llm() is None
+
+
 def test_generate_summary_falls_back_when_llm_none_and_no_ollama(isolated_db):
     """With llm=None and no Ollama server reachable, generate_summary()
     should silently use the template path rather than erroring."""
