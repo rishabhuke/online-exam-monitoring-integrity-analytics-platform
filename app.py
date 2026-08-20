@@ -52,25 +52,46 @@ def get_exam(exam_id):
 @app.route("/submit_exam", methods=["POST"])
 def submit_exam():
     if "candidate_id" not in session:
+        print("[DEBUG] submit_exam: User not logged in, redirecting to login page.")
+        if request.is_json:
+            return jsonify({"status": "error", "message": "Not authenticated"}), 401
         return redirect(url_for("auth.login"))
 
-    data = request.get_json()
+    data = request.get_json(silent=True)
+    print(f"[DEBUG] submit_exam called. candidate_id: {session.get('candidate_id')}")
+
+    if data is None or "answers" not in data or not isinstance(data["answers"], list):
+        print("[DEBUG] submit_exam: Invalid payload structure - 'answers' list missing or None.")
+        return jsonify({"status": "error", "message": "Invalid request format. 'answers' list is required."}), 400
+
     conn = get_db_connection()
+    try:
+        inserted_count = 0
+        for idx, answer in enumerate(data["answers"]):
+            if not isinstance(answer, dict) or "question_id" not in answer or "selected_option" not in answer:
+                print(f"[DEBUG] submit_exam: Skipping invalid answer item at index {idx}: {answer}")
+                continue
 
-    for answer in data["answers"]:
-        conn.execute("""
-            INSERT INTO Answers (candidate_id, question_id, selected_option)
-            VALUES (?, ?, ?)
-        """, (
-            session["candidate_id"],
-            answer["question_id"],
-            answer["selected_option"]
-        ))
+            conn.execute("""
+                INSERT INTO Answers (candidate_id, question_id, selected_option)
+                VALUES (?, ?, ?)
+            """, (
+                session["candidate_id"],
+                answer["question_id"],
+                answer["selected_option"]
+            ))
+            inserted_count += 1
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        print(f"[DEBUG] submit_exam: Successfully saved {inserted_count} answers to database.")
+    except Exception as e:
+        conn.rollback()
+        print(f"[DEBUG] submit_exam: Database error occurred: {str(e)}")
+        return jsonify({"status": "error", "message": "Internal database error occurred."}), 500
+    finally:
+        conn.close()
 
-    return jsonify({"message": "Answers submitted successfully"})
+    return jsonify({"message": "Answers submitted successfully", "status": "success"})
 
 
 if __name__ == "__main__":

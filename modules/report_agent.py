@@ -26,13 +26,11 @@ Design notes:
   would receive, whenever no LLM is passed in or the LLM call fails. This
   keeps the module fully testable offline and keeps app behaviour identical
   either way - only the wording source changes.
-- Integrity Scoring Module (Priyanshu, Milestone 3) isn't merged yet, so
-  build_session_context() computes a lightweight fallback risk label
-  in-house (severity-weighted flag count vs. face-absence ratio isn't
-  available without exam duration, so this only uses flag severity/counts).
-  Swap _fallback_risk_label() out for a call into his scoring module once
-  that PR lands - the interface (candidate_id, exam_id) -> risk label is
-  meant to be a drop-in replacement.
+- build_session_context() now delegates overall risk calculation to
+  modules.scoring.calculate_session_score(candidate_id, exam_id) and
+  reads the returned "risk_label" for both LLM and template summaries.
+  Summary wording remains local to this module, but risk-level logic is
+  centralized in the scoring module.
 """
 
 import os
@@ -40,7 +38,7 @@ from typing import Any, Dict, List, Optional
 
 from langchain_core.prompts import PromptTemplate
 
-from modules import flags_storage, monitoring_storage
+from modules import flags_storage, monitoring_storage, scoring
 
 # Groq model name, overridable via env var. openai/gpt-oss-20b is fast and
 # free-tier-friendly (llama-3.1-8b-instant was the original choice but Groq
@@ -90,6 +88,8 @@ def build_session_context(candidate_id: int, exam_id: int) -> Dict[str, Any]:
     for f in flags:
         flag_counts[f.get("flag_type", "unknown")] = flag_counts.get(f.get("flag_type", "unknown"), 0) + 1
 
+    scoring_result = scoring.calculate_session_score(candidate_id, exam_id)
+
     return {
         "candidate_id": candidate_id,
         "exam_id": exam_id,
@@ -98,21 +98,8 @@ def build_session_context(candidate_id: int, exam_id: int) -> Dict[str, Any]:
         "browser_event_counts": browser_event_counts,
         "flags": flags,
         "flag_counts": flag_counts,
-        "risk_label": _fallback_risk_label(flags),
+        "risk_label": scoring_result["risk_label"],
     }
-
-
-def _fallback_risk_label(flags: List[Dict[str, Any]]) -> str:
-    """Severity-weighted risk label. Placeholder until Priyanshu's Integrity
-    Scoring Module (Milestone 3) lands - see module docstring."""
-    weights = {"high": 3, "medium": 2, "low": 1}
-    score = sum(weights.get(f.get("severity", "low"), 1) for f in flags)
-
-    if score >= 5:
-        return "High"
-    if score >= 2:
-        return "Medium"
-    return "Low"
 
 
 def _format_counts(counts: Dict[str, int]) -> str:

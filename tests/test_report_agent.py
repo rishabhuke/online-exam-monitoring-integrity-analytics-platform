@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import modules.report_agent as report_agent
 import modules.flags_storage as flags_storage
 import modules.monitoring_storage as monitoring_storage
+import modules.scoring as scoring
 
 
 @pytest.fixture
@@ -32,6 +33,7 @@ def isolated_db(monkeypatch, tmp_path):
     test_db = tmp_path / "test.db"
     monkeypatch.setattr(flags_storage, "DATABASE", test_db)
     monkeypatch.setattr(monitoring_storage, "DATABASE", test_db)
+    monkeypatch.setattr(scoring, "DATABASE", test_db)
 
     conn = sqlite3.connect(test_db)
     conn.execute("PRAGMA foreign_keys = ON")
