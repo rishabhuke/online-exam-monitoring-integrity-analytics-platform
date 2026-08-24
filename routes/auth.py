@@ -42,95 +42,175 @@ def validate_registration_data(name: str, email: str, password: str) -> Union[No
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register() -> Union[str, Response, Tuple[Response, int]]:
-    """Candidate registration handler supporting form-encoded and JSON payloads."""
+    """Candidate registration handler."""
+
     if request.method == 'GET':
         return render_template('register.html')
-        
-    # Support both application/json and form-encoded data
+
+    # ============================================================
+    # GET FORM DATA
+    # ============================================================
+
     if request.is_json:
         data: Dict[str, Any] = request.get_json() or {}
+
         name = data.get('name', '')
         email = data.get('email', '')
         password = data.get('password', '')
         photo_data = data.get('photo_data', '')
+
     else:
         name = request.form.get('name', '')
         email = request.form.get('email', '')
         password = request.form.get('password', '')
         photo_data = request.form.get('photo_data', '')
 
-    # Validate standard fields
-    validation_error = validate_registration_data(name, email, password)
+    # ============================================================
+    # VALIDATE BASIC DATA
+    # ============================================================
+
+    validation_error = validate_registration_data(
+        name,
+        email,
+        password
+    )
+
     if validation_error:
         return jsonify({
             "status": "error",
             "message": f"Validation failed: {validation_error}"
         }), 400
 
-    if not photo_data:
-        return jsonify({
-            "status": "error",
-            "message": "Validation failed: Identity verification photo is required."
-        }), 400
+    # ============================================================
+    # CLEAN INPUT
+    # ============================================================
 
-    # Clean inputs
     name = name.strip()
     email = email.strip().lower()
 
-    # Validate and save candidate photo using OpenCV face check
-    try:
-        photo_path = save_candidate_photo(photo_data, email)
-    except ValueError as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 400
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": f"Photo processing error: {str(e)}"
-        }), 500
-    
+    # ============================================================
+    # CHECK EMAIL FIRST
+    # ============================================================
+
     conn = get_db_connection()
+
     try:
-        # Check if email already exists
-        existing = conn.execute("SELECT id FROM Candidates WHERE email = ?", (email,)).fetchone()
+
+        existing = conn.execute(
+            """
+            SELECT id
+            FROM Candidates
+            WHERE email = ?
+            """,
+            (email,)
+        ).fetchone()
+
         if existing:
+
             return jsonify({
                 "status": "error",
                 "message": "Email already registered."
             }), 409
 
-        # Hash password and store in SQLite
+        # ========================================================
+        # PHOTO IS REQUIRED
+        # ========================================================
+
+        if not photo_data:
+
+            return jsonify({
+                "status": "error",
+                "message": "Identity verification photo is required."
+            }), 400
+
+        # ========================================================
+        # SAVE PHOTO ONLY AFTER EMAIL CHECK
+        # ========================================================
+
+        try:
+
+            photo_path = save_candidate_photo(
+                photo_data,
+                email
+            )
+
+        except ValueError as e:
+
+            return jsonify({
+                "status": "error",
+                "message": str(e)
+            }), 400
+
+        except Exception as e:
+
+            return jsonify({
+                "status": "error",
+                "message": f"Photo processing error: {str(e)}"
+            }), 500
+
+        # ========================================================
+        # HASH PASSWORD
+        # ========================================================
+
         hashed_password = generate_password_hash(password)
+
+        # ========================================================
+        # INSERT CANDIDATE
+        # ========================================================
+
         cur = conn.cursor()
+
         cur.execute(
-            "INSERT INTO Candidates (name, email, password_hash, photo_path) VALUES (?, ?, ?, ?)",
-            (name, email, hashed_password, photo_path)
+            """
+            INSERT INTO Candidates
+            (
+                name,
+                email,
+                password_hash,
+                photo_path
+            )
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                name,
+                email,
+                hashed_password,
+                photo_path
+            )
         )
+
         conn.commit()
+
         candidate_id = cur.lastrowid
-        
+
         return jsonify({
             "status": "success",
             "message": "Candidate registered successfully",
             "candidate_id": candidate_id
         }), 201
-        
+
     except sqlite3.IntegrityError:
+
+        conn.rollback()
+
         return jsonify({
             "status": "error",
             "message": "Email already registered."
         }), 409
+
     except Exception as e:
+
+        conn.rollback()
+
         return jsonify({
             "status": "error",
             "message": f"Database error occurred: {str(e)}"
         }), 500
+
     finally:
+
         conn.close()
-
-
+        
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login() -> Union[str, Response, Tuple[Response, int]]:
     """Candidate login handler supporting JSON APIs and form submissions."""
@@ -202,9 +282,8 @@ def login_test() -> str:
     session["candidate_id"] = 1
     return "Session Created Successfully"
 
-
 @auth_bp.route('/logout')
-def logout() -> str:
-    """Logout the candidate and clear the session."""
+def logout():
+    """Logout the candidate and redirect to the home page."""
     session.clear()
-    return "Logged Out Successfully"
+    return redirect('/')

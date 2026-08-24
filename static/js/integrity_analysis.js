@@ -1,9 +1,4 @@
-/* =========================================================
-   INTEGRITY ANALYSIS CENTER
-   ========================================================= */
-
 "use strict";
-
 
 /* =========================================================
    GLOBAL STATE
@@ -60,6 +55,19 @@ function initializePage() {
     const search =
         document.getElementById("globalSearch");
 
+    const themeBtn =
+        document.getElementById("themeBtn");
+
+
+    const notificationBtn =
+        document.querySelector(
+            ".icon-btn:not(#themeBtn)"
+        );
+
+
+    /* =====================================================
+       EXAM FILTER
+       ===================================================== */
 
     if (examFilter) {
 
@@ -75,6 +83,10 @@ function initializePage() {
     }
 
 
+    /* =====================================================
+       REFRESH BUTTON
+       ===================================================== */
+
     if (refreshBtn) {
 
         refreshBtn.addEventListener(
@@ -88,6 +100,10 @@ function initializePage() {
 
     }
 
+
+    /* =====================================================
+       GLOBAL SEARCH
+       ===================================================== */
 
     if (search) {
 
@@ -105,15 +121,76 @@ function initializePage() {
     }
 
 
+    /* =====================================================
+       THEME BUTTON
+       ===================================================== */
+
+    if (themeBtn) {
+
+        themeBtn.addEventListener(
+            "click",
+            function () {
+
+                toggleTheme();
+
+            }
+        );
+
+    }
+
+
+
+    /* =====================================================
+       NOTIFICATION BUTTON
+       ===================================================== */
+
+    if (notificationBtn) {
+
+        notificationBtn.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+                toggleNotifications();
+
+            }
+        );
+
+    }
+
+
+
+
+
+    /* =====================================================
+       KEYBOARD SHORTCUT
+       ===================================================== */
+
     initializeKeyboardShortcut();
+
+
+    /* =====================================================
+       CREATE UI ELEMENTS
+       ===================================================== */
+
+    createSessionModal();
+
+    createExportButton();
+
+
+    /* =====================================================
+       INITIAL LOAD
+       ===================================================== */
 
     loadIntegrityAnalysis();
 
 
-    /*
-       Refresh every 10 seconds.
-       This keeps LIVE analysis updated.
-    */
+
+
+    /* =====================================================
+       LIVE REFRESH
+       ===================================================== */
 
     refreshTimer =
         setInterval(
@@ -123,6 +200,7 @@ function initializePage() {
                     true
                 );
 
+
             },
             10000
         );
@@ -131,149 +209,211 @@ function initializePage() {
 
 
 /* =========================================================
-   LOAD API DATA
+   LOAD INTEGRITY API DATA
    ========================================================= */
+
 async function loadIntegrityAnalysis() {
+
+    if (isLoading) {
+        return;
+    }
+
+    isLoading = true;
+
+    setLoadingState(true);
 
     try {
 
         const examId =
-            document.getElementById("examFilter")?.value || "";
+            document.getElementById(
+                "examFilter"
+            )?.value || "";
+
 
         let url =
-            "/admin/api/integrity-analysis";
+            API_URL;
+
 
         if (examId) {
-            url += "?exam_id=" +
-                encodeURIComponent(examId);
+
+            url +=
+                "?exam_id=" +
+                encodeURIComponent(
+                    examId
+                );
+
         }
+
 
         console.log(
             "Loading integrity API:",
             url
         );
 
+
         const response =
-            await fetch(url, {
-                method: "GET",
-                headers: {
-                    "Accept": "application/json"
+            await fetch(
+                url,
+                {
+                    method: "GET",
+
+                    credentials: "same-origin",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
                 }
-            });
+            );
+
 
         console.log(
             "Integrity API status:",
             response.status
         );
 
-        const data =
-            await response.json();
 
-currentData = data; 
+        let data = null;
+
+        try {
+
+            data =
+                await response.json();
+
+        }
+        catch (jsonError) {
+
+            throw new Error(
+                "Server returned an invalid response."
+            );
+
+        }
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data?.message ||
+                data?.error ||
+                "Integrity analysis API request failed."
+            );
+
+        }
+
+
+        if (
+            data.status &&
+            data.status !== "success"
+        ) {
+
+            throw new Error(
+                data.message ||
+                "Unable to load integrity analysis."
+            );
+
+        }
+
+
+        currentData =
+            data;
+
 
         console.log(
             "Integrity API data:",
             data
         );
 
-        // =====================================================
-        // ONLY CHECK HTTP STATUS
-        // =====================================================
 
-        if (!response.ok) {
+        /* =================================================
+           RENDER
+           ================================================= */
 
-            throw new Error(
-                data.message ||
-                data.error ||
-                "Integrity analysis API request failed"
-            );
+        populateExamFilter(
+            data.exams || []
+        );
 
-        }
-function populateExamFilter(exams) {
 
-    const select =
-        document.getElementById("examFilter");
+        renderSummary(
+            data.summary || {}
+        );
 
-    if (!select) return;
 
-    const currentValue =
-        select.value;
+        renderIntegrityTable(
+            data.sessions || []
+        );
 
-    select.innerHTML = `
-        <option value="">
-            All Examinations
-        </option>
-    `;
 
-    exams.forEach(exam => {
+        renderMiniCharts(
+            data.summary?.totalSessions || 0,
 
-        const option =
-            document.createElement("option");
+            (data.sessions || []).map(
+                function (s) {
+                    return Number(
+                        s.integrityScore || 0
+                    );
+                }
+            ),
 
-        option.value = exam.id;
+            (data.sessions || []).map(
+                function (s) {
+                    return Number(
+                        s.facePresence || 0
+                    );
+                }
+            )
+        );
 
-        option.textContent =
-            exam.title;
-
-        select.appendChild(option);
-
-    });
-
-    if (
-        currentValue &&
-        exams.some(
-            exam =>
-                String(exam.id) ===
-                String(currentValue)
-        )
-    ) {
-        select.value =
-            currentValue;
-    }
-}
-
-        // =====================================================
-        // RENDER DATA
-        // =====================================================
-
-        populateExamFilter(data.exams || []);
-
-        renderSummary(data.summary || {});
-        renderIntegrityTable(data.sessions || []);
-
-renderMiniCharts(
-    (data.summary?.totalSessions || 0),
-    (data.sessions || []).map(s => Number(s.integrityScore || 0)),
-    (data.sessions || []).map(s => Number(s.facePresence || 0))
-);
-
-      
 
         renderDistribution(
             data.distribution || {}
         );
 
+
         renderRiskDistribution(
             data.riskDistribution || {}
         );
 
+
         renderHeatmap(
-            data.heatmap || []
+            data.heatmap || {}
         );
+
 
         renderClusters(
             data.clusters || []
         );
 
+
         renderCohorts(
             data.cohorts || []
         );
+
 
         renderRecentActivity(
             data.recentActivity || []
         );
 
+
         updateLastUpdated();
+
+
+        /*
+         * Reapply search after every live refresh.
+         */
+
+        const search =
+            document.getElementById(
+                "globalSearch"
+            );
+
+        if (search && search.value) {
+
+            filterSessions(
+                search.value
+            );
+
+        }
+
 
         console.log(
             "Integrity analysis rendered successfully."
@@ -287,12 +427,21 @@ renderMiniCharts(
             error
         );
 
+
         showGlobalError(
             error.message ||
             "Unable to load integrity analysis."
         );
 
     }
+    finally {
+
+        isLoading = false;
+
+        setLoadingState(false);
+
+    }
+
 }
 
 
@@ -300,32 +449,147 @@ renderMiniCharts(
    EXAMINATION DROPDOWN
    ========================================================= */
 
+function populateExamFilter(
+    exams
+) {
 
+    const select =
+        document.getElementById(
+            "examFilter"
+        );
+
+
+    if (!select) {
+        return;
+    }
+
+
+    const currentValue =
+        select.value;
+
+
+    select.innerHTML =
+        "";
+
+
+    const defaultOption =
+        document.createElement(
+            "option"
+        );
+
+
+    defaultOption.value =
+        "";
+
+
+    defaultOption.textContent =
+        "All Examinations";
+
+
+    select.appendChild(
+        defaultOption
+    );
+
+
+    if (!Array.isArray(exams)) {
+        return;
+    }
+
+
+    exams.forEach(
+        function (exam) {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                exam.id;
+
+
+            option.textContent =
+                exam.title ||
+                "Untitled Examination";
+
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
+
+
+    if (
+        currentValue &&
+        exams.some(
+            function (exam) {
+
+                return String(
+                    exam.id
+                ) ===
+                String(
+                    currentValue
+                );
+
+            }
+        )
+    ) {
+
+        select.value =
+            currentValue;
+
+    }
+
+}
 
 
 /* =========================================================
    SUMMARY
    ========================================================= */
 
-function renderSummary(summary) {
+function renderSummary(
+    summary
+) {
 
-    document.getElementById("totalSessions").textContent =
-        summary.totalSessions ?? 0;
+    setText(
+        "totalSessions",
+        summary.totalSessions ?? 0
+    );
 
-    document.getElementById("averageScore").textContent =
-        summary.averageScore ?? 0;
 
-    document.getElementById("lowRisk").textContent =
-        summary.lowRisk ?? 0;
+    setText(
+        "averageScore",
+        summary.averageScore ?? 0
+    );
 
-    document.getElementById("mediumRisk").textContent =
-        summary.mediumRisk ?? 0;
 
-    document.getElementById("highRisk").textContent =
-        summary.highRisk ?? 0;
+    setText(
+        "lowRisk",
+        summary.lowRisk ?? 0
+    );
 
-    document.getElementById("facePresence").textContent =
-        (summary.facePresence ?? 0) + "%";
+
+    setText(
+        "mediumRisk",
+        summary.mediumRisk ?? 0
+    );
+
+
+    setText(
+        "highRisk",
+        summary.highRisk ?? 0
+    );
+
+
+    setText(
+        "facePresence",
+        (summary.facePresence ?? 0) +
+        "%"
+    );
+
 }
 
 
@@ -343,15 +607,23 @@ function renderMiniCharts(
         sessionsMiniChart
     );
 
-
     destroyChart(
         scoreMiniChart
     );
 
-
     destroyChart(
         faceMiniChart
     );
+
+
+    sessionsMiniChart =
+        null;
+
+    scoreMiniChart =
+        null;
+
+    faceMiniChart =
+        null;
 
 
     const sessionCanvas =
@@ -371,12 +643,6 @@ function renderMiniCharts(
             "faceMiniChart"
         );
 
-
-    /*
-     * Session chart.
-     * Uses session ordering as returned
-     * by backend.
-     */
 
     if (sessionCanvas) {
 
@@ -400,10 +666,6 @@ function renderMiniCharts(
     }
 
 
-    /*
-     * Score chart.
-     */
-
     if (scoreCanvas) {
 
         scoreMiniChart =
@@ -417,10 +679,6 @@ function renderMiniCharts(
 
     }
 
-
-    /*
-     * Face presence chart.
-     */
 
     if (faceCanvas) {
 
@@ -450,6 +708,7 @@ function createMiniChart(
             type: "line",
 
             data: {
+
                 labels:
                     values.map(
                         function (_, i) {
@@ -461,7 +720,8 @@ function createMiniChart(
                     {
                         data: values,
 
-                        borderColor: color,
+                        borderColor:
+                            color,
 
                         borderWidth: 1.2,
 
@@ -472,20 +732,25 @@ function createMiniChart(
                         fill: false
                     }
                 ]
+
             },
 
             options: {
+
                 responsive: true,
 
                 maintainAspectRatio: false,
 
                 plugins: {
+
                     legend: {
                         display: false
                     }
+
                 },
 
                 scales: {
+
                     x: {
                         display: false
                     },
@@ -493,14 +758,19 @@ function createMiniChart(
                     y: {
                         display: false
                     }
+
                 },
 
                 elements: {
+
                     line: {
                         tension: 0.4
                     }
+
                 }
+
             }
+
         }
     );
 
@@ -526,10 +796,14 @@ function renderIntegrityTable(
     }
 
 
-    tbody.innerHTML = "";
+    tbody.innerHTML =
+        "";
 
 
-    if (!sessions.length) {
+    if (
+        !Array.isArray(sessions) ||
+        !sessions.length
+    ) {
 
         tbody.innerHTML =
             createEmptyRow(
@@ -598,7 +872,8 @@ function renderIntegrityTable(
                             src="${escapeHtml(photo)}"
                             alt="Candidate"
                             onerror="
-                                this.src='/static/images/default-avatar.png'
+                                this.onerror=null;
+                                this.src='/static/images/default-avatar.png';
                             "
                         >
 
@@ -606,7 +881,7 @@ function renderIntegrityTable(
 
                             <span class="candidate-name">
                                 ${escapeHtml(
-                                   session.candidateName ||
+                                    session.candidateName ||
                                     "Unknown Candidate"
                                 )}
                             </span>
@@ -628,8 +903,7 @@ function renderIntegrityTable(
                 <td>
                     ${escapeHtml(
                         String(
-                            session.candidateId ??
-                            "-"
+                            session.candidateId ?? "-"
                         )
                     )}
                 </td>
@@ -660,7 +934,10 @@ function renderIntegrityTable(
                         <span
                             style="
                                 width:${Math.min(
-                                    Math.max(face, 0),
+                                    Math.max(
+                                        face,
+                                        0
+                                    ),
                                     100
                                 )}%;
                             "
@@ -765,7 +1042,9 @@ function getRiskLabel(
         const risk =
             String(
                 session.riskLevel
-            ).toLowerCase();
+            )
+            .trim()
+            .toLowerCase();
 
 
         if (
@@ -846,6 +1125,10 @@ function renderDistribution(
     );
 
 
+    distributionChart =
+        null;
+
+
     const labels =
         Array.isArray(
             data.labels
@@ -893,6 +1176,7 @@ function renderDistribution(
                             borderRadius: 4
                         }
                     ]
+
                 },
 
                 options: {
@@ -932,17 +1216,22 @@ function renderDistribution(
                             beginAtZero: true,
 
                             ticks: {
+
                                 color: "#718099",
+
                                 font: {
                                     size: 8
                                 },
 
                                 precision: 0
+
                             },
 
                             grid: {
+
                                 color:
                                     "rgba(148,163,184,0.06)"
+
                             }
 
                         }
@@ -980,13 +1269,65 @@ function renderRiskDistribution(
         riskChart
     );
 
-const values = data.values || [];
 
-const low = Number(values[0] || 0);
+    riskChart =
+        null;
 
-const medium = Number(values[1] || 0);
 
-const high = Number(values[2] || 0);
+    const values =
+        Array.isArray(
+            data.values
+        )
+            ? data.values
+            : [];
+
+
+    const low =
+        Number(
+            values[0] || 0
+        );
+
+
+    const medium =
+        Number(
+            values[1] || 0
+        );
+
+
+    const high =
+        Number(
+            values[2] || 0
+        );
+
+
+    const total =
+        low +
+        medium +
+        high;
+
+
+    setText(
+        "lowRiskPercent",
+        total
+            ? ((low / total) * 100).toFixed(1) + "%"
+            : "0%"
+    );
+
+
+    setText(
+        "mediumRiskPercent",
+        total
+            ? ((medium / total) * 100).toFixed(1) + "%"
+            : "0%"
+    );
+
+
+    setText(
+        "highRiskPercent",
+        total
+            ? ((high / total) * 100).toFixed(1) + "%"
+            : "0%"
+    );
 
 
     riskChart =
@@ -1082,9 +1423,16 @@ function renderHeatmap(
     }
 
 
-    container.innerHTML = "";
-    labels.innerHTML = "";
-    hours.innerHTML = "";
+    container.innerHTML =
+        "";
+
+
+    labels.innerHTML =
+        "";
+
+
+    hours.innerHTML =
+        "";
 
 
     const events =
@@ -1095,14 +1443,11 @@ function renderHeatmap(
             : [];
 
 
-    /*
-     * Backend sends event rows.
-     */
-
     if (!events.length) {
 
         labels.innerHTML =
             "<div>No events</div>";
+
 
         container.innerHTML =
             `
@@ -1115,17 +1460,15 @@ function renderHeatmap(
                 <i class="fa-solid fa-chart-area"></i>
 
                 No violation activity recorded.
+
             </div>
             `;
+
 
         return;
 
     }
 
-
-    /*
-     * Event labels.
-     */
 
     events.forEach(
         function (event) {
@@ -1149,10 +1492,6 @@ function renderHeatmap(
         }
     );
 
-
-    /*
-     * Every event has 24 values.
-     */
 
     events.forEach(
         function (event) {
@@ -1188,30 +1527,38 @@ function renderHeatmap(
 
 
                 if (value >= 1) {
+
                     cell.classList.add(
                         "level-1"
                     );
+
                 }
 
 
                 if (value >= 3) {
+
                     cell.classList.add(
                         "level-2"
                     );
+
                 }
 
 
                 if (value >= 6) {
+
                     cell.classList.add(
                         "level-3"
                     );
+
                 }
 
 
                 if (value >= 10) {
+
                     cell.classList.add(
                         "level-4"
                     );
+
                 }
 
 
@@ -1235,10 +1582,6 @@ function renderHeatmap(
         }
     );
 
-
-    /*
-     * Hour labels.
-     */
 
     for (
         let hour = 0;
@@ -1290,12 +1633,17 @@ function renderClusters(
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     destroyChart(
         clusterChart
     );
+
+
+    clusterChart =
+        null;
 
 
     if (
@@ -1324,10 +1672,6 @@ function renderClusters(
     }
 
 
-    /*
-     * Create cluster cards.
-     */
-
     clusters.forEach(
         function (cluster) {
 
@@ -1353,7 +1697,8 @@ function renderClusters(
                 );
 
 
-            item.innerHTML = `
+            item.innerHTML =
+                `
 
                 <div class="cluster-title">
 
@@ -1368,8 +1713,7 @@ function renderClusters(
 
                         Cluster ${escapeHtml(
                             String(
-                                cluster.cluster ??
-                                "-"
+                                cluster.cluster ?? "-"
                             )
                         )}
 
@@ -1378,7 +1722,8 @@ function renderClusters(
                     <span>
                         ${Number(
                             cluster.count || 0
-                        )} sessions
+                        )}
+                        sessions
                     </span>
 
                 </div>
@@ -1403,7 +1748,7 @@ function renderClusters(
 
                 </div>
 
-            `;
+                `;
 
 
             container.appendChild(
@@ -1413,21 +1758,6 @@ function renderClusters(
         }
     );
 
-
-    /*
-     * Visual cluster chart.
-     *
-     * Your current backend cluster response
-     * contains aggregate cluster information,
-     * not individual coordinates.
-     *
-     * Therefore the chart uses:
-     *
-     * X = average events
-     * Y = average integrity score
-     *
-     * Bubble size = session count
-     */
 
     if (!canvas) {
         return;
@@ -1456,6 +1786,12 @@ function renderClusters(
                     );
 
 
+                const color =
+                    getScoreColor(
+                        score
+                    );
+
+
                 return {
 
                     label:
@@ -1465,7 +1801,9 @@ function renderClusters(
                     data: [
                         {
                             x: events,
+
                             y: score,
+
                             r:
                                 Math.max(
                                     6,
@@ -1478,10 +1816,10 @@ function renderClusters(
                     ],
 
                     backgroundColor:
-                        getScoreColor(score),
+                        color,
 
                     borderColor:
-                        getScoreColor(score),
+                        color,
 
                     borderWidth: 1
 
@@ -1498,8 +1836,10 @@ function renderClusters(
                 type: "bubble",
 
                 data: {
+
                     datasets:
                         datasets
+
                 },
 
                 options: {
@@ -1511,12 +1851,18 @@ function renderClusters(
                     plugins: {
 
                         legend: {
+
                             labels: {
-                                color: "#8b98ad",
+
+                                color:
+                                    "#8b98ad",
+
                                 font: {
                                     size: 8
                                 }
+
                             }
+
                         }
 
                     },
@@ -1526,25 +1872,37 @@ function renderClusters(
                         x: {
 
                             title: {
+
                                 display: true,
+
                                 text:
                                     "Average Events",
-                                color: "#6f7e96",
+
+                                color:
+                                    "#6f7e96",
+
                                 font: {
                                     size: 8
                                 }
+
                             },
 
                             ticks: {
-                                color: "#65748b",
+
+                                color:
+                                    "#65748b",
+
                                 font: {
                                     size: 7
                                 }
+
                             },
 
                             grid: {
+
                                 color:
                                     "rgba(148,163,184,0.06)"
+
                             }
 
                         },
@@ -1556,25 +1914,37 @@ function renderClusters(
                             max: 100,
 
                             title: {
+
                                 display: true,
+
                                 text:
                                     "Average Integrity Score",
-                                color: "#6f7e96",
+
+                                color:
+                                    "#6f7e96",
+
                                 font: {
                                     size: 8
                                 }
+
                             },
 
                             ticks: {
-                                color: "#65748b",
+
+                                color:
+                                    "#65748b",
+
                                 font: {
                                     size: 7
                                 }
+
                             },
 
                             grid: {
+
                                 color:
                                     "rgba(148,163,184,0.06)"
+
                             }
 
                         }
@@ -1608,7 +1978,8 @@ function renderCohorts(
     }
 
 
-    tbody.innerHTML = "";
+    tbody.innerHTML =
+        "";
 
 
     if (
@@ -1638,7 +2009,8 @@ function renderCohorts(
                 );
 
 
-            row.innerHTML = `
+            row.innerHTML =
+                `
 
                 <td>
                     ${escapeHtml(
@@ -1665,7 +2037,7 @@ function renderCohorts(
                     )}
                 </td>
 
-            `;
+                `;
 
 
             tbody.appendChild(
@@ -1682,116 +2054,112 @@ function renderCohorts(
    RECENT ACTIVITY
    ========================================================= */
 
-function renderRecentActivity(
-    activities
-) {
+function renderRecentActivity(activities) {
 
     const container =
-        document.getElementById(
-            "recentActivity"
-        );
-
+        document.getElementById("recentActivity");
 
     if (!container) {
         return;
     }
 
-
     container.innerHTML = "";
 
-
     if (
-        !Array.isArray(
-            activities
-        ) ||
+        !Array.isArray(activities) ||
         activities.length === 0
     ) {
-
-        container.innerHTML =
-            `
+        container.innerHTML = `
             <div class="empty-state">
-
                 <i class="fa-solid fa-shield"></i>
-
                 No recent integrity activity.
-
             </div>
-            `;
+        `;
 
         return;
-
     }
 
+    activities.forEach(function (activity) {
 
-    activities.forEach(
-        function (activity) {
+        const item =
+            document.createElement("div");
 
-            const item =
-                document.createElement(
-                    "div"
-                );
+        item.className = "activity-item";
 
+        const candidateImage =
+            activity.candidateImage ||
+            activity.profileImage ||
+            activity.photo ||
+            "";
 
-            item.className =
-                "activity-item";
+        const imageHTML = candidateImage
+            ? `
+                <img
+                    src="${escapeHtml(candidateImage)}"
+                    alt="${escapeHtml(
+                        activity.candidateName || "Candidate"
+                    )}"
+                    class="activity-candidate-image"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                >
 
-
-            item.innerHTML = `
-
+                <div
+                    class="activity-icon"
+                    style="display:none;"
+                >
+                    <i class="fa-solid fa-user"></i>
+                </div>
+              `
+            : `
                 <div class="activity-icon">
-
-                    <i class="fa-solid fa-shield-halved"></i>
-
+                    <i class="fa-solid fa-user"></i>
                 </div>
+              `;
 
+        item.innerHTML = `
 
-                <div class="activity-main">
+            ${imageHTML}
 
-                    <strong>
-                        ${escapeHtml(
-                            activity.event ||
-                            "Integrity Event"
-                        )}
-                    </strong>
+            <div class="activity-main">
 
-                    <span>
+                <strong>
+                    ${escapeHtml(
+                        activity.event ||
+                        "Integrity Event"
+                    )}
+                </strong>
 
-                        ${escapeHtml(
-                            activity.candidateName ||
-                            "Unknown"
-                        )}
-
-                        ·
-
-                        ${escapeHtml(
-                            activity.examTitle ||
-                            "Unknown Examination"
-                        )}
-
-                    </span>
-
-                </div>
-
-
-                <div class="activity-time">
+                <span>
 
                     ${escapeHtml(
-                        activity.time ||
-                        ""
+                        activity.candidateName ||
+                        "Unknown"
                     )}
 
-                </div>
+                    ·
 
-            `;
+                    ${escapeHtml(
+                        activity.examTitle ||
+                        "Unknown Examination"
+                    )}
 
+                </span>
 
-            container.appendChild(
-                item
-            );
+            </div>
 
-        }
-    );
+            <div class="activity-time">
 
+                ${escapeHtml(
+                    activity.time || ""
+                )}
+
+            </div>
+
+        `;
+
+        container.appendChild(item);
+
+    });
 }
 
 
@@ -1809,7 +2177,9 @@ function viewSession(
             currentData.sessions
         )
     ) {
+
         return;
+
     }
 
 
@@ -1832,47 +2202,854 @@ function viewSession(
     }
 
 
-    const message =
+    showSessionModal(
+        session
+    );
 
-        "Candidate: " +
-        (session.candidateName || "-") +
+}
 
-        "\nCandidate ID: " +
-        (session.candidateId || "-") +
 
-        "\nExamination: " +
-        (session.examTitle || "-") +
+/* =========================================================
+   SESSION DETAILS MODAL
+   ========================================================= */
 
-        "\nTotal Events: " +
-        (session.totalEvents || 0) +
+function createSessionModal() {
 
-        "\nSeverity Score: " +
-        Number(
-            session.severityScore || 0
-        ).toFixed(1) +
+    if (
+        document.getElementById(
+            "sessionDetailsModal"
+        )
+    ) {
 
-        "\nFace Presence: " +
-        Number(
-            session.facePresence || 0
-        ).toFixed(1) +
-        "%" +
+        return;
 
-        "\nIntegrity Score: " +
-        Number(
-            session.integrityScore || 0
-        ).toFixed(0) +
+    }
 
-        "\nRisk Level: " +
-        getRiskLabel(
-            session,
-            Number(
-                session.integrityScore || 0
-            )
+
+    const modal =
+        document.createElement(
+            "div"
         );
 
 
-    alert(
-        message
+    modal.id =
+        "sessionDetailsModal";
+
+
+    modal.style.cssText = `
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.65);
+        display:none;
+        align-items:center;
+        justify-content:center;
+        z-index:99999;
+        padding:20px;
+        backdrop-filter:blur(4px);
+    `;
+
+
+    modal.innerHTML =
+        `
+
+        <div
+            id="sessionDetailsBox"
+            style="
+                width:min(720px, 95vw);
+                max-height:90vh;
+                overflow:auto;
+                background:#111827;
+                color:#e5e7eb;
+                border-radius:16px;
+                box-shadow:0 25px 80px rgba(0,0,0,.45);
+                padding:24px;
+            "
+        >
+
+            <div
+                style="
+                    display:flex;
+                    align-items:center;
+                    justify-content:space-between;
+                    gap:20px;
+                    margin-bottom:20px;
+                "
+            >
+
+                <div>
+
+                    <h2
+                        id="sessionModalTitle"
+                        style="
+                            margin:0;
+                            font-size:22px;
+                        "
+                    >
+                        Session Analysis
+                    </h2>
+
+                    <small
+                        style="
+                            color:#94a3b8;
+                        "
+                    >
+                        Candidate integrity analysis
+                    </small>
+
+                </div>
+
+
+                <button
+                    id="closeSessionModal"
+                    type="button"
+                    style="
+                        border:0;
+                        background:#1f2937;
+                        color:#fff;
+                        width:38px;
+                        height:38px;
+                        border-radius:10px;
+                        cursor:pointer;
+                        font-size:18px;
+                    "
+                    aria-label="Close"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <div id="sessionModalContent"></div>
+
+        </div>
+
+        `;
+
+
+    document.body.appendChild(
+        modal
+    );
+
+
+    const closeButton =
+        document.getElementById(
+            "closeSessionModal"
+        );
+
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            closeSessionModal
+        );
+
+    }
+
+
+    modal.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target === modal
+            ) {
+
+                closeSessionModal();
+
+            }
+
+        }
+    );
+
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Escape"
+            ) {
+
+                closeSessionModal();
+
+            }
+
+        }
+    );
+
+}
+
+
+function showSessionModal(
+    session
+) {
+
+    const modal =
+        document.getElementById(
+            "sessionDetailsModal"
+        );
+
+
+    const title =
+        document.getElementById(
+            "sessionModalTitle"
+        );
+
+
+    const content =
+        document.getElementById(
+            "sessionModalContent"
+        );
+
+
+    if (
+        !modal ||
+        !content
+    ) {
+
+        return;
+
+    }
+
+
+    const score =
+        Number(
+            session.integrityScore || 0
+        );
+
+
+    const severity =
+        Number(
+            session.severityScore || 0
+        );
+
+
+    const face =
+        Number(
+            session.facePresence || 0
+        );
+
+
+    const events =
+        Number(
+            session.totalEvents || 0
+        );
+
+
+    const risk =
+        getRiskLabel(
+            session,
+            score
+        );
+
+
+    if (title) {
+
+        title.textContent =
+            session.candidateName ||
+            "Session Analysis";
+
+    }
+
+
+    content.innerHTML =
+        `
+
+        <div
+            style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+                gap:14px;
+            "
+        >
+
+            ${createDetailCard(
+                "Candidate",
+                session.candidateName || "-"
+            )}
+
+            ${createDetailCard(
+                "Candidate ID",
+                session.candidateId ?? "-"
+            )}
+
+            ${createDetailCard(
+                "Email",
+                session.candidateEmail || "-"
+            )}
+
+            ${createDetailCard(
+                "Examination",
+                session.examTitle || "-"
+            )}
+
+            ${createDetailCard(
+                "Topic",
+                session.examTopic || "-"
+            )}
+
+            ${createDetailCard(
+                "Total Events",
+                events
+            )}
+
+            ${createDetailCard(
+                "Severity Score",
+                severity.toFixed(1)
+            )}
+
+            ${createDetailCard(
+                "Face Presence",
+                face.toFixed(1) + "%"
+            )}
+
+            ${createDetailCard(
+                "Integrity Score",
+                score.toFixed(1)
+            )}
+
+            ${createDetailCard(
+                "Risk Level",
+                risk
+            )}
+
+            ${createDetailCard(
+                "Warning Count",
+                Number(
+                    session.warningCount || 0
+                )
+            )}
+
+            ${createDetailCard(
+                "Generated At",
+                session.generatedAt || "-"
+            )}
+
+        </div>
+
+        <div
+            style="
+                margin-top:20px;
+                padding:16px;
+                border-radius:12px;
+                background:#0f172a;
+                border-left:4px solid ${getScoreColor(score)};
+            "
+        >
+
+            <strong>
+                Integrity Assessment
+            </strong>
+
+            <p
+                style="
+                    margin:8px 0 0;
+                    color:#94a3b8;
+                    line-height:1.6;
+                "
+            >
+                ${getIntegrityDescription(
+                    score,
+                    risk
+                )}
+            </p>
+
+        </div>
+
+        `;
+
+
+    modal.style.display =
+        "flex";
+
+
+    document.body.style.overflow =
+        "hidden";
+
+}
+
+
+function createDetailCard(
+    label,
+    value
+) {
+
+    return `
+        <div
+            style="
+                background:#1e293b;
+                padding:14px;
+                border-radius:12px;
+                border:1px solid rgba(148,163,184,.12);
+            "
+        >
+
+            <small
+                style="
+                    display:block;
+                    color:#94a3b8;
+                    margin-bottom:6px;
+                "
+            >
+                ${escapeHtml(label)}
+            </small>
+
+            <strong
+                style="
+                    color:#f8fafc;
+                    word-break:break-word;
+                "
+            >
+                ${escapeHtml(
+                    String(value ?? "-")
+                )}
+            </strong>
+
+        </div>
+    `;
+
+}
+
+
+function getIntegrityDescription(
+    score,
+    risk
+) {
+
+    if (risk === "Low") {
+
+        return (
+            "This session has a low integrity risk based on the calculated integrity score."
+        );
+
+    }
+
+
+    if (risk === "Medium") {
+
+        return (
+            "This session requires attention because the calculated integrity score indicates a medium level of integrity risk."
+        );
+
+    }
+
+
+    return (
+        "This session has a high integrity risk and should be reviewed by the administrator."
+    );
+
+}
+
+
+function closeSessionModal() {
+
+    const modal =
+        document.getElementById(
+            "sessionDetailsModal"
+        );
+
+
+    if (modal) {
+
+        modal.style.display =
+            "none";
+
+    }
+
+
+    document.body.style.overflow =
+        "";
+
+}
+
+
+
+function createProfileRow(
+    label,
+    value
+) {
+
+    return `
+        <div
+            style="
+                display:flex;
+                justify-content:space-between;
+                gap:15px;
+                padding:10px 0;
+                border-bottom:1px solid rgba(148,163,184,.1);
+            "
+        >
+
+            <span
+                style="
+                    color:#94a3b8;
+                    font-size:13px;
+                "
+            >
+                ${escapeHtml(label)}
+            </span>
+
+            <strong
+                style="
+                    text-align:right;
+                    font-size:13px;
+                    word-break:break-word;
+                "
+            >
+                ${escapeHtml(
+                    String(value ?? "-")
+                )}
+            </strong>
+
+        </div>
+    `;
+
+}
+
+
+/* =========================================================
+   EXPORT REPORT
+   ========================================================= */
+
+function createExportButton() {
+
+    if (
+        document.getElementById(
+            "exportReportBtn"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const sessionsPanel =
+        document.querySelector(
+            ".sessions-panel"
+        );
+
+
+    if (!sessionsPanel) {
+        return;
+    }
+
+
+    const panelHeader =
+        sessionsPanel.querySelector(
+            ".panel-header"
+        );
+
+
+    if (!panelHeader) {
+        return;
+    }
+
+
+    const button =
+        document.createElement(
+            "button"
+        );
+
+
+    button.id =
+        "exportReportBtn";
+
+
+    button.type =
+        "button";
+
+
+    button.className =
+        "refresh-btn";
+
+
+    button.style.cssText = `
+        display:flex;
+        align-items:center;
+        gap:7px;
+        margin-left:auto;
+    `;
+
+
+    button.innerHTML =
+        `
+        <i class="fa-solid fa-file-export"></i>
+        Export Report
+        `;
+
+
+    button.addEventListener(
+        "click",
+        exportReport
+    );
+
+
+    const badge =
+        panelHeader.querySelector(
+            ".panel-badge"
+        );
+
+
+    if (badge) {
+
+        badge.parentNode.insertBefore(
+            button,
+            badge
+        );
+
+    }
+    else {
+
+        panelHeader.appendChild(
+            button
+        );
+
+    }
+
+}
+
+
+function exportReport() {
+
+    if (
+        !currentData ||
+        !Array.isArray(
+            currentData.sessions
+        )
+    ) {
+
+        alert(
+            "There is no integrity data available to export."
+        );
+
+        return;
+
+    }
+
+
+    const sessions =
+        currentData.sessions;
+
+
+    if (!sessions.length) {
+
+        alert(
+            "There are no sessions available to export."
+        );
+
+        return;
+
+    }
+
+
+    const headers = [
+
+        "Candidate",
+
+        "Candidate ID",
+
+        "Email",
+
+        "Examination",
+
+        "Exam Topic",
+
+        "Total Events",
+
+        "Severity Score",
+
+        "Face Presence (%)",
+
+        "Integrity Score",
+
+        "Risk Level",
+
+        "Warning Count",
+
+        "Generated At"
+
+    ];
+
+
+    const rows =
+        sessions.map(
+            function (session) {
+
+                return [
+
+                    session.candidateName || "",
+
+                    session.candidateId ?? "",
+
+                    session.candidateEmail || "",
+
+                    session.examTitle || "",
+
+                    session.examTopic || "",
+
+                    session.totalEvents ?? 0,
+
+                    Number(
+                        session.severityScore || 0
+                    ).toFixed(1),
+
+                    Number(
+                        session.facePresence || 0
+                    ).toFixed(1),
+
+                    Number(
+                        session.integrityScore || 0
+                    ).toFixed(1),
+
+                    getRiskLabel(
+                        session,
+                        Number(
+                            session.integrityScore || 0
+                        )
+                    ),
+
+                    session.warningCount ?? 0,
+
+                    session.generatedAt || ""
+
+                ];
+
+            }
+        );
+
+
+    const csv =
+        [
+            headers,
+            ...rows
+        ]
+        .map(
+            function (row) {
+
+                return row
+                    .map(
+                        csvEscape
+                    )
+                    .join(",");
+
+            }
+        )
+        .join("\r\n");
+
+
+    const blob =
+        new Blob(
+            [
+                "\uFEFF" +
+                csv
+            ],
+            {
+                type:
+                    "text/csv;charset=utf-8;"
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.href =
+        url;
+
+
+    const examFilter =
+        document.getElementById(
+            "examFilter"
+        );
+
+
+    const selectedExam =
+        examFilter &&
+        examFilter.selectedOptions.length
+            ? examFilter.selectedOptions[0].textContent.trim()
+            : "All-Examinations";
+
+
+    const safeExamName =
+        selectedExam
+            .replace(
+                /[^a-z0-9]+/gi,
+                "_"
+            )
+            .replace(
+                /^_+|_+$/g,
+                ""
+            );
+
+
+    const timestamp =
+        new Date()
+            .toISOString()
+            .replace(
+                /[:.]/g,
+                "-"
+            );
+
+
+    link.download =
+        `integrity_report_${safeExamName}_${timestamp}.csv`;
+
+
+    document.body.appendChild(
+        link
+    );
+
+
+    link.click();
+
+
+    link.remove();
+
+
+    setTimeout(
+        function () {
+
+            URL.revokeObjectURL(
+                url
+            );
+
+        },
+        1000
+    );
+
+}
+
+
+function csvEscape(
+    value
+) {
+
+    const text =
+        String(
+            value ?? ""
+        );
+
+
+    return (
+        '"' +
+        text
+            .replace(
+                /"/g,
+                '""'
+            ) +
+        '"'
     );
 
 }
@@ -1892,7 +3069,9 @@ function filterSessions(
             currentData.sessions
         )
     ) {
+
         return;
+
     }
 
 
@@ -1929,7 +3108,9 @@ function filterSessions(
 
 
             row.style.display =
-                text.includes(value)
+                text.includes(
+                    value
+                )
                     ? ""
                     : "none";
 
@@ -1978,6 +3159,108 @@ function initializeKeyboardShortcut() {
 
 
 /* =========================================================
+   THEME
+   ========================================================= */
+
+function toggleTheme() {
+
+    const body =
+        document.body;
+
+
+    const themeBtn =
+        document.getElementById(
+            "themeBtn"
+        );
+
+
+    body.classList.toggle(
+        "light-theme"
+    );
+
+
+    const isLight =
+        body.classList.contains(
+            "light-theme"
+        );
+
+
+    localStorage.setItem(
+        "integrity-theme",
+        isLight
+            ? "light"
+            : "dark"
+    );
+
+
+    if (themeBtn) {
+
+        const icon =
+            themeBtn.querySelector(
+                "i"
+            );
+
+
+        if (icon) {
+
+            icon.className =
+                isLight
+                    ? "fa-regular fa-sun"
+                    : "fa-regular fa-moon";
+
+        }
+
+    }
+
+}
+
+
+function initializeTheme() {
+
+    const savedTheme =
+        localStorage.getItem(
+            "integrity-theme"
+        );
+
+
+    if (
+        savedTheme === "light"
+    ) {
+
+        document.body.classList.add(
+            "light-theme"
+        );
+
+
+        const themeBtn =
+            document.getElementById(
+                "themeBtn"
+            );
+
+
+        if (themeBtn) {
+
+            const icon =
+                themeBtn.querySelector(
+                    "i"
+                );
+
+
+            if (icon) {
+
+                icon.className =
+                    "fa-regular fa-sun";
+
+            }
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
    HELPERS
    ========================================================= */
 
@@ -2013,7 +3296,6 @@ function destroyChart(
             chart.destroy();
 
         }
-
         catch (error) {
 
             console.warn(
@@ -2053,7 +3335,9 @@ function createEmptyRow(
                     "
                 ></i>
 
-                ${escapeHtml(message)}
+                ${escapeHtml(
+                    message
+                )}
 
             </td>
 
@@ -2079,7 +3363,9 @@ function formatEventName(
     .replace(
         /\b\w/g,
         function (letter) {
+
             return letter.toUpperCase();
+
         }
     );
 
@@ -2116,22 +3402,80 @@ function escapeHtml(
 
 }
 
+
 /* =========================================================
    LAST UPDATED
    ========================================================= */
 
 function updateLastUpdated() {
 
-    const element = document.getElementById("lastUpdated");
+    const element =
+        document.getElementById(
+            "lastUpdated"
+        );
 
-    if (!element) return;
 
-    const now = new Date();
+    if (!element) {
+        return;
+    }
+
+
+    const now =
+        new Date();
+
 
     element.textContent =
         "Last updated: " +
         now.toLocaleString();
+
 }
+
+
+/* =========================================================
+   LOADING STATE
+   ========================================================= */
+
+function setLoadingState(
+    loading
+) {
+
+    const refreshBtn =
+        document.getElementById(
+            "refreshBtn"
+        );
+
+
+    if (!refreshBtn) {
+        return;
+    }
+
+
+    if (loading) {
+
+        refreshBtn.disabled =
+            true;
+
+        refreshBtn.style.opacity =
+            "0.65";
+
+    }
+    else {
+
+        refreshBtn.disabled =
+            false;
+
+        refreshBtn.style.opacity =
+            "";
+
+    }
+
+}
+
+
+/* =========================================================
+   GLOBAL ERROR
+   ========================================================= */
+
 function showGlobalError(
     message
 ) {
@@ -2177,5 +3521,37 @@ window.addEventListener(
 
         }
 
+
+        destroyChart(
+            distributionChart
+        );
+
+        destroyChart(
+            riskChart
+        );
+
+        destroyChart(
+            clusterChart
+        );
+
+        destroyChart(
+            sessionsMiniChart
+        );
+
+        destroyChart(
+            scoreMiniChart
+        );
+
+        destroyChart(
+            faceMiniChart
+        );
+
     }
 );
+
+
+/* =========================================================
+   INITIAL THEME
+   ========================================================= */
+
+initializeTheme();

@@ -17,7 +17,6 @@ from datetime import timedelta
 from routes.api import api_bp
 from routes.auth import auth_bp
 from routes.pages import pages_bp
-from routes.integrity_analytics import integrity_bp
 from modules.integrity_scoring import save_integrity_score
 from routes.admin import admin_bp
 from routes.admin_dashboard import admin_dashboard_bp
@@ -49,7 +48,6 @@ app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 app.register_blueprint(api_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(pages_bp)
-app.register_blueprint(integrity_bp)
 app.register_blueprint(admin_bp) 
 app.register_blueprint(admin_dashboard_bp)
 

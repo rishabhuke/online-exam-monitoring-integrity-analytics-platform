@@ -77,6 +77,31 @@ const pageNumbers =
 
 
 /* ============================================================
+   CANDIDATE DETAILS MODAL
+============================================================ */
+
+const candidateDetailsModal =
+    document.getElementById(
+        "candidateDetailsModal"
+    );
+
+const candidateModalClose =
+    document.getElementById(
+        "candidateModalClose"
+    );
+
+const candidateModalCloseBottom =
+    document.getElementById(
+        "candidateModalCloseBottom"
+    );
+
+const candidateModalBackdrop =
+    document.querySelector(
+        ".candidate-modal-backdrop"
+    );
+
+
+/* ============================================================
    LOAD DATA
 ============================================================ */
 
@@ -140,7 +165,18 @@ async function loadCandidateStatus() {
         );
 
         renderStatistics(
-            data.statistics
+            data.statistics || {}
+        );
+
+        renderActivityFeed(
+            data.activity_feed ||
+            data.activity ||
+            []
+        );
+
+        renderRealtimeActivity(
+            data.realtime_activity ||
+            []
         );
 
         applyFilters();
@@ -208,16 +244,11 @@ function populateExams(exams) {
         }
     );
 
-    /*
-     * Preserve selected exam
-     */
-
     if (
         currentValue &&
         exams.some(
             exam =>
-                String(exam.id)
-                ===
+                String(exam.id) ===
                 String(currentValue)
         )
     ) {
@@ -282,42 +313,27 @@ function renderStatistics(stats) {
 
     setText(
         "totalPercentage",
-        percentage(
-            total,
-            total
-        )
+        percentage(total, total)
     );
 
     setText(
         "onlinePercentage",
-        percentage(
-            online,
-            total
-        )
+        percentage(online, total)
     );
 
     setText(
         "warningPercentage",
-        percentage(
-            warning,
-            total
-        )
+        percentage(warning, total)
     );
 
     setText(
         "violationPercentage",
-        percentage(
-            violations,
-            total
-        )
+        percentage(violations, total)
     );
 
     setText(
         "offlinePercentage",
-        percentage(
-            offline,
-            total
-        )
+        percentage(offline, total)
     );
 
 }
@@ -351,10 +367,6 @@ function applyFilters() {
         allCandidates.filter(
             candidate => {
 
-                /*
-                 * Status
-                 */
-
                 if (
                     status &&
                     candidate.status !== status
@@ -365,10 +377,6 @@ function applyFilters() {
                 }
 
 
-                /*
-                 * Risk
-                 */
-
                 if (
                     risk &&
                     candidate.risk !== risk
@@ -378,10 +386,6 @@ function applyFilters() {
 
                 }
 
-
-                /*
-                 * Search
-                 */
 
                 if (keyword) {
 
@@ -489,7 +493,7 @@ function renderTable() {
             <tr>
 
                 <td
-                    colspan="10"
+                    colspan="8"
                     class="empty-row"
                 >
 
@@ -558,97 +562,79 @@ function renderTable() {
 
 
 /* ============================================================
-   CANDIDATE ROW
+   CANDIDATE PHOTO
 ============================================================ */
+
 function getCandidatePhotoUrl(photo) {
 
     if (!photo) {
         return "";
     }
 
-    let value = String(photo).trim();
+    let value =
+        String(photo).trim();
 
     if (!value) {
         return "";
     }
 
-    console.log("Original candidate photo:", value);
+    value =
+        value.replace(/\\/g, "/");
 
-    /*
-     * Convert Windows backslashes to URL slashes.
-     *
-     * static\uploads\photos\image.png
-     * becomes
-     * static/uploads/photos/image.png
-     */
-    value = value.replace(/\\/g, "/");
+    value =
+        value.replace(/^\/+/, "");
 
-    /*
-     * Remove leading slash.
-     */
-    value = value.replace(/^\/+/, "");
 
-    /*
-     * Absolute URL
-     */
     if (
         value.startsWith("http://") ||
         value.startsWith("https://") ||
         value.startsWith("data:")
     ) {
+
         return value;
+
     }
 
-    /*
-     * If database contains:
-     *
-     * static/uploads/photos/image.png
-     *
-     * return:
-     *
-     * /static/uploads/photos/image.png
-     */
-    if (value.startsWith("static/")) {
+
+    if (
+        value.startsWith("static/")
+    ) {
+
         return "/" + value;
+
     }
 
-    /*
-     * If database contains:
-     *
-     * uploads/photos/image.png
-     *
-     * return:
-     *
-     * /static/uploads/photos/image.png
-     */
-    if (value.startsWith("uploads/")) {
+
+    if (
+        value.startsWith("uploads/")
+    ) {
+
         return "/static/" + value;
+
     }
 
-    /*
-     * If database contains only:
-     *
-     * image.png
-     *
-     * return:
-     *
-     * /static/uploads/photos/image.png
-     */
+
     return "/static/uploads/photos/" + value;
+
 }
+
+
+/* ============================================================
+   CANDIDATE ROW
+============================================================ */
 
 function createCandidateRow(candidate) {
 
     const initials =
-        getInitials(candidate.name);
+        getInitials(
+            candidate.name
+        );
 
-
-    /* ========================================================
-       CANDIDATE PHOTO
-    ======================================================== */
 
     const photoUrl =
-        getCandidatePhotoUrl(candidate.photo);
+        getCandidatePhotoUrl(
+            candidate.photo
+        );
 
 
     const photo =
@@ -657,7 +643,8 @@ function createCandidateRow(candidate) {
                 <img
                     src="${escapeAttribute(photoUrl)}"
                     alt="${escapeAttribute(
-                        candidate.name || "Candidate"
+                        candidate.name ||
+                        "Candidate"
                     )}"
                     class="candidate-photo"
                     onerror="
@@ -683,19 +670,11 @@ function createCandidateRow(candidate) {
         `;
 
 
-    /* ========================================================
-       STATUS
-    ======================================================== */
-
     const statusClass =
         getStatusClass(
             candidate.status
         );
 
-
-    /* ========================================================
-       RISK
-    ======================================================== */
 
     const riskClass =
         getRiskClass(
@@ -703,28 +682,10 @@ function createCandidateRow(candidate) {
         );
 
 
-    /* ========================================================
-       SCORE
-    ======================================================== */
-
- 
-
-
-    /* ========================================================
-       VIOLATIONS
-    ======================================================== */
-const violationCount = Number(candidate.violation_count ?? 0);
-
-// Calculate integrity score
-let score = 100 - (violationCount * 10);
-
-// Keep score between 0 and 100
-score = Math.max(0, Math.min(100, score));
-
-// Make sure it is an integer
-score = Math.round(score);
-
-
+    const violationCount =
+        Number(
+            candidate.violation_count ?? 0
+        );
 
 
     const violationClass =
@@ -732,10 +693,6 @@ score = Math.round(score);
             ? "has-violations"
             : "";
 
-
-    /* ========================================================
-       EXAM
-    ======================================================== */
 
     const examName =
         candidate.exam_title ||
@@ -748,12 +705,28 @@ score = Math.round(score);
 
 
     /* ========================================================
-       ROW
+       ACTION BUTTON
     ======================================================== */
+
+    const actionButton = `
+        <button
+            type="button"
+            class="view-details"
+            data-candidate-id="${escapeAttribute(
+                String(candidate.candidate_id ?? "")
+            )}"
+            title="View candidate details"
+        >
+            <i class="fa-solid fa-eye"></i>
+            <span>View Details</span>
+        </button>
+    `;
+
 
     return `
 
         <tr>
+
 
             <!-- Candidate -->
 
@@ -815,33 +788,7 @@ score = Math.round(score);
             </td>
 
 
-            <!-- Examination -->
-
-            <td>
-
-                <span class="exam-name">
-
-                    ${escapeHTML(
-                        examName
-                    )}
-
-                </span>
-
-                ${
-                    topic
-                        ? `
-                            <span class="exam-topic">
-                                ${escapeHTML(topic)}
-                            </span>
-                        `
-                        : ""
-                }
-
-            </td>
-
-
-            <!-- Login Time -->
-
+            
 
 
             <!-- Status -->
@@ -898,11 +845,6 @@ score = Math.round(score);
             </td>
 
 
-            <!-- Integrity Score -->
-
-     
-
-
             <!-- Last Activity -->
 
             <td>
@@ -916,10 +858,17 @@ score = Math.round(score);
 
             <!-- Actions -->
 
+            <td>
+
+                ${actionButton}
+
+            </td>
+
 
         </tr>
 
     `;
+
 }
 
 
@@ -940,25 +889,12 @@ function bindDetailButtons() {
                     "click",
                     function () {
 
-                        const examId =
-                            this.dataset.examId;
+                        const candidateId =
+                            this.dataset.candidateId;
 
-                        if (examId) {
-
-                            window.location.href =
-                                "/admin/live-monitoring" +
-                                "?exam_id=" +
-                                encodeURIComponent(
-                                    examId
-                                );
-
-                        }
-                        else {
-
-                            window.location.href =
-                                "/admin/live-monitoring";
-
-                        }
+                        openCandidateDetails(
+                            candidateId
+                        );
 
                     }
                 );
@@ -967,6 +903,599 @@ function bindDetailButtons() {
         );
 
 }
+
+
+/* ============================================================
+   OPEN CANDIDATE DETAILS
+============================================================ */
+
+function openCandidateDetails(candidateId) {
+
+    const candidate =
+        allCandidates.find(
+            item =>
+                String(
+                    item.candidate_id
+                ) ===
+                String(candidateId)
+        );
+
+
+    if (!candidate) {
+
+        console.error(
+            "Candidate not found:",
+            candidateId
+        );
+
+        return;
+
+    }
+
+
+    populateCandidateModal(
+        candidate
+    );
+
+
+    if (!candidateDetailsModal) {
+        return;
+    }
+
+
+    candidateDetailsModal.classList.add(
+        "show"
+    );
+
+    candidateDetailsModal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+
+    document.body.classList.add(
+        "modal-open"
+    );
+
+}
+
+
+/* ============================================================
+   POPULATE CANDIDATE MODAL
+============================================================ */
+
+function populateCandidateModal(candidate) {
+       console.log("FULL CANDIDATE DATA:", candidate);
+    console.log("INTEGRITY SCORE:", candidate.integrity_score);
+
+    const name =
+        candidate.name ||
+        "Unknown Candidate";
+
+
+    const email =
+        candidate.email ||
+        "--";
+
+
+    const candidateId =
+        candidate.candidate_id ??
+        "--";
+
+
+    const status =
+        candidate.status ||
+        "Offline";
+
+
+    const risk =
+        candidate.risk ||
+        "Low";
+
+
+    const violations =
+        Number(
+            candidate.violation_count ?? 0
+        );
+
+
+    let integrity =
+        Number(
+            candidate.integrity_score ?? 0
+        );
+
+
+    integrity =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                Math.round(integrity)
+            )
+        );
+
+
+    const exams =
+        Array.isArray(
+            candidate.completed_exams
+        )
+            ? candidate.completed_exams
+            : [];
+
+
+    const averageScore =
+        Number(
+            candidate.average_exam_score ?? 0
+        );
+
+
+    setText(
+        "candidateModalName",
+        name
+    );
+
+
+    setText(
+        "candidateModalEmail",
+        email
+    );
+
+
+    setText(
+        "candidateModalId",
+        `Candidate ID: ${candidateId}`
+    );
+
+
+    setText(
+        "candidateModalIntegrity",
+        `${integrity}%`
+    );
+
+
+    setText(
+        "candidateIntegrityRingValue",
+        integrity
+    );
+
+
+    setText(
+        "candidateModalViolations",
+        violations
+    );
+
+
+    setText(
+        "candidateModalExamCount",
+        exams.length
+    );
+
+
+    setText(
+        "candidateModalAverageScore",
+        `${averageScore.toFixed(1)}%`
+    );
+
+
+    setText(
+        "candidateModalLastActivity",
+        formatDateTime(
+            candidate.last_activity
+        )
+    );
+
+
+    /* ========================================================
+       STATUS
+    ======================================================== */
+
+    const statusElement =
+        document.getElementById(
+            "candidateModalStatus"
+        );
+
+    if (statusElement) {
+
+        statusElement.textContent =
+            status;
+
+        statusElement.className =
+            "status-badge " +
+            getStatusClass(status);
+
+    }
+
+
+    /* ========================================================
+       RISK
+    ======================================================== */
+
+    const riskElement =
+        document.getElementById(
+            "candidateModalRisk"
+        );
+
+    if (riskElement) {
+
+        riskElement.textContent =
+            risk;
+
+        riskElement.className =
+            "risk-badge " +
+            getRiskClass(risk);
+
+    }
+
+
+    /* ========================================================
+       PROFILE AVATAR
+    ======================================================== */
+
+    const modalAvatar =
+        document.getElementById(
+            "candidateModalAvatar"
+        );
+
+    const modalInitials =
+        document.getElementById(
+            "candidateModalInitials"
+        );
+
+
+    const photoUrl =
+        getCandidatePhotoUrl(
+            candidate.photo
+        );
+
+
+    if (
+        modalAvatar &&
+        modalInitials
+    ) {
+
+        modalAvatar.innerHTML = `
+            <span>
+                ${escapeHTML(
+                    getInitials(name)
+                )}
+            </span>
+        `;
+
+
+        if (photoUrl) {
+
+            const image =
+                document.createElement(
+                    "img"
+                );
+
+            image.src =
+                photoUrl;
+
+            image.alt =
+                name;
+
+            image.className =
+                "modal-candidate-photo";
+
+
+            image.onerror =
+                function () {
+
+                    this.remove();
+
+                };
+
+
+            modalAvatar.prepend(
+                image
+            );
+
+        }
+
+    }
+
+
+    /* ========================================================
+       INTEGRITY RING
+    ======================================================== */
+
+    const ring =
+        document.getElementById(
+            "candidateIntegrityRing"
+        );
+
+    if (ring) {
+
+        ring.style.setProperty(
+            "--score",
+            integrity
+        );
+
+        ring.classList.remove(
+            "score-low",
+            "score-medium",
+            "score-high"
+        );
+
+
+        if (integrity >= 80) {
+
+            ring.classList.add(
+                "score-high"
+            );
+
+        }
+
+        else if (integrity >= 50) {
+
+            ring.classList.add(
+                "score-medium"
+            );
+
+        }
+
+        else {
+
+            ring.classList.add(
+                "score-low"
+            );
+
+        }
+
+    }
+
+
+    renderCandidateExamHistory(
+        exams
+    );
+
+}
+
+
+/* ============================================================
+   EXAM HISTORY
+============================================================ */
+
+function renderCandidateExamHistory(
+    exams
+) {
+
+    const container =
+        document.getElementById(
+            "candidateExamHistory"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (
+        !Array.isArray(exams) ||
+        exams.length === 0
+    ) {
+
+        container.innerHTML = `
+
+            <div class="no-exam-history">
+
+                <div class="no-exam-icon">
+
+                    <i class="fa-solid fa-file-circle-xmark"></i>
+
+                </div>
+
+                <div>
+
+                    <strong>
+                        No examination history
+                    </strong>
+
+                    <span>
+                        This candidate has not completed an examination yet.
+                    </span>
+
+                </div>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        exams
+            .map(
+                (exam, index) => {
+
+                    const score =
+                        Number(
+                            exam.score ?? 0
+                        );
+
+
+                    const scoreClass =
+                        score >= 80
+                            ? "excellent"
+                            : score >= 50
+                                ? "average"
+                                : "poor";
+
+
+                    return `
+
+                        <div
+                            class="exam-history-item"
+                        >
+
+                            <div class="exam-history-number">
+
+                                ${index + 1}
+
+                            </div>
+
+
+                            <div class="exam-history-main">
+
+                                <div class="exam-history-name">
+
+                                    <strong>
+                                        ${escapeHTML(
+                                            exam.exam_name ||
+                                            "Unknown Exam"
+                                        )}
+                                    </strong>
+
+                                    ${
+                                        exam.topic
+                                            ? `
+                                                <span>
+                                                    ${escapeHTML(
+                                                        exam.topic
+                                                    )}
+                                                </span>
+                                            `
+                                            : ""
+                                    }
+
+                                </div>
+
+
+                                <div class="exam-history-meta">
+
+                                    <span>
+
+                                        <i class="fa-solid fa-hashtag"></i>
+
+                                        Exam ID:
+                                        ${escapeHTML(
+                                            String(
+                                                exam.exam_id ??
+                                                "--"
+                                            )
+                                        )}
+
+                                    </span>
+
+
+                                    <span>
+
+                                        <i class="fa-solid fa-file-circle-check"></i>
+
+                                        Completed
+
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="exam-history-score ${scoreClass}">
+
+                                <span>
+                                    SCORE
+                                </span>
+
+                                <strong>
+                                    ${score.toFixed(1)}%
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+
+/* ============================================================
+   CLOSE CANDIDATE MODAL
+============================================================ */
+
+function closeCandidateDetails() {
+
+    if (!candidateDetailsModal) {
+        return;
+    }
+
+
+    candidateDetailsModal.classList.remove(
+        "show"
+    );
+
+
+    candidateDetailsModal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+
+    document.body.classList.remove(
+        "modal-open"
+    );
+
+}
+
+
+if (candidateModalClose) {
+
+    candidateModalClose.addEventListener(
+        "click",
+        closeCandidateDetails
+    );
+
+}
+
+
+if (candidateModalCloseBottom) {
+
+    candidateModalCloseBottom.addEventListener(
+        "click",
+        closeCandidateDetails
+    );
+
+}
+
+
+if (candidateModalBackdrop) {
+
+    candidateModalBackdrop.addEventListener(
+        "click",
+        closeCandidateDetails
+    );
+
+}
+
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Escape" &&
+            candidateDetailsModal &&
+            candidateDetailsModal.classList.contains(
+                "show"
+            )
+        ) {
+
+            closeCandidateDetails();
+
+        }
+
+    }
+);
 
 
 /* ============================================================
@@ -995,7 +1524,8 @@ function renderPagination(
                 "button"
             );
 
-        button.type = "button";
+        button.type =
+            "button";
 
         button.className =
             "page-number" +
@@ -1008,16 +1538,19 @@ function renderPagination(
         button.textContent =
             i;
 
+
         button.addEventListener(
             "click",
             () => {
 
-                currentPage = i;
+                currentPage =
+                    i;
 
                 renderTable();
 
             }
         );
+
 
         pageNumbers.appendChild(
             button
@@ -1048,43 +1581,33 @@ function renderPagination(
    ACTIVITY FEED
 ============================================================ */
 
-function renderActivityFeed() {
+function renderActivityFeed(activity) {
 
     const feed =
         document.getElementById(
             "activityFeed"
         );
 
-    if (!feed)
+
+    if (!feed) {
         return;
+    }
 
 
-    const recent =
-        [...allCandidates]
-            .filter(
-                candidate =>
-                    candidate.last_activity
-            )
-            .sort(
-                (a, b) =>
-                    String(
-                        b.last_activity
-                    ).localeCompare(
-                        String(
-                            a.last_activity
-                        )
-                    )
-            )
-            .slice(0, 6);
-
-
-    if (recent.length === 0) {
+    if (
+        !Array.isArray(activity) ||
+        activity.length === 0
+    ) {
 
         feed.innerHTML = `
 
             <div class="empty-activity">
 
-                No recent activity
+                <i class="fa-solid fa-clock"></i>
+
+                <span>
+                    No recent activity
+                </span>
 
             </div>
 
@@ -1096,35 +1619,192 @@ function renderActivityFeed() {
 
 
     feed.innerHTML =
-        recent
-            .map(
-                candidate => `
+        activity
+            .slice(0, 8)
+            .map(event => {
 
-                    <div class="activity-item">
+                const severity =
+                    String(
+                        event.severity ||
+                        "Medium"
+                    ).toLowerCase();
 
-                        <strong>
 
-                            ${escapeHTML(
-                                candidate.name
-                            )}
+                const candidate =
+                    escapeHTML(
+                        event.candidate_name ||
+                        "Unknown Candidate"
+                    );
 
-                        </strong>
 
-                        <span>
+                const type =
+                    escapeHTML(
+                        event.violation_type ||
+                        event.type ||
+                        "Integrity Event"
+                    );
 
-                            ${
-                                candidate.violation_count > 0
-                                    ? "Integrity activity detected"
-                                    : "Candidate activity recorded"
-                            }
 
-                        </span>
+                const exam =
+                    escapeHTML(
+                        event.exam_title ||
+                        "Unknown Examination"
+                    );
+
+
+                const time =
+                    formatDateTime(
+                        event.time
+                    );
+
+
+                return `
+
+                    <div
+                        class="activity-item severity-${severity}"
+                    >
+
+                        <div class="activity-icon">
+
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+
+                        </div>
+
+
+                        <div class="activity-content">
+
+                            <strong>
+                                ${candidate}
+                            </strong>
+
+                            <span>
+                                ${type}
+                            </span>
+
+                            <small>
+                                ${exam}
+                            </small>
+
+                            <time>
+                                ${time}
+                            </time>
+
+                        </div>
 
                     </div>
 
-                `
-            )
+                `;
+
+            })
             .join("");
+
+}
+
+
+/* ============================================================
+   REALTIME ACTIVITY
+============================================================ */
+
+function renderRealtimeActivity(activity) {
+
+    const chart =
+        document.getElementById(
+            "activityChart"
+        );
+
+
+    if (!chart) {
+        return;
+    }
+
+
+    if (
+        !Array.isArray(activity) ||
+        activity.length === 0
+    ) {
+
+        chart.innerHTML = `
+
+            <div class="activity-empty">
+                No integrity events yet
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    const maxCount =
+        Math.max(
+            ...activity.map(
+                item =>
+                    Number(
+                        item.count || 0
+                    )
+            ),
+            1
+        );
+
+
+    chart.innerHTML = `
+
+        <div class="realtime-bars">
+
+            ${
+                activity
+                    .map(item => {
+
+                        const count =
+                            Number(
+                                item.count || 0
+                            );
+
+
+                        const height =
+                            Math.max(
+                                8,
+                                (
+                                    count /
+                                    maxCount
+                                ) * 100
+                            );
+
+
+                        return `
+
+                            <div
+                                class="realtime-bar-wrapper"
+                                title="${escapeAttribute(
+                                    item.time
+                                )}: ${count} events"
+                            >
+
+                                <div
+                                    class="realtime-bar"
+                                    style="
+                                        height:${height}%;
+                                    "
+                                ></div>
+
+                                <span>
+                                    ${escapeHTML(
+                                        item.time
+                                    )}
+                                </span>
+
+                            </div>
+
+                        `;
+
+                    })
+                    .join("")
+            }
+
+        </div>
+
+    `;
 
 }
 
@@ -1147,6 +1827,11 @@ function startAutoRefresh() {
     refreshTimer =
         setInterval(
             () => {
+
+                /*
+                 * Do not close the modal while refreshing.
+                 * The candidate data itself will be refreshed.
+                 */
 
                 loadCandidateStatus();
 
@@ -1298,6 +1983,7 @@ if (nextPage) {
                     rowsPerPage
                 );
 
+
             if (
                 currentPage <
                 totalPages
@@ -1323,6 +2009,7 @@ const exportButton =
     document.getElementById(
         "exportReport"
     );
+
 
 if (exportButton) {
 
@@ -1354,12 +2041,9 @@ function exportCSV() {
         "Candidate",
         "Candidate ID",
         "Email",
-        "Examination",
-        "Login Time",
         "Status",
         "Risk",
         "Violations",
-        "Integrity Score",
         "Last Activity"
 
     ];
@@ -1375,17 +2059,11 @@ function exportCSV() {
 
                 candidate.email,
 
-                candidate.exam_title,
-
-                candidate.login_time,
-
                 candidate.status,
 
                 candidate.risk,
 
                 candidate.violation_count,
-
-                candidate.integrity_score,
 
                 candidate.last_activity
 
@@ -1438,12 +2116,17 @@ function exportCSV() {
             "a"
         );
 
-    link.href = url;
+
+    link.href =
+        url;
+
 
     link.download =
         "candidate_status_report.csv";
 
+
     link.click();
+
 
     URL.revokeObjectURL(
         url
@@ -1490,6 +2173,7 @@ function updateClock() {
         time
     );
 
+
     setText(
         "currentDate",
         date
@@ -1513,12 +2197,13 @@ function showLoading() {
     if (!tableBody)
         return;
 
+
     tableBody.innerHTML = `
 
         <tr>
 
             <td
-                colspan="10"
+                colspan="8"
                 class="loading-row"
             >
 
@@ -1540,12 +2225,13 @@ function showError(message) {
     if (!tableBody)
         return;
 
+
     tableBody.innerHTML = `
 
         <tr>
 
             <td
-                colspan="10"
+                colspan="8"
                 class="empty-row"
             >
 
@@ -1561,7 +2247,9 @@ function showError(message) {
                     class="view-details"
                     onclick="loadCandidateStatus()"
                 >
+
                     Try Again
+
                 </button>
 
             </td>
@@ -1579,7 +2267,10 @@ function setText(
 ) {
 
     const element =
-        document.getElementById(id);
+        document.getElementById(
+            id
+        );
+
 
     if (element) {
 
@@ -1598,6 +2289,7 @@ function percentage(
 
     if (!total)
         return "0%";
+
 
     return (
         (value / total) *
@@ -1632,8 +2324,10 @@ function getStatusClass(status) {
     if (status === "Online")
         return "status-online";
 
+
     if (status === "Warning")
         return "status-warning";
+
 
     return "status-offline";
 
@@ -1645,8 +2339,10 @@ function getRiskClass(risk) {
     if (risk === "High")
         return "risk-high";
 
+
     if (risk === "Medium")
         return "risk-medium";
+
 
     return "risk-low";
 

@@ -571,7 +571,58 @@
     }
 }
 
+/* =========================================================
+   MENU LINKS
+   ========================================================= */
 
+.sidebar-menu a,
+.sidebar-bottom a {
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    min-height: 43px;
+
+    padding:
+        0 13px;
+
+    border-radius: 8px;
+
+    color: var(--sidebar-text);
+
+    font-size: 0.75rem;
+
+    font-weight: 500;
+
+    white-space: nowrap;
+
+    text-decoration: none;
+
+    transition:
+        background var(--sidebar-transition),
+        color var(--sidebar-transition),
+        transform var(--sidebar-transition),
+        box-shadow var(--sidebar-transition);
+}
+
+
+/* Remove underline in every state */
+
+.sidebar-menu a:link,
+.sidebar-menu a:visited,
+.sidebar-menu a:hover,
+.sidebar-menu a:active,
+.sidebar-bottom a:link,
+.sidebar-bottom a:visited,
+.sidebar-bottom a:hover,
+.sidebar-bottom a:active {
+
+    text-decoration: none;
+}
 /* =========================================================
    MOBILE
    ========================================================= */

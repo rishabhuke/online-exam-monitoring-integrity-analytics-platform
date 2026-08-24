@@ -133,7 +133,6 @@ def admin_api_required(function):
 # Backward-compatible alias
 admin_required = admin_api_required
 
-
 # ============================================================
 # ADMIN LOGOUT PAGE ROUTE
 # ============================================================
@@ -143,17 +142,24 @@ def admin_logout_page():
     session.clear()
     return redirect(url_for("admin.admin_login_page"))
 
+@admin_dashboard_bp.route("/support-requests")
+@admin_login_required
+def support_requests_page():
+    """Admin support requests page."""
+    return render_template("support_request.html")
+
 
 # ============================================================
 # ADMIN DASHBOARD PAGE
 # ============================================================
-
 @admin_dashboard_bp.route("/dashboard")
 @admin_login_required
 def dashboard():
+
+    print("Inside dashboard")
+    print(dict(session))
+
     return render_template("admin_dashboard.html")
-
-
 # ============================================================
 # EXAMINATIONS PAGE
 # ============================================================
@@ -177,31 +183,203 @@ def ai_generated_reports_page():
     return render_template("ai_generated_reports.html")
 
 
-# ============================================================
-# LIVE MONITORING PAGE
-# ============================================================
-
 @admin_dashboard_bp.route(
-    "/live-monitoring",
-    methods=["GET"]
+    "/api/support/<int:ticket_id>",
+    methods=["PUT"]
 )
-@admin_login_required
-def live_monitoring_page():
-    return render_template("live_monitoring.html")
+def update_support_ticket(ticket_id):
 
+    if "admin_id" not in session:
+        return jsonify({
+            "success": False,
+            "message": "Admin not logged in"
+        }), 401
+
+    admin_id = session["admin_id"]
+
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({
+            "success": False,
+            "message": "Invalid request data"
+        }), 400
+
+    status = str(
+        data.get("status", "")
+    ).strip()
+
+    admin_response = str(
+        data.get("admin_response", "")
+    ).strip()
+
+    allowed_statuses = [
+        "Open",
+        "In Progress",
+        "Resolved",
+        "Closed"
+    ]
+
+    if status not in allowed_statuses:
+        return jsonify({
+            "success": False,
+            "message": "Invalid ticket status"
+        }), 400
+
+    conn = get_db_connection()
+
+    try:
+
+        ticket = conn.execute("""
+            SELECT id
+            FROM SupportTickets
+            WHERE id = ?
+        """, (ticket_id,)).fetchone()
+
+        if ticket is None:
+            return jsonify({
+                "success": False,
+                "message": "Support ticket not found"
+            }), 404
+
+        resolved_at = None
+
+        if status in ["Resolved", "Closed"]:
+            resolved_at = datetime.now().isoformat()
+
+        conn.execute("""
+            UPDATE SupportTickets
+
+            SET
+                status = ?,
+                admin_response = ?,
+                assigned_admin_id = ?,
+                updated_at = CURRENT_TIMESTAMP,
+                resolved_at = ?
+
+            WHERE id = ?
+        """, (
+            status,
+            admin_response,
+            admin_id,
+            resolved_at,
+            ticket_id
+        ))
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Support ticket updated successfully"
+        })
+
+    finally:
+        conn.close()
+@admin_dashboard_bp.route("/api/support", methods=["GET"])
+@admin_login_required
+def get_admin_support_tickets():
+
+    if "admin_id" not in session:
+        return jsonify({
+            "success": False,
+            "message": "Admin not logged in"
+        }), 401
+
+    conn = get_db_connection()
+
+    try:
+
+        tickets = conn.execute("""
+            SELECT
+                s.id,
+
+                s.candidate_id,
+
+                c.name AS candidate_name,
+
+                c.email AS candidate_email,
+
+                s.issue_type,
+
+                s.priority,
+
+                s.subject,
+
+                s.message,
+
+                s.status,
+
+                s.admin_response,
+
+                s.created_at,
+
+                s.updated_at,
+
+                s.resolved_at,
+
+                a.full_name AS admin_name
+
+            FROM SupportTickets s
+
+            INNER JOIN Candidates c
+                ON c.id = s.candidate_id
+
+            LEFT JOIN Admins a
+                ON a.id = s.assigned_admin_id
+
+            ORDER BY
+                CASE s.priority
+                    WHEN 'Critical' THEN 1
+                    WHEN 'High' THEN 2
+                    WHEN 'Medium' THEN 3
+                    WHEN 'Low' THEN 4
+                    ELSE 5
+                END,
+
+                datetime(s.created_at) DESC
+        """).fetchall()
+
+        return jsonify({
+            "success": True,
+            "tickets": [
+                dict(ticket)
+                for ticket in tickets
+            ]
+        })
+
+    finally:
+        conn.close()
+
+
+@admin_dashboard_bp.route("/profile")
+@admin_api_required
+def profile_page():
+    return render_template("admin_profile.html")
 
 # ============================================================
 # ADMIN PROFILE API
 # ============================================================
-
-@admin_dashboard_bp.route("/api/admin-profile")
-@admin_dashboard_bp.route("/api/dashboard/admin-profile")
-@admin_dashboard_bp.route("/api/profile")
+@admin_dashboard_bp.route("/api/admin-profile", methods=["GET"])
+@admin_dashboard_bp.route("/api/dashboard/admin-profile", methods=["GET"])
+@admin_dashboard_bp.route("/api/profile", methods=["GET"])
 @admin_api_required
 def admin_profile():
+
     conn = get_db_connection()
+
     try:
 
+        # Get logged-in admin ID from session
+        admin_id = session.get("admin_id")
+
+        if not admin_id:
+            return jsonify({
+                "success": False,
+                "message": "Admin session expired."
+            }), 401
+
+
+        # Fetch admin details
         admin = conn.execute(
             """
             SELECT
@@ -214,17 +392,14 @@ def admin_profile():
             FROM Admins
             WHERE id = ?
             """,
-            (session["admin_id"],)
+            (admin_id,)
         ).fetchone()
 
 
         if admin is None:
-
-            session.clear()
-
             return jsonify({
                 "success": False,
-                "message": "Admin not found"
+                "message": "Admin not found."
             }), 404
 
 
@@ -234,45 +409,40 @@ def admin_profile():
 
             "admin": {
 
-                "id":
-                    admin["id"],
+                "id": admin["id"],
 
-                "full_name":
-                    admin["full_name"],
+                "name": admin["full_name"] or "",
 
-                "name":
-                    admin["full_name"],
+                "full_name": admin["full_name"] or "",
 
-                "email":
-                    admin["email"],
+                "email": admin["email"] or "",
 
-                "employee_id":
-                    admin["employee_id"],
+                "employee_id": admin["employee_id"] or "",
 
-                "username":
-                    admin["username"]
+                "username": admin["username"] or "",
+
+                "created_at": admin["created_at"] or ""
 
             }
 
-        })
+        }), 200
 
 
     except Exception as error:
 
-        print(
-            "Admin profile error:",
-            error
-        )
+        import traceback
+
+        print("Admin profile error:", repr(error))
+
+        traceback.print_exc()
 
         return jsonify({
 
             "success": False,
 
-            "message":
-                "Unable to load admin profile",
+            "message": "Unable to load admin profile.",
 
-            "error":
-                str(error)
+            "error": str(error)
 
         }), 500
 
@@ -280,6 +450,7 @@ def admin_profile():
     finally:
 
         conn.close()
+
 
 # ============================================================
 # STATUS OF EACH CANDIDATE PAGE
@@ -296,25 +467,10 @@ def candidate_status_page():
     )
 
 
-# ============================================================
-# QUESTION BANK PAGE
-# ============================================================
-
-@admin_dashboard_bp.route(
-    "/question-bank",
-    methods=["GET"]
-)
-@admin_login_required
-def question_bank_page():
-    return render_template(
-        "question_bank.html"
-    )
-
 
 # ============================================================
 # CANDIDATE STATUS API
 # ============================================================
-
 @admin_dashboard_bp.route(
     "/api/candidate-status",
     methods=["GET"]
@@ -335,9 +491,9 @@ def candidate_status_api():
             type=int
         )
 
-        # ----------------------------------------------------
-        # ACTIVE EXAMS
-        # ----------------------------------------------------
+        # ============================================================
+        # EXAMS
+        # ============================================================
 
         exams = conn.execute(
             """
@@ -349,44 +505,24 @@ def candidate_status_api():
                 start_time,
                 end_time
             FROM Exams
-            WHERE datetime(start_time)
-                <= datetime('now', 'localtime')
-
-              AND datetime(end_time)
-                >= datetime('now', 'localtime')
-
             ORDER BY
-                datetime(start_time) ASC
+                datetime(start_time) DESC
             """
         ).fetchall()
 
-        # ----------------------------------------------------
+        # ============================================================
         # LATEST SESSION FOR EACH CANDIDATE
-        # ----------------------------------------------------
+        # ============================================================
 
         if exam_id is not None:
 
-            session_condition = """
-                s.exam_id = ?
-            """
-
-            session_params = (
-                exam_id,
-            )
+            session_condition = "s.exam_id = ?"
+            session_params = (exam_id,)
 
         else:
 
-            session_condition = """
-                1 = 1
-            """
-
+            session_condition = "1 = 1"
             session_params = ()
-
-        # ----------------------------------------------------
-        # CANDIDATES
-        #
-        # We take the latest session for every candidate.
-        # ----------------------------------------------------
 
         query = f"""
             WITH latest_sessions AS (
@@ -397,96 +533,75 @@ def candidate_status_api():
                     ROW_NUMBER() OVER (
                         PARTITION BY s.candidate_id
                         ORDER BY
-                            datetime(s.login_time) DESC,
+                            datetime(
+                                COALESCE(
+                                    s.login_time,
+                                    '1970-01-01'
+                                )
+                            ) DESC,
                             s.id DESC
                     ) AS rn
 
                 FROM SessionLogs s
 
                 WHERE {session_condition}
-
             )
 
             SELECT
 
                 c.id AS candidate_id,
-
                 c.name,
-
                 c.email,
-
                 c.photo_path,
 
+                ls.id AS session_id,
                 ls.exam_id,
-
-                e.title AS exam_title,
-
-                e.topic AS exam_topic,
-
                 ls.login_time,
-
+                ls.logout_time,
                 ls.status AS session_status,
 
-                ls.logout_time,
+                e.title AS exam_title,
+                e.topic AS exam_topic,
 
                 (
-
                     SELECT COUNT(*)
-
                     FROM ViolationLogs v
-
-                    WHERE v.candidate_id =
-                        c.id
-
-                      AND (
+                    WHERE
+                        v.candidate_id = c.id
+                        AND (
                             ls.exam_id IS NULL
                             OR v.exam_id = ls.exam_id
-                          )
-
+                        )
                 ) AS violation_count,
 
                 (
-
                     SELECT COUNT(*)
-
                     FROM ViolationLogs v
-
-                    WHERE v.candidate_id =
-                        c.id
-
-                      AND (
+                    WHERE
+                        v.candidate_id = c.id
+                        AND (
                             ls.exam_id IS NULL
                             OR v.exam_id = ls.exam_id
-                          )
-
-                      AND v.evidence_image
-                            IS NOT NULL
-
+                        )
+                        AND v.evidence_image IS NOT NULL
                 ) AS evidence_count,
 
                 (
-
-                    SELECT MAX(
-                        v.violation_time
-                    )
-
+                    SELECT MAX(v.violation_time)
                     FROM ViolationLogs v
-
-                    WHERE v.candidate_id =
-                        c.id
-
-                      AND (
+                    WHERE
+                        v.candidate_id = c.id
+                        AND (
                             ls.exam_id IS NULL
                             OR v.exam_id = ls.exam_id
-                          )
-
+                        )
                 ) AS last_violation
 
             FROM Candidates c
 
             LEFT JOIN latest_sessions ls
                 ON ls.candidate_id = c.id
-               AND ls.rn = 1
+                AND ls.rn = 1
 
             LEFT JOIN Exams e
                 ON e.id = ls.exam_id
@@ -500,23 +615,36 @@ def candidate_status_api():
             session_params
         ).fetchall()
 
+        # ============================================================
+        # BUILD CANDIDATES
+        # ============================================================
+
         candidates = []
 
         for row in rows:
 
-            violation_count = (
-                row["violation_count"]
-                or 0
+            candidate_id = row["candidate_id"]
+
+            # ========================================================
+            # VIOLATIONS
+            # ========================================================
+
+            violation_count = int(
+                row["violation_count"] or 0
             )
 
-            # ------------------------------------------------
-            # STATUS
-            # ------------------------------------------------
+            evidence_count = int(
+                row["evidence_count"] or 0
+            )
+
+            # ========================================================
+            # SESSION STATUS
+            # ========================================================
 
             raw_status = (
                 row["session_status"]
                 or ""
-            ).lower().strip()
+            ).strip().lower()
 
             logout_time = row["logout_time"]
 
@@ -539,12 +667,9 @@ def candidate_status_api():
 
                 current_status = "Offline"
 
-            # ------------------------------------------------
-            # RISK
-            #
-            # Derived from violation count because the
-            # supplied schema does not contain a risk_score.
-            # ------------------------------------------------
+            # ========================================================
+            # RISK LEVEL
+            # ========================================================
 
             if violation_count >= 4:
 
@@ -558,123 +683,492 @@ def candidate_status_api():
 
                 risk_level = "Low"
 
-            # ------------------------------------------------
+            # ========================================================
             # INTEGRITY SCORE
-            #
-            # Derived dynamically.
-            # ------------------------------------------------
-            integrity_score = 100
+            # ========================================================
 
-            if violation_count > 0:
-                integrity_score -= violation_count * 10
             integrity_score = max(
                 0,
                 min(
                     100,
-                    integrity_score
+                    100 - (
+                        violation_count * 10
+                    )
                 )
             )
 
-
-            # ------------------------------------------------
+            # ========================================================
             # LAST ACTIVITY
-            # ------------------------------------------------
+            # ========================================================
 
-            if row["last_violation"]:
+            last_activity = (
+                row["last_violation"]
+                or row["login_time"]
+            )
 
-                last_activity = (
-                    row["last_violation"]
-                )
+            # ========================================================
+            # COMPLETED EXAMS
+            # ========================================================
 
-            elif row["login_time"]:
+            completed_exam_rows = conn.execute(
+                """
+                SELECT
+                    ea.id AS attempt_id,
+                    ea.exam_id,
+                    ea.score,
 
-                last_activity = (
-                    row["login_time"]
+                    e.title AS exam_title,
+                    e.topic AS exam_topic
+
+                FROM ExamAttempts ea
+
+                LEFT JOIN Exams e
+                    ON e.id = ea.exam_id
+
+                WHERE
+                    ea.candidate_id = ?
+
+                ORDER BY
+                    ea.id DESC
+                """,
+                (candidate_id,)
+            ).fetchall()
+
+            # ========================================================
+            # BUILD EXAM HISTORY
+            # ========================================================
+
+            completed_exams = []
+
+            for attempt in completed_exam_rows:
+
+                score = attempt["score"]
+
+                try:
+
+                    score = float(
+                        score or 0
+                    )
+
+                except (
+                    TypeError,
+                    ValueError
+                ):
+
+                    score = 0
+
+                completed_exams.append({
+
+                    "attempt_id":
+                        attempt["attempt_id"],
+
+                    "exam_id":
+                        attempt["exam_id"],
+
+                    "exam_name":
+                        attempt["exam_title"]
+                        or "Unknown Exam",
+
+                    "topic":
+                        attempt["exam_topic"]
+                        or "",
+
+                    "score":
+                        score
+
+                })
+
+            # ========================================================
+            # REMOVE DUPLICATE EXAMS
+            # ========================================================
+            #
+            # ExamAttempts is ordered by id DESC.
+            #
+            # Therefore, the first record for an exam is
+            # the latest attempt.
+            #
+            # ========================================================
+
+            unique_exams = {}
+
+            for exam in completed_exams:
+
+                exam_key = exam["exam_id"]
+
+                if exam_key is None:
+                    continue
+
+                if exam_key not in unique_exams:
+
+                    unique_exams[
+                        exam_key
+                    ] = exam
+
+            completed_exams = list(
+                unique_exams.values()
+            )
+
+            # ========================================================
+            # EXAM COUNT
+            # ========================================================
+
+            exams_completed = len(
+                completed_exams
+            )
+
+            # ========================================================
+            # AVERAGE EXAM SCORE
+            # ========================================================
+
+            if completed_exams:
+
+                average_exam_score = round(
+                    sum(
+                        exam["score"]
+                        for exam in completed_exams
+                    )
+                    /
+                    len(completed_exams),
+                    1
                 )
 
             else:
 
-                last_activity = None
+                average_exam_score = 0
+
+            # ========================================================
+            # CURRENT EXAM SCORE
+            # ========================================================
+
+            current_exam_score = None
+
+            current_exam_id = row["exam_id"]
+
+            if current_exam_id is not None:
+
+                for exam in completed_exams:
+
+                    if (
+                        exam["exam_id"]
+                        ==
+                        current_exam_id
+                    ):
+
+                        current_exam_score = (
+                            exam["score"]
+                        )
+
+                        break
+
+            # ========================================================
+            # CANDIDATE OBJECT
+            # ========================================================
 
             candidates.append({
 
+                # ----------------------------------------------------
+                # BASIC INFORMATION
+                # ----------------------------------------------------
+
                 "candidate_id":
-                    row["candidate_id"],
+                    candidate_id,
 
                 "name":
-                    row["name"],
+                    row["name"]
+                    or "Unknown",
 
                 "email":
-                    row["email"],
+                    row["email"]
+                    or "",
 
                 "photo":
-                    row["photo_path"],
+                    row["photo_path"]
+                    or "",
+
+                # ----------------------------------------------------
+                # SESSION INFORMATION
+                # ----------------------------------------------------
+
+                "session_id":
+                    row["session_id"],
 
                 "exam_id":
                     row["exam_id"],
 
                 "exam_title":
-                    row["exam_title"],
+                    row["exam_title"]
+                    or "No examination",
 
                 "exam_topic":
-                    row["exam_topic"],
+                    row["exam_topic"]
+                    or "",
 
                 "login_time":
                     row["login_time"],
 
+                "logout_time":
+                    row["logout_time"],
+
+                # ----------------------------------------------------
+                # STATUS
+                # ----------------------------------------------------
+
                 "status":
                     current_status,
 
+                # ----------------------------------------------------
+                # RISK
+                # ----------------------------------------------------
+
                 "risk":
                     risk_level,
+
+                # ----------------------------------------------------
+                # INTEGRITY
+                # ----------------------------------------------------
 
                 "violation_count":
                     violation_count,
 
                 "evidence_count":
-                    row["evidence_count"] or 0,
+                    evidence_count,
 
                 "integrity_score":
                     integrity_score,
 
                 "last_activity":
-                    last_activity
+                    last_activity,
+
+                # ----------------------------------------------------
+                # EXAM INFORMATION
+                # ----------------------------------------------------
+
+                "exams_completed":
+                    exams_completed,
+
+                "completed_exams":
+                    completed_exams,
+
+                "average_exam_score":
+                    average_exam_score,
+
+                "current_exam_score":
+                    current_exam_score
 
             })
 
-        # ----------------------------------------------------
+        # ============================================================
         # STATISTICS
-        # ----------------------------------------------------
+        # ============================================================
 
         total = len(candidates)
 
         online = sum(
             1
-            for c in candidates
-            if c["status"] == "Online"
+            for candidate in candidates
+            if candidate["status"] == "Online"
         )
 
         warning = sum(
             1
-            for c in candidates
-            if c["status"] == "Warning"
+            for candidate in candidates
+            if candidate["status"] == "Warning"
         )
 
         violations = sum(
             1
-            for c in candidates
-            if c["violation_count"] > 0
+            for candidate in candidates
+            if candidate["violation_count"] > 0
         )
 
         offline = sum(
             1
-            for c in candidates
-            if c["status"] == "Offline"
+            for candidate in candidates
+            if candidate["status"] == "Offline"
         )
+
+        # ============================================================
+        # ACTIVITY FEED
+        # ============================================================
+
+        activity_query = """
+            SELECT
+
+                v.id,
+                v.candidate_id,
+                v.exam_id,
+                v.violation_type,
+                v.face_count,
+                v.evidence_image,
+                v.violation_time,
+
+                c.name AS candidate_name,
+
+                e.title AS exam_title
+
+            FROM ViolationLogs v
+
+            LEFT JOIN Candidates c
+                ON c.id = v.candidate_id
+
+            LEFT JOIN Exams e
+                ON e.id = v.exam_id
+
+            WHERE
+                (
+                    ? IS NULL
+                    OR v.exam_id = ?
+                )
+
+            ORDER BY
+                datetime(v.violation_time) DESC,
+                v.id DESC
+
+            LIMIT 20
+        """
+
+        activity_rows = conn.execute(
+            activity_query,
+            (
+                exam_id,
+                exam_id
+            )
+        ).fetchall()
+
+        activity_feed = []
+
+        for row in activity_rows:
+
+            violation_type = (
+                row["violation_type"]
+                or "Integrity event"
+            )
+
+            severity = (
+                "High"
+                if violation_type.upper()
+                in (
+                    "MULTIPLE_FACES",
+                    "UNKNOWN_FACE",
+                    "IDENTITY MISMATCH",
+                    "IDENTITY MISMATCH."
+                )
+                else "Medium"
+            )
+
+            activity_feed.append({
+
+                "id":
+                    row["id"],
+
+                "candidate_id":
+                    row["candidate_id"],
+
+                "candidate_name":
+                    row["candidate_name"]
+                    or "Unknown Candidate",
+
+                "exam_id":
+                    row["exam_id"],
+
+                "exam_title":
+                    row["exam_title"]
+                    or "Unknown Examination",
+
+                "type":
+                    violation_type,
+
+                "violation_type":
+                    violation_type,
+
+                "face_count":
+                    row["face_count"]
+                    or 0,
+
+                "evidence_image":
+                    row["evidence_image"],
+
+                "time":
+                    row["violation_time"],
+
+                "severity":
+                    severity
+
+            })
+
+        # ============================================================
+        # REALTIME ACTIVITY
+        # ============================================================
+
+        chart_query = """
+            SELECT
+
+                strftime(
+                    '%H:%M',
+                    violation_time
+                ) AS time_label,
+
+                COUNT(*) AS event_count
+
+            FROM ViolationLogs
+
+            WHERE
+                violation_time IS NOT NULL
+
+                AND (
+                    ? IS NULL
+                    OR exam_id = ?
+                )
+
+            GROUP BY
+                strftime(
+                    '%H:%M',
+                    violation_time
+                )
+
+            ORDER BY
+                datetime(
+                    MAX(violation_time)
+                ) ASC
+
+            LIMIT 12
+        """
+
+        chart_rows = conn.execute(
+            chart_query,
+            (
+                exam_id,
+                exam_id
+            )
+        ).fetchall()
+
+        realtime_activity = [
+
+            {
+                "time":
+                    row["time_label"],
+
+                "count":
+                    int(
+                        row["event_count"] or 0
+                    )
+            }
+
+            for row in chart_rows
+
+        ]
+
+        # ============================================================
+        # FINAL RESPONSE
+        # ============================================================
 
         return jsonify({
 
             "success": True,
+
+            # --------------------------------------------------------
+            # STATISTICS
+            # --------------------------------------------------------
 
             "statistics": {
 
@@ -695,9 +1189,14 @@ def candidate_status_api():
 
             },
 
+            # --------------------------------------------------------
+            # EXAMS
+            # --------------------------------------------------------
+
             "exams": [
 
                 {
+
                     "id":
                         exam["id"],
 
@@ -715,13 +1214,36 @@ def candidate_status_api():
 
                     "end_time":
                         exam["end_time"]
+
                 }
 
                 for exam in exams
+
             ],
 
+            # --------------------------------------------------------
+            # CANDIDATES
+            # --------------------------------------------------------
+
             "candidates":
-                candidates
+                candidates,
+
+            # --------------------------------------------------------
+            # ACTIVITY
+            # --------------------------------------------------------
+
+            "activity":
+                activity_feed,
+
+            "activity_feed":
+                activity_feed,
+
+            # --------------------------------------------------------
+            # REALTIME ACTIVITY
+            # --------------------------------------------------------
+
+            "realtime_activity":
+                realtime_activity
 
         })
 
@@ -734,7 +1256,8 @@ def candidate_status_api():
 
         return jsonify({
 
-            "success": False,
+            "success":
+                False,
 
             "message":
                 "Unable to load candidate status.",
@@ -853,7 +1376,7 @@ def dashboard_stats():
         report_count = conn.execute(
             """
             SELECT COUNT(*)
-            FROM IntegrityScores
+            FROM AIReports
             """
         ).fetchone()[0]
 
@@ -2116,399 +2639,6 @@ def recent_candidates():
 
         conn.close()
 
-# ============================================================
-# LIVE MONITORING API
-# ============================================================
-
-@admin_dashboard_bp.route(
-    "/api/live-monitoring"
-)
-@admin_dashboard_bp.route(
-    "/api/live_monitoring"
-)
-@admin_api_required
-def live_monitoring_api():
-
-    conn = get_db_connection()
-
-    try:
-
-        exam_id = request.args.get(
-            "exam_id",
-            type=int
-        )
-
-        # -------------------------------------------------
-        # ACTIVE EXAM
-        # -------------------------------------------------
-
-        if exam_id is None:
-
-            exam = conn.execute(
-                """
-                SELECT *
-                FROM Exams
-                WHERE datetime(start_time)
-                    <= datetime('now','localtime')
-                  AND datetime(end_time)
-                    >= datetime('now','localtime')
-                ORDER BY
-                    datetime(start_time)
-                LIMIT 1
-                """
-            ).fetchone()
-
-            if not exam:
-                exam = conn.execute(
-                    """
-                    SELECT *
-                    FROM Exams
-                    ORDER BY
-                        datetime(start_time) DESC,
-                        id DESC
-                    LIMIT 1
-                    """
-                ).fetchone()
-
-        else:
-
-            exam = conn.execute(
-                """
-                SELECT *
-                FROM Exams
-                WHERE id = ?
-                """,
-                (exam_id,)
-            ).fetchone()
-
-        if exam is None:
-
-            return jsonify({
-
-                "success": True,
-
-                "exam": None,
-
-                "statistics": {
-                    "total_students": 0,
-                    "monitored": 0,
-                    "violations": 0,
-                    "evidence": 0
-                },
-
-                "students": []
-
-            })
-
-        # -------------------------------------------------
-        # ACTIVE / PARTICIPATING STUDENTS
-        # -------------------------------------------------
-
-        rows = conn.execute(
-            """
-            SELECT
-                s.id AS session_id,
-                s.candidate_id,
-                s.exam_id,
-                s.login_time,
-                s.status,
-                c.name,
-                c.email,
-                c.photo_path
-            FROM SessionLogs s
-            INNER JOIN Candidates c
-                ON c.id = s.candidate_id
-            WHERE s.exam_id = ?
-              AND (
-                  LOWER(COALESCE(s.status, '')) IN ('active', 'online', 'running', 'in progress')
-                  OR s.logout_time IS NULL
-              )
-            ORDER BY
-                datetime(s.login_time) DESC
-            """,
-            (exam["id"],)
-        ).fetchall()
-
-        if not rows:
-            rows = conn.execute(
-                """
-                SELECT
-                    s.id AS session_id,
-                    s.candidate_id,
-                    s.exam_id,
-                    s.login_time,
-                    s.status,
-                    c.name,
-                    c.email,
-                    c.photo_path
-                FROM SessionLogs s
-                INNER JOIN Candidates c
-                    ON c.id = s.candidate_id
-                WHERE s.exam_id = ?
-                ORDER BY
-                    datetime(s.login_time) DESC
-                """,
-                (exam["id"],)
-            ).fetchall()
-
-        if not rows:
-            rows = conn.execute(
-                """
-                SELECT
-                    a.id AS session_id,
-                    a.candidate_id,
-                    a.exam_id,
-                    a.submitted_at AS login_time,
-                    'Completed' AS status,
-                    c.name,
-                    c.email,
-                    c.photo_path
-                FROM ExamAttempts a
-                INNER JOIN Candidates c
-                    ON c.id = a.candidate_id
-                WHERE a.exam_id = ?
-                ORDER BY
-                    datetime(a.submitted_at) DESC
-                """,
-                (exam["id"],)
-            ).fetchall()
-
-        students = []
-
-        # -------------------------------------------------
-        # EACH STUDENT
-        # -------------------------------------------------
-
-        for row in rows:
-
-            candidate_id = row["candidate_id"]
-
-            # ---------------------------------------------
-            # VIOLATIONS
-            # ---------------------------------------------
-
-            violations = conn.execute(
-                """
-                SELECT
-                    id,
-                    violation_type,
-                    evidence_image,
-                    face_count,
-                    violation_time
-                FROM ViolationLogs
-                WHERE candidate_id = ?
-                  AND exam_id = ?
-                ORDER BY
-                    datetime(violation_time) DESC
-                LIMIT 10
-                """,
-                (
-                    candidate_id,
-                    exam["id"]
-                )
-            ).fetchall()
-
-            # ---------------------------------------------
-            # LATEST VIOLATION
-            # ---------------------------------------------
-
-            latest_violation = None
-
-            if violations:
-
-                latest = violations[0]
-
-                latest_violation = {
-                    "id": latest["id"],
-                    "type": latest["violation_type"],
-                    "time": latest["violation_time"],
-                    "evidence": latest["evidence_image"]
-                }
-
-            # ---------------------------------------------
-            # EVIDENCE COUNT
-            # ---------------------------------------------
-
-            evidence_count = conn.execute(
-                """
-                SELECT COUNT(*)
-                FROM ViolationLogs
-                WHERE candidate_id = ?
-                  AND exam_id = ?
-                  AND evidence_image IS NOT NULL
-                """,
-                (
-                    candidate_id,
-                    exam["id"]
-                )
-            ).fetchone()[0]
-
-            # ---------------------------------------------
-            # LIVE FRAME
-            # ---------------------------------------------
-
-            live_frame = f"/admin/api/live-frame/{candidate_id}/{exam['id']}"
-            if latest_violation and latest_violation.get("evidence"):
-                live_frame = f"/admin/api/evidence?path={latest_violation['evidence']}"
-            elif row["photo_path"]:
-                photo_str = str(row["photo_path"]).strip()
-                if photo_str.startswith("static/") or photo_str.startswith("uploads/"):
-                    live_frame = f"/{photo_str}"
-                elif photo_str.startswith("evidence/"):
-                    live_frame = f"/admin/api/evidence?path={photo_str}"
-
-            # ---------------------------------------------
-            # STATUS
-            # ---------------------------------------------
-
-            status = "Online"
-
-            if latest_violation:
-
-                violation_type = (
-                    latest_violation["type"]
-                    or ""
-                ).upper()
-
-                if (
-                    "NO_FACE" in violation_type
-                    or
-                    "MULTIPLE" in violation_type
-                    or
-                    "UNKNOWN" in violation_type
-                ):
-
-                    status = "Violation"
-
-                else:
-
-                    status = "Warning"
-
-            students.append({
-
-                "candidate_id":
-                    candidate_id,
-
-                "name":
-                    row["name"],
-
-                "email":
-                    row["email"],
-
-                "photo":
-                    row["photo_path"],
-
-                "status":
-                    status,
-
-                "camera":
-                    "ON",
-
-                "connection":
-                    "Stable",
-
-                "login_time":
-                    row["login_time"],
-
-                "violation_count":
-                    len(violations),
-
-                "evidence_count":
-                    evidence_count,
-
-                "latest_violation":
-                    latest_violation,
-
-                "live_frame":
-                    live_frame
-
-            })
-
-        # -------------------------------------------------
-        # EXAM STATISTICS
-        # -------------------------------------------------
-
-        total_students = len(students)
-
-        violation_students = sum(
-            1
-            for student in students
-            if student["status"] == "Violation"
-        )
-
-        return jsonify({
-
-            "success": True,
-
-            "exam": {
-
-                "id":
-                    exam["id"],
-
-                "title":
-                    exam["title"],
-
-                "topic":
-                    exam["topic"],
-
-                "duration":
-                    exam["duration"],
-
-                "start_time":
-                    exam["start_time"],
-
-                "end_time":
-                    exam["end_time"]
-
-            },
-
-            "statistics": {
-
-                "total_students":
-                    total_students,
-
-                "monitored":
-                    total_students,
-
-                "violations":
-                    violation_students,
-
-                "evidence":
-                    sum(
-                        student["evidence_count"]
-                        for student in students
-                    )
-
-            },
-
-            "students":
-                students
-
-        })
-
-    except Exception as error:
-
-        print(
-            "Live monitoring error:",
-            repr(error)
-        )
-
-        return jsonify({
-
-            "success": False,
-
-            "message":
-                "Unable to load live monitoring.",
-
-            "error":
-                str(error)
-
-        }), 500
-
-    finally:
-
-        conn.close()
-
 
 # ============================================================
 # LIVE ALERTS
@@ -2904,11 +3034,10 @@ def reports():
 # ============================================================
 # NOTIFICATION COUNT
 # ============================================================
-
 @admin_dashboard_bp.route(
     "/api/notifications/count"
 )
-@admin_required
+@admin_login_required
 def notification_count():
 
     conn = get_db_connection()
@@ -2925,7 +3054,6 @@ def notification_count():
             """
         ).fetchone()[0]
 
-
         return jsonify({
 
             "success": True,
@@ -2934,7 +3062,6 @@ def notification_count():
                 count
 
         })
-
 
     except Exception as error:
 
@@ -2955,10 +3082,186 @@ def notification_count():
 
         }), 500
 
+    finally:
+
+        conn.close()
+
+
+@admin_dashboard_bp.route(
+    "/api/notifications",
+    methods=["GET"]
+)
+@admin_login_required
+def notifications():
+
+    conn = get_db_connection()
+
+    try:
+
+        # ============================================================
+        # RECENT NOTIFICATIONS
+        # ============================================================
+
+        rows = conn.execute(
+            """
+            SELECT
+
+                v.id,
+
+                v.candidate_id,
+
+                c.name AS candidate_name,
+
+                c.email AS candidate_email,
+
+                v.exam_id,
+
+                e.title AS exam_title,
+
+                v.violation_type,
+
+                v.face_count,
+
+                v.violation_time
+
+            FROM ViolationLogs v
+
+            LEFT JOIN Candidates c
+                ON c.id = v.candidate_id
+
+            LEFT JOIN Exams e
+                ON e.id = v.exam_id
+
+            ORDER BY
+                v.violation_time DESC
+
+            LIMIT 20
+            """
+        ).fetchall()
+
+
+        notifications = []
+
+
+        for row in rows:
+
+            violation_type = (
+                row["violation_type"]
+                or "Integrity Event"
+            )
+
+
+            notifications.append({
+
+                "id":
+                    row["id"],
+
+                "candidateId":
+                    row["candidate_id"],
+
+                "candidateName":
+                    row["candidate_name"]
+                    or "Unknown Candidate",
+
+                "candidateEmail":
+                    row["candidate_email"]
+                    or "",
+
+                "examId":
+                    row["exam_id"],
+
+                "examTitle":
+                    row["exam_title"]
+                    or "Unknown Examination",
+
+                "event":
+                    violation_type,
+
+                "faceCount":
+                    row["face_count"]
+                    or 0,
+
+                "time":
+                    row["violation_time"]
+                    or "",
+
+                "message":
+                    (
+                        str(violation_type)
+                        + " detected for "
+                        + str(
+                            row["candidate_name"]
+                            or "Unknown Candidate"
+                        )
+                    )
+
+            })
+
+
+        # ============================================================
+        # TODAY'S NOTIFICATION COUNT
+        # ============================================================
+
+        count_row = conn.execute(
+            """
+            SELECT COUNT(*)
+            FROM ViolationLogs
+            WHERE date(violation_time)
+                  = date('now','localtime')
+            """
+        ).fetchone()
+
+
+        count = (
+            count_row[0]
+            if count_row
+            else 0
+        )
+
+
+        return jsonify({
+
+            "success":
+                True,
+
+            "count":
+                count,
+
+            "notifications":
+                notifications
+
+        }), 200
+
+
+    except Exception as error:
+
+        import traceback
+
+        print(
+            "Notifications API error:",
+            repr(error)
+        )
+
+        traceback.print_exc()
+
+        return jsonify({
+
+            "success":
+                False,
+
+            "message":
+                "Unable to load notifications.",
+
+            "error":
+                str(error)
+
+        }), 500
+
 
     finally:
 
         conn.close()
+
 
 # ============================================================
 # QUIZ GENERATOR PAGE
@@ -4517,6 +4820,7 @@ def violations_evidence_api():
 
         conn.close()
 
+
 # ============================================================
 # INTEGRITY ANALYSIS CENTER
 # ============================================================
@@ -6029,16 +6333,322 @@ def integrity_analysis_api():
         if conn:
 
             conn.close()
+
+@admin_dashboard_bp.route(
+    "/api/integrity-analysis/export",
+    methods=["GET"]
+)
+@admin_required
+def export_integrity_analysis():
+
+    try:
+
+        # ============================================================
+        # REUSE THE EXISTING INTEGRITY ANALYSIS API
+        # ============================================================
+
+        response = integrity_analysis_api()
+
+
+        # Flask route functions can return:
+        #
+        # Response
+        #
+        # or:
+        #
+        # (Response, status_code)
+
+        if isinstance(response, tuple):
+
+            response_object = response[0]
+
+            status_code = response[1]
+
+        else:
+
+            response_object = response
+
+            status_code = 200
+
+
+        if status_code != 200:
+
+            return response
+
+
+        data = response_object.get_json()
+
+
+        if not data:
+
+            return jsonify({
+
+                "success": False,
+
+                "message":
+                    "No integrity analysis data available."
+
+            }), 404
+
+
+        # ============================================================
+        # CSV GENERATION
+        # ============================================================
+
+        import csv
+        import io
+
+        output = io.StringIO()
+
+        writer = csv.writer(
+            output
+        )
+
+
+        # ============================================================
+        # REPORT HEADER
+        # ============================================================
+
+        writer.writerow([
+            "Integrity Analysis Report"
+        ])
+
+        writer.writerow([])
+
+
+        # ============================================================
+        # SUMMARY
+        # ============================================================
+
+        summary = (
+            data.get(
+                "summary",
+                {}
+            )
+        )
+
+
+        writer.writerow([
+            "SUMMARY"
+        ])
+
+        writer.writerow([
+            "Total Sessions",
+            summary.get(
+                "totalSessions",
+                0
+            )
+        ])
+
+        writer.writerow([
+            "Average Integrity Score",
+            summary.get(
+                "averageScore",
+                0
+            )
+        ])
+
+        writer.writerow([
+            "Low Risk",
+            summary.get(
+                "lowRisk",
+                0
+            )
+        ])
+
+        writer.writerow([
+            "Medium Risk",
+            summary.get(
+                "mediumRisk",
+                0
+            )
+        ])
+
+        writer.writerow([
+            "High Risk",
+            summary.get(
+                "highRisk",
+                0
+            )
+        ])
+
+        writer.writerow([
+            "Average Face Presence",
+            summary.get(
+                "facePresence",
+                0
+            )
+        ])
+
+        writer.writerow([])
+
+
+        # ============================================================
+        # SESSION DATA
+        # ============================================================
+
+        writer.writerow([
+            "SESSION DETAILS"
+        ])
+
+
+        writer.writerow([
+
+            "Candidate",
+
+            "Candidate ID",
+
+            "Email",
+
+            "Examination",
+
+            "Total Events",
+
+            "Severity Score",
+
+            "Face Presence (%)",
+
+            "Integrity Score",
+
+            "Risk Level",
+
+            "Warning Count",
+
+            "Generated At"
+
+        ])
+
+
+        sessions = (
+            data.get(
+                "sessions",
+                []
+            )
+        )
+
+
+        for session_data in sessions:
+
+            writer.writerow([
+
+                session_data.get(
+                    "candidateName",
+                    ""
+                ),
+
+                session_data.get(
+                    "candidateId",
+                    ""
+                ),
+
+                session_data.get(
+                    "candidateEmail",
+                    ""
+                ),
+
+                session_data.get(
+                    "examTitle",
+                    ""
+                ),
+
+                session_data.get(
+                    "totalEvents",
+                    0
+                ),
+
+                session_data.get(
+                    "severityScore",
+                    0
+                ),
+
+                session_data.get(
+                    "facePresence",
+                    0
+                ),
+
+                session_data.get(
+                    "integrityScore",
+                    0
+                ),
+
+                session_data.get(
+                    "riskLevel",
+                    ""
+                ),
+
+                session_data.get(
+                    "warningCount",
+                    0
+                ),
+
+                session_data.get(
+                    "generatedAt",
+                    ""
+                )
+
+            ])
+
+
+        # ============================================================
+        # DOWNLOAD RESPONSE
+        # ============================================================
+
+        from flask import make_response
+
+        csv_data = output.getvalue()
+
+        response = make_response(
+            csv_data
+        )
+
+
+        response.headers[
+            "Content-Type"
+        ] = (
+            "text/csv; charset=utf-8"
+        )
+
+
+        response.headers[
+            "Content-Disposition"
+        ] = (
+            "attachment; "
+            "filename=integrity_analysis_report.csv"
+        )
+
+
+        return response
+
+
+    except Exception as error:
+
+        import traceback
+
+        print(
+            "Integrity export error:",
+            repr(error)
+        )
+
+        traceback.print_exc()
+
+        return jsonify({
+
+            "success":
+                False,
+
+            "message":
+                "Unable to export integrity analysis report.",
+
+            "error":
+                str(error)
+
+        }), 500
 # ==========================================================
 # GET EXAMS (EXAMINATIONS / AI REPORTS)
 # ==========================================================
 
 @admin_dashboard_bp.route(
     "/api/ai-reports/exams",
-    methods=["GET"]
-)
-@admin_dashboard_bp.route(
-    "/api/examinations",
     methods=["GET"]
 )
 @admin_api_required
@@ -6096,42 +6706,209 @@ def ai_reports_exams():
 # DELETE EXAMINATION API
 # ==========================================================
 
+# ============================================================
+# GET ALL EXAMINATIONS
+# ============================================================
+# ============================================================
+# GET ALL EXAMINATIONS
+# ============================================================
+
+@admin_dashboard_bp.route(
+    "/api/examinations",
+    methods=["GET"]
+)
+@admin_api_required
+def get_examinations():
+
+    conn = get_db_connection()
+
+    try:
+
+        exams = conn.execute("""
+            SELECT
+                id,
+                title,
+                topic,
+                difficulty,
+                description,
+                duration,
+                total_questions,
+                total_marks,
+                start_time,
+                end_time,
+                created_at
+            FROM Exams
+            ORDER BY datetime(created_at) DESC, id DESC
+        """).fetchall()
+
+        examinations = []
+
+        for exam in exams:
+
+            examination = {
+                "id": exam["id"],
+
+                "title": (
+                    exam["title"]
+                    if exam["title"] is not None
+                    else ""
+                ),
+
+                "topic": (
+                    exam["topic"]
+                    if exam["topic"] is not None
+                    else ""
+                ),
+
+                "difficulty": (
+                    exam["difficulty"]
+                    if exam["difficulty"] is not None
+                    else ""
+                ),
+
+                "description": (
+                    exam["description"]
+                    if exam["description"] is not None
+                    else ""
+                ),
+
+                "duration": int(
+                    exam["duration"] or 0
+                ),
+
+                "total_questions": int(
+                    exam["total_questions"] or 0
+                ),
+
+                "total_marks": int(
+                    exam["total_marks"] or 0
+                ),
+
+                "start_time": exam["start_time"],
+
+                "end_time": exam["end_time"],
+
+                "created_at": exam["created_at"]
+            }
+
+            examinations.append(
+                examination
+            )
+
+        # Debug output
+        print("\n===== EXAMS API RESPONSE =====")
+
+        for examination in examinations:
+            print(examination)
+
+        print(
+            "Total examinations:",
+            len(examinations)
+        )
+
+        print(
+            "===============================\n"
+        )
+
+        return jsonify({
+            "success": True,
+            "exams": examinations
+        }), 200
+
+    except Exception as error:
+
+        print(
+            "GET EXAMINATIONS ERROR:",
+            error
+        )
+
+        return jsonify({
+            "success": False,
+            "message": "Failed to load examinations.",
+            "error": str(error)
+        }), 500
+
+    finally:
+
+        conn.close()
+
+
+# ============================================================
+# DELETE EXAMINATION
+# ============================================================
+
 @admin_dashboard_bp.route(
     "/api/examinations/<int:exam_id>",
     methods=["DELETE"]
 )
-@admin_dashboard_bp.route(
-    "/api/ai-reports/exams/<int:exam_id>",
-    methods=["DELETE"]
-)
 @admin_api_required
 def delete_examination(exam_id):
+
     conn = get_db_connection()
+
     try:
-        exam = conn.execute("SELECT id FROM Exams WHERE id = ?", (exam_id,)).fetchone()
+
+        exam = conn.execute(
+            """
+            SELECT
+                id,
+                title
+            FROM Exams
+            WHERE id = ?
+            """,
+            (exam_id,)
+        ).fetchone()
+
         if not exam:
+
             return jsonify({
                 "success": False,
                 "message": "Examination not found."
             }), 404
 
-        conn.execute("DELETE FROM Exams WHERE id = ?", (exam_id,))
+        conn.execute(
+            """
+            DELETE FROM Exams
+            WHERE id = ?
+            """,
+            (exam_id,)
+        )
+
         conn.commit()
+
+        print(
+            f"Examination deleted: "
+            f"{exam['id']} - {exam['title']}"
+        )
 
         return jsonify({
             "success": True,
-            "message": "Examination deleted successfully."
-        })
+            "message": "Examination deleted successfully.",
+            "exam_id": exam_id
+        }), 200
+
     except Exception as error:
+
         conn.rollback()
+
+        print(
+            "DELETE EXAMINATION ERROR:",
+            error
+        )
+
         return jsonify({
             "success": False,
             "message": "Failed to delete examination.",
             "error": str(error)
         }), 500
+
     finally:
+
         conn.close()
 
+# ============================================================
+# DELETE EXAMINATION
+# ============================================================
 
 # ==========================================================
 # GENERATE CANDIDATE AI REPORT

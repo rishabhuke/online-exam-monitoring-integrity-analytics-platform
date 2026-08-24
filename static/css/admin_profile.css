@@ -1,0 +1,692 @@
+/* =========================================================
+   EXAMGUARD AI
+   ADMIN PROFILE PAGE
+   ========================================================= */
+
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+
+body {
+
+    font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    background:
+        linear-gradient(
+            135deg,
+            #020b1d,
+            #03152f,
+            #061d3d
+        );
+
+    color: #e5eefc;
+
+    min-height: 100vh;
+}
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.profile-page {
+
+    min-height: 100vh;
+
+}
+
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+.profile-main {
+
+    margin-left: 228px;
+
+    min-height: 100vh;
+
+    padding: 0 32px 40px;
+
+    transition:
+        margin-left 0.25s ease;
+}
+
+
+/* =========================================================
+   TOPBAR
+   ========================================================= */
+
+.profile-topbar {
+
+    min-height: 92px;
+
+    display: flex;
+
+    align-items: center;
+
+    border-bottom:
+        1px solid
+        rgba(96, 165, 250, 0.12);
+
+}
+
+
+.topbar-left {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+}
+
+
+.sidebar-toggle {
+
+    width: 42px;
+
+    height: 42px;
+
+    border: 1px solid
+        rgba(96, 165, 250, 0.2);
+
+    border-radius: 10px;
+
+    background:
+        rgba(15, 35, 67, 0.75);
+
+    color: #bfdbfe;
+
+    cursor: pointer;
+
+    font-size: 17px;
+
+    transition: 0.2s ease;
+}
+
+
+.sidebar-toggle:hover {
+
+    background:
+        rgba(37, 99, 235, 0.25);
+
+    color: white;
+
+    transform: translateY(-1px);
+}
+
+
+.profile-topbar h1 {
+
+    font-size: 1.55rem;
+
+    color: #f8fafc;
+
+    font-weight: 750;
+}
+
+
+.profile-topbar p {
+
+    margin-top: 4px;
+
+    color: #7f96b8;
+
+    font-size: 0.78rem;
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.profile-content {
+
+    max-width: 1150px;
+
+    margin: 32px auto 0;
+}
+
+
+/* =========================================================
+   PROFILE HEADER
+   ========================================================= */
+
+.profile-header-card {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 24px;
+
+    padding: 30px;
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(9, 32, 67, 0.96),
+            rgba(5, 22, 47, 0.96)
+        );
+
+    border:
+        1px solid
+        rgba(96, 165, 250, 0.16);
+
+    box-shadow:
+        0 20px 50px
+        rgba(0, 0, 0, 0.28);
+}
+
+
+/* =========================================================
+   AVATAR
+   ========================================================= */
+
+.profile-avatar {
+
+    width: 92px;
+
+    height: 92px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    color: white;
+
+    font-size: 2.2rem;
+
+    background:
+        linear-gradient(
+            145deg,
+            #2563eb,
+            #1d4ed8
+        );
+
+    border:
+        4px solid
+        rgba(96, 165, 250, 0.25);
+
+    box-shadow:
+        0 0 30px
+        rgba(37, 99, 235, 0.32);
+}
+
+
+.profile-header-info h2 {
+
+    color: #f8fafc;
+
+    font-size: 1.65rem;
+
+    font-weight: 750;
+}
+
+
+.profile-header-info > p {
+
+    margin-top: 5px;
+
+    color: #8da5c7;
+
+    font-size: 0.82rem;
+}
+
+
+/* =========================================================
+   ROLE
+   ========================================================= */
+
+.role-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    margin-top: 12px;
+
+    padding: 6px 11px;
+
+    border-radius: 20px;
+
+    background:
+        rgba(37, 99, 235, 0.16);
+
+    border:
+        1px solid
+        rgba(59, 130, 246, 0.25);
+
+    color: #93c5fd;
+
+    font-size: 0.72rem;
+
+    font-weight: 650;
+}
+
+
+/* =========================================================
+   PROFILE GRID
+   ========================================================= */
+
+.profile-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 22px;
+
+    margin-top: 22px;
+}
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.profile-card {
+
+    padding: 25px;
+
+    border-radius: 16px;
+
+    background:
+        rgba(4, 20, 43, 0.92);
+
+    border:
+        1px solid
+        rgba(96, 165, 250, 0.13);
+
+    box-shadow:
+        0 15px 35px
+        rgba(0, 0, 0, 0.20);
+}
+
+
+/* =========================================================
+   CARD TITLE
+   ========================================================= */
+
+.card-title {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding-bottom: 20px;
+
+    border-bottom:
+        1px solid
+        rgba(100, 116, 139, 0.12);
+}
+
+
+.card-title-icon {
+
+    width: 40px;
+
+    height: 40px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background:
+        rgba(37, 99, 235, 0.14);
+
+    color: #60a5fa;
+}
+
+
+.card-title h3 {
+
+    color: #eaf2ff;
+
+    font-size: 0.94rem;
+}
+
+
+.card-title p {
+
+    margin-top: 3px;
+
+    color: #6f86a8;
+
+    font-size: 0.68rem;
+}
+
+
+/* =========================================================
+   DETAILS
+   ========================================================= */
+
+.details-list {
+
+    margin-top: 7px;
+}
+
+
+.detail-item {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 15px 0;
+
+    border-bottom:
+        1px solid
+        rgba(100, 116, 139, 0.09);
+}
+
+
+.detail-item:last-child {
+
+    border-bottom: none;
+}
+
+
+.detail-icon {
+
+    width: 36px;
+
+    height: 36px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 9px;
+
+    background:
+        rgba(30, 64, 175, 0.13);
+
+    color: #7dd3fc;
+
+    font-size: 0.82rem;
+}
+
+
+.detail-content {
+
+    min-width: 0;
+}
+
+
+.detail-label {
+
+    display: block;
+
+    color: #7188aa;
+
+    font-size: 0.67rem;
+
+    margin-bottom: 4px;
+}
+
+
+.detail-content strong {
+
+    display: block;
+
+    color: #e5eefc;
+
+    font-size: 0.82rem;
+
+    font-weight: 600;
+
+    word-break: break-word;
+}
+
+
+/* =========================================================
+   ACCOUNT STATUS
+   ========================================================= */
+
+.account-status-card {
+
+    margin-top: 22px;
+
+    padding: 22px 25px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(3, 34, 55, 0.95),
+            rgba(3, 24, 45, 0.95)
+        );
+
+    border:
+        1px solid
+        rgba(34, 197, 94, 0.15);
+}
+
+
+.status-left {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+}
+
+
+.status-icon {
+
+    width: 43px;
+
+    height: 43px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    color: #4ade80;
+
+    background:
+        rgba(34, 197, 94, 0.12);
+
+    font-size: 1.1rem;
+}
+
+
+.status-left h3 {
+
+    color: #e8f5ee;
+
+    font-size: 0.9rem;
+}
+
+
+.status-left p {
+
+    margin-top: 4px;
+
+    color: #7890a9;
+
+    font-size: 0.7rem;
+}
+
+
+.status-badge {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 7px 13px;
+
+    border-radius: 20px;
+
+    background:
+        rgba(34, 197, 94, 0.10);
+
+    border:
+        1px solid
+        rgba(34, 197, 94, 0.2);
+
+    color: #86efac;
+
+    font-size: 0.7rem;
+
+    font-weight: 650;
+}
+
+
+.status-badge span {
+
+    width: 7px;
+
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+
+    box-shadow:
+        0 0 9px
+        rgba(34, 197, 94, 0.8);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+    .profile-main {
+
+        margin-left: 70px;
+    }
+
+}
+
+
+@media (max-width: 750px) {
+
+    .profile-main {
+
+        margin-left: 0;
+
+        padding: 0 18px 30px;
+    }
+
+
+    .profile-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+
+    .profile-header-card {
+
+        padding: 22px;
+
+    }
+
+
+    .profile-avatar {
+
+        width: 75px;
+
+        height: 75px;
+
+        font-size: 1.8rem;
+    }
+
+
+    .account-status-card {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+}
+
+
+@media (max-width: 500px) {
+
+    .profile-topbar {
+
+        min-height: 80px;
+    }
+
+
+    .profile-topbar h1 {
+
+        font-size: 1.25rem;
+    }
+
+
+    .profile-topbar p {
+
+        display: none;
+    }
+
+
+    .profile-header-card {
+
+        flex-direction: column;
+
+        text-align: center;
+    }
+
+
+    .role-badge {
+
+        justify-content: center;
+    }
+
+}

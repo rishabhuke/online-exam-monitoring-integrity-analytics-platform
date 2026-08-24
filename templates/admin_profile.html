@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>ExamGuard AI | Admin Profile</title>
+
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/admin_sidebar.css') }}">
+
+    <!-- Profile CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/admin_profile.css') }}">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+
+<body>
+
+
+<div class="profile-page">
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    {% set active_page = 'profile' %}
+
+    {% include 'admin_sidebar.html' %}
+
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="profile-main">
+
+
+        <!-- TOP BAR -->
+
+        <header class="profile-topbar">
+
+            <div class="topbar-left">
+
+                <button id="toggleSidebar"
+                        class="sidebar-toggle">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+                <div>
+
+                    <h1>Admin Profile</h1>
+
+                    <p>
+                        Manage and view your administrator information.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+        </header>
+
+
+
+        <!-- =================================================
+             PROFILE CONTENT
+        ================================================== -->
+
+        <section class="profile-content">
+
+
+            <!-- PROFILE HEADER CARD -->
+
+            <div class="profile-header-card">
+
+
+                <div class="profile-avatar">
+
+                    <i class="fa-solid fa-user"></i>
+
+                </div>
+
+
+                <div class="profile-header-info">
+
+                    <h2 id="profileName">
+                        Loading...
+                    </h2>
+
+                    <p id="profileUsername">
+                        @username
+                    </p>
+
+                    <span class="role-badge">
+
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                        <span id="profileRole">
+                            Administrator
+                        </span>
+
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =================================================
+                 DETAILS
+            ================================================== -->
+
+            <div class="profile-grid">
+
+
+                <!-- PERSONAL INFORMATION -->
+
+                <div class="profile-card">
+
+
+                    <div class="card-title">
+
+                        <div class="card-title-icon">
+
+                            <i class="fa-solid fa-user"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h3>Personal Information</h3>
+
+                            <p>
+                                Basic administrator details
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="details-list">
+
+
+                        <div class="detail-item">
+
+                            <div class="detail-icon">
+
+                                <i class="fa-solid fa-id-card"></i>
+
+                            </div>
+
+                            <div class="detail-content">
+
+                                <span class="detail-label">
+                                    Admin ID
+                                </span>
+
+                                <strong id="profileAdminId">
+                                    --
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div class="detail-item">
+
+                            <div class="detail-icon">
+
+                                <i class="fa-solid fa-id-badge"></i>
+
+                            </div>
+
+                            <div class="detail-content">
+
+                                <span class="detail-label">
+                                    Employee ID
+                                </span>
+
+                                <strong id="profileEmpId">
+                                    --
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div class="detail-item">
+
+                            <div class="detail-icon">
+
+                                <i class="fa-solid fa-user-tag"></i>
+
+                            </div>
+
+                            <div class="detail-content">
+
+                                <span class="detail-label">
+                                    Username
+                                </span>
+
+                                <strong id="profileUsernameValue">
+                                    --
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- CONTACT INFORMATION -->
+
+                <div class="profile-card">
+
+
+                    <div class="card-title">
+
+                        <div class="card-title-icon">
+
+                            <i class="fa-solid fa-envelope"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h3>Contact Information</h3>
+
+                            <p>
+                                Registered contact details
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="details-list">
+
+
+                        <div class="detail-item">
+
+                            <div class="detail-icon">
+
+                                <i class="fa-solid fa-envelope"></i>
+
+                            </div>
+
+                            <div class="detail-content">
+
+                                <span class="detail-label">
+                                    Email Address
+                                </span>
+
+                                <strong id="profileEmail">
+                                    --
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div class="detail-item">
+
+                            <div class="detail-icon">
+
+                                <i class="fa-solid fa-user-shield"></i>
+
+                            </div>
+
+                            <div class="detail-content">
+
+                                <span class="detail-label">
+                                    Account Role
+                                </span>
+
+                                <strong id="profileRoleValue">
+                                    Administrator
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div class="detail-item">
+
+                            <div class="detail-icon">
+
+                                <i class="fa-solid fa-calendar"></i>
+
+                            </div>
+
+                            <div class="detail-content">
+
+                                <span class="detail-label">
+                                    Account Created
+                                </span>
+
+                                <strong id="profileCreatedAt">
+                                    --
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =================================================
+                 ACCOUNT STATUS
+            ================================================== -->
+
+            <div class="account-status-card">
+
+
+                <div class="status-left">
+
+                    <div class="status-icon">
+
+                        <i class="fa-solid fa-circle-check"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <h3>Account Status</h3>
+
+                        <p>
+                            Your administrator account is active and
+                            authorized to access the ExamGuard AI admin panel.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="status-badge">
+
+                    <span></span>
+
+                    Active
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+<!-- =========================================================
+     PROFILE JS
+========================================================= -->
+
+<script src="{{ url_for('static', filename='js/admin_profile.js') }}"></script>
+
+
+</body>
+
+</html>

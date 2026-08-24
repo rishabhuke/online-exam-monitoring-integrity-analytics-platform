@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamGuard AI | Admin Dashboard</title>
 
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -54,32 +55,6 @@ BACKGROUND
                 </div>
 
             </div>
-
-            <div class="right-top">
-
-                <div class="notification">
-                    <i class="fa-solid fa-bell"></i>
-                    <span id="notificationCount">0</span>
-                </div>
-
-                <div class="admin-profile">
-
-                    <img id="adminPhoto"
-                         src="{{ url_for('static', filename='images/admin.png') }}"
-                         alt="Admin">
-
-                    <div>
-
-                        <h4 id="adminName">Loading...</h4>
-
-                        <p id="adminRole">Administrator</p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
         </header>
 
         <!-- ================= TITLE ================= -->
@@ -294,27 +269,30 @@ BACKGROUND
 
                 </div>
 
-                <!-- Recent Activity -->
+                <!-- Recent Activity -->                <!-- ================= SUPPORT REQUESTS ================= -->
 
-                <div class="panel">
+<div class="panel activity-panel">
+    <div class="panel-header">
+        
+        <div>
+            <h2>Recent Activity</h2>
+            <span>Latest system and candidate activity</span>
+        </div>
+        <span class="panel-badge">
+            <i class="fa-solid fa-bolt"></i> Live
+        </span>
+    </div>
 
-                    <div class="panel-header">
-
-                        <h2>Recent Activity</h2>
-
-                    </div>
-
-                    <div id="recentActivity">
-
-                    </div>
-
-                </div>
+    <div id="recentActivity" class="activity-list">
+    </div>
+</div>
 
             </div>
 
             <!-- RIGHT -->
 
             <div class="right-content">
+
 
                 <!-- AI Integrity -->
 
@@ -368,10 +346,10 @@ BACKGROUND
 
                     <div class="quick-actions">
 
-                        <a href="/admin/quiz-generator">
-                            <i class="fa-solid fa-plus"></i>
-                            Create Exam
-                        </a>
+                        <a href="/admin/support-requests">
+                            <i class="fa-solid fa-headset"></i>
+    Support Requests
+</a>
 
                         <a href="/admin/status-of-candidates">
                             <i class="fa-solid fa-users"></i>
@@ -399,6 +377,11 @@ BACKGROUND
     </main>
 
 </div>
+<!-- ======================================================
+     SUPPORT RESPONSE MODAL
+====================================================== -->
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>

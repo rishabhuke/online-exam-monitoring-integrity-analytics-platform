@@ -48,10 +48,21 @@
             <i class="fa-solid fa-brain"></i>
             <span>Integrity Analyticis</span>
         </a>
+        <a href="{{ url_for('admin_dashboard.support_requests_page') }}">
+    <i class="fa-solid fa-headset"></i>
+    Support Requests
+</a>
 
        
 
     </nav>
+    <div class="sidebar-bottom profile-section">
+    <a href="/admin/profile"
+       class="{% if active_page == 'profile' %}active{% endif %}">
+        <i class="fa-solid fa-user-circle"></i>
+        <span>Profile</span>
+    </a>
+</div>
 
     <div class="sidebar-bottom">
         <a href="/admin/logout" class="logout">

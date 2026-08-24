@@ -3,7 +3,7 @@
 // ADMIN DASHBOARD JAVASCRIPT
 // ============================================================
 
-
+let currentSupportTicket = null;
 document.addEventListener(
     "DOMContentLoaded",
     function () {
@@ -17,6 +17,7 @@ document.addEventListener(
         initializeSearch();
 
         initializeRiskFilter();
+         loadSupportTickets();
 
         initializeRefreshButton();
 
@@ -25,6 +26,16 @@ document.addEventListener(
         updateCurrentTime();
 
         loadAllDashboardData();
+        
+document.getElementById("closeSupportModal")
+    .addEventListener("click",closeSupportModal);
+
+document.getElementById("cancelSupportModal")
+    .addEventListener("click",closeSupportModal);
+     document
+        .getElementById("saveSupportResponse")
+        ?.addEventListener("click", updateSupportTicket);
+
 
         setInterval(
             loadAllDashboardData,
@@ -57,6 +68,49 @@ function initializeDashboard() {
             "Dashboard";
 
     }
+    
+}
+function createProfileRow(
+    label,
+    value
+) {
+
+    return `
+        <div
+            style="
+                display:flex;
+                justify-content:space-between;
+                gap:15px;
+                padding:10px 0;
+                border-bottom:1px solid rgba(148,163,184,.1);
+            "
+        >
+
+            <span
+                style="
+                    color:#94a3b8;
+                    font-size:13px;
+                "
+            >
+                ${escapeHtml(label)}
+            </span>
+
+            <strong
+                style="
+                    text-align:right;
+                    font-size:13px;
+                    word-break:break-word;
+                "
+            >
+                ${escapeHtml(
+                    String(value ?? "-")
+                )}
+            </strong>
+
+
+        </div>
+    `;
+
 }
 
 
@@ -68,7 +122,6 @@ function loadAllDashboardData() {
 
     loadDashboardStatistics();
 
-    loadAdminProfile();
 
     loadIntegritySummary();
 
@@ -92,112 +145,148 @@ function loadAllDashboardData() {
 
     loadReports();
 
-    loadNotificationCount();
+
 
 }
 
-
-// ============================================================
-// ADMIN PROFILE
-// ============================================================
-
-async function loadAdminProfile() {
-
+async function loadSupportTickets() {
     try {
-
-        const response =
-            await fetch(
-                "/admin/api/dashboard/admin-profile",
-                {
-                    credentials: "same-origin"
-                }
-            );
-
+        const response = await fetch("/admin/api/support", {
+            credentials: "same-origin"
+        });
 
         if (!response.ok) {
-
-            throw new Error(
-                "HTTP " + response.status
-            );
-
+            throw new Error("HTTP " + response.status);
         }
 
+        const data = await response.json();
 
-        const result =
-            await response.json();
+        console.log("SUPPORT API RESPONSE:", data);
+        console.log("SUPPORT TICKETS:", data.tickets);
 
-
-        if (!result.success) {
-
+        if (!data.success) {
+            console.error("Support API failed:", data.message);
             return;
-
         }
 
+        renderSupportTickets(data.tickets || []);
 
-        const admin =
-            result.admin;
-
-
-        const adminName =
-            document.getElementById(
-                "adminName"
-            );
-
-
-        if (adminName) {
-
-            adminName.textContent =
-                admin.full_name ||
-                admin.name ||
-                "Administrator";
-
-        }
-
-
-        const adminEmail =
-            document.getElementById(
-                "adminEmail"
-            );
-
-
-        if (adminEmail) {
-
-            adminEmail.textContent =
-                admin.email || "";
-
-        }
-
-
-        const welcomeAdmin =
-            document.getElementById(
-                "welcomeAdmin"
-            );
-
-
-        if (welcomeAdmin) {
-
-            welcomeAdmin.textContent =
-                "Welcome, " +
-                (
-                    admin.full_name ||
-                    admin.name ||
-                    "Administrator"
-                );
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Admin profile error:",
-            error
-        );
-
+    } catch (error) {
+        console.error("Support tickets error:", error);
     }
 }
 
+function openSupportModal(ticket){
+
+    currentSupportTicket=ticket;
+
+    document.getElementById("modalCandidateName").textContent=ticket.candidate_name;
+    document.getElementById("modalCandidateEmail").textContent=ticket.candidate_email;
+    document.getElementById("modalIssueType").textContent=ticket.issue_type;
+    document.getElementById("modalPriority").textContent=ticket.priority;
+    document.getElementById("modalSubject").textContent=ticket.subject;
+    document.getElementById("modalCandidateMessage").value=ticket.message;
+    document.getElementById("modalAdminResponse").value=ticket.admin_response || "";
+    document.getElementById("modalTicketStatus").value=ticket.status;
+
+    document.getElementById("supportModal").classList.add("show");
+
+}
+
+
+function renderSupportTickets(tickets){
+
+    const container =
+        document.getElementById("supportTicketsList");
+
+    const badge =
+        document.getElementById("openSupportCount");
+
+    if(!container) return;
+
+    container.innerHTML = "";
+
+  const openTickets = tickets.filter(ticket =>
+    String(ticket.status || "").trim().toLowerCase() === "open"
+).length;
+
+    badge.textContent =
+        `${openTickets} Open`;
+
+    if(tickets.length===0){
+
+        container.innerHTML =
+        `<div class="empty-state">
+            No support requests found.
+        </div>`;
+
+        return;
+    }
+
+    tickets.slice(0,5).forEach(ticket=>{
+
+        const statusClass =
+            ticket.status.toLowerCase().replace(/\s+/g,"-");
+
+        const priorityClass =
+            ticket.priority.toLowerCase();
+
+        const card =
+            document.createElement("div");
+
+        card.className="support-ticket";
+
+        card.innerHTML=`
+            <div class="support-ticket-top">
+
+                <div>
+                    <h4>${ticket.candidate_name}</h4>
+                    <small>${ticket.candidate_email}</small>
+                </div>
+
+                <span class="ticket-status ${statusClass}">
+                    ${ticket.status}
+                </span>
+
+            </div>
+
+            <strong>${ticket.subject}</strong>
+
+            <p class="support-ticket-message">
+                ${ticket.message}
+            </p>
+
+            <div class="support-meta">
+
+                <span class="priority ${priorityClass}">
+                    ${ticket.priority}
+                </span>
+
+                <span>${ticket.issue_type}</span>
+
+            </div>
+
+            <div class="support-actions">
+
+                <button class="respond-btn">
+                    Respond
+                </button>
+
+            </div>
+        `;
+
+        card.querySelector(".respond-btn")
+            .addEventListener("click",function(){
+
+                openSupportModal(ticket);
+
+            });
+
+        container.appendChild(card);
+
+    });
+
+}
 
 // ============================================================
 // DASHBOARD STATISTICS
@@ -895,11 +984,21 @@ async function loadRecentActivity() {
 
     }
 }
+function closeSupportModal(){
+
+    document.getElementById("supportModal")
+        .classList.remove("show");
+
+    currentSupportTicket=null;
+
+}
 
 
 // ============================================================
 // UPCOMING EXAMS
 // ============================================================
+
+
 
 async function loadUpcomingExams() {
 
@@ -1678,67 +1777,7 @@ async function loadReports() {
 }
 
 
-// ============================================================
-// NOTIFICATION COUNT
-// ============================================================
 
-async function loadNotificationCount() {
-
-    try {
-
-        const response =
-            await fetch(
-                "/admin/api/notifications/count",
-                {
-                    credentials: "same-origin"
-                }
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "HTTP " + response.status
-            );
-
-        }
-
-
-        const result =
-            await response.json();
-
-
-        if (!result.success) {
-
-            return;
-
-        }
-
-
-        const badge =
-            document.getElementById(
-                "notificationCount"
-            );
-
-
-        if (badge) {
-
-            badge.textContent =
-                result.count ?? 0;
-
-        }
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Notification count error:",
-            error
-        );
-
-    }
-}
 
 
 // ============================================================

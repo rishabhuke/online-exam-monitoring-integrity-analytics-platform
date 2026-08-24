@@ -14,7 +14,6 @@
         ExamGuard AI | Candidate Status
     </title>
 
-    <!-- Existing dashboard CSS -->
     <link
         rel="stylesheet"
         href="{{ url_for(
@@ -23,7 +22,6 @@
         ) }}"
     >
 
-    <!-- Candidate status CSS -->
     <link
         rel="stylesheet"
         href="{{ url_for(
@@ -32,7 +30,6 @@
         ) }}"
     >
 
-    <!-- Font Awesome -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
@@ -71,78 +68,33 @@
     <main class="main-content">
 
 
-        <!-- TOP BAR -->
+        <!-- =================================================
+             TOP BAR
+        ================================================== -->
 
-      <header class="top-header">
+        <header class="top-header">
 
-    <!-- Search -->
-    <div class="header-search">
-        <i class="fas fa-search"></i>
-        <input
-            type="text"
-            id="globalSearch"
-            placeholder="Search candidates, exams, reports..."
-            autocomplete="off"
-        >
-        <span class="search-shortcut">⌘ K</span>
-    </div>
+            <div class="header-search">
 
-    <!-- Header Actions -->
-    <div class="header-actions">
+                <i class="fas fa-search"></i>
 
-        <!-- Notifications -->
-        <button class="header-icon-btn" title="Notifications">
-            <i class="far fa-bell"></i>
-            <span class="notification-badge" id="notificationCount">
-                0
-            </span>
-        </button>
+                <input
+                    type="text"
+                    id="globalSearch"
+                    placeholder="Search candidates, exams, reports..."
+                    autocomplete="off"
+                >
 
-        <!-- Theme -->
-        <button
-            class="header-icon-btn theme-btn"
-            id="themeToggle"
-            title="Toggle theme"
-        >
-            <i class="fas fa-sun"></i>
-        </button>
+                <span class="search-shortcut">
+                    ⌘ K
+                </span>
 
-        <!-- Divider -->
-        <div class="header-divider"></div>
-
-        <!-- Admin Profile -->
-        <div class="admin-profile">
-
-            <div class="admin-avatar">
-                {% if session.get('admin_photo') %}
-                    <img
-                        src="{{ session.get('admin_photo') }}"
-                        alt="Admin"
-                    >
-                {% else %}
-                    <span>
-                        {{ session.get('admin_name', 'Admin')[0]|upper }}
-                    </span>
-                {% endif %}
             </div>
 
-            <div class="admin-info">
-                <div class="admin-name">
-                    {{ session.get('admin_name', 'Admin User') }}
-                </div>
 
-                <div class="admin-role">
-                    Administrator
-                </div>
-            </div>
+          
 
-            <i class="fas fa-chevron-down profile-arrow"></i>
-
-        </div>
-
-    </div>
-
-</header>
+        </header>
 
 
         <!-- =================================================
@@ -154,9 +106,7 @@
             <div class="page-title-area">
 
                 <div class="page-title-icon">
-
                     <i class="fa-solid fa-users"></i>
-
                 </div>
 
                 <div>
@@ -168,11 +118,8 @@
                         </h1>
 
                         <span class="live-badge">
-
                             <span></span>
-
                             LIVE
-
                         </span>
 
                     </div>
@@ -260,9 +207,7 @@
                 </div>
 
                 <div class="stat-icon">
-
                     <i class="fa-solid fa-users"></i>
-
                 </div>
 
             </div>
@@ -287,9 +232,7 @@
                 </div>
 
                 <div class="stat-icon">
-
                     <i class="fa-solid fa-wifi"></i>
-
                 </div>
 
             </div>
@@ -314,9 +257,7 @@
                 </div>
 
                 <div class="stat-icon">
-
                     <i class="fa-solid fa-triangle-exclamation"></i>
-
                 </div>
 
             </div>
@@ -341,9 +282,7 @@
                 </div>
 
                 <div class="stat-icon">
-
                     <i class="fa-solid fa-shield-halved"></i>
-
                 </div>
 
             </div>
@@ -368,9 +307,7 @@
                 </div>
 
                 <div class="stat-icon">
-
                     <i class="fa-solid fa-wifi-slash"></i>
-
                 </div>
 
             </div>
@@ -384,7 +321,6 @@
         ================================================== -->
 
         <section class="filter-panel">
-
 
             <div class="filter-group">
 
@@ -501,16 +437,13 @@
 
 
         <!-- =================================================
-             CANDIDATE TABLE + ACTIVITY
+             CANDIDATE TABLE
         ================================================== -->
 
         <section class="candidate-layout">
 
 
-            <!-- TABLE -->
-
             <div class="candidate-table-card">
-
 
                 <div class="table-header">
 
@@ -536,9 +469,7 @@
 
 
                     <span class="auto-refresh">
-
                         Auto Refresh • Every 10s
-
                     </span>
 
                 </div>
@@ -560,11 +491,8 @@
                                     Candidate ID
                                 </th>
 
-                                <th>
-                                    Examination
-                                </th>
+                
 
-                                
                                 <th>
                                     Current Status
                                 </th>
@@ -577,12 +505,13 @@
                                     Violations
                                 </th>
 
-                             
-
                                 <th>
                                     Last Activity
                                 </th>
 
+                                <th>
+                                    Actions
+                                </th>
 
                             </tr>
 
@@ -594,7 +523,7 @@
                             <tr>
 
                                 <td
-                                    colspan="10"
+                                    colspan="8"
                                     class="loading-row"
                                 >
 
@@ -612,8 +541,6 @@
 
                 </div>
 
-
-                <!-- PAGINATION -->
 
                 <div class="table-footer">
 
@@ -682,10 +609,11 @@
             </div>
 
 
-            <!-- RIGHT ACTIVITY -->
+            <!-- =================================================
+                 RIGHT ACTIVITY
+            ================================================== -->
 
             <aside class="activity-panel">
-
 
                 <div class="activity-card">
 
@@ -698,7 +626,6 @@
                         <i class="fa-solid fa-chart-simple"></i>
 
                     </div>
-
 
                     <div
                         class="activity-chart"
@@ -736,9 +663,7 @@
                     >
 
                         <div class="empty-activity">
-
                             No recent activity
-
                         </div>
 
                     </div>
@@ -749,11 +674,8 @@
                 <div class="integrity-card">
 
                     <div class="integrity-icon">
-
                         <i class="fa-solid fa-shield-halved"></i>
-
                     </div>
-
 
                     <h3>
                         Integrity System
@@ -794,8 +716,298 @@
 
         </section>
 
-
     </main>
+
+</div>
+
+
+<!-- =========================================================
+     CANDIDATE DETAILS MODAL
+========================================================== -->
+
+<div
+    class="candidate-modal"
+    id="candidateDetailsModal"
+    aria-hidden="true"
+>
+
+    <div class="candidate-modal-backdrop"></div>
+
+
+    <div
+        class="candidate-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="candidateModalName"
+    >
+
+        <button
+            type="button"
+            class="candidate-modal-close"
+            id="candidateModalClose"
+            aria-label="Close candidate details"
+        >
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+
+        <!-- Modal Header -->
+
+        <div class="candidate-modal-header">
+
+            <div class="modal-profile">
+
+                <div
+                    class="modal-avatar"
+                    id="candidateModalAvatar"
+                >
+                    <span id="candidateModalInitials">
+                        ?
+                    </span>
+                </div>
+
+
+                <div class="modal-profile-info">
+
+                    <div class="modal-profile-name-row">
+
+                        <h2 id="candidateModalName">
+                            Candidate
+                        </h2>
+
+                        <span
+                            id="candidateModalStatus"
+                            class="status-badge status-offline"
+                        >
+                            Offline
+                        </span>
+
+                    </div>
+
+
+                    <p id="candidateModalEmail">
+                        --
+                    </p>
+
+
+                    <span
+                        class="modal-candidate-id"
+                        id="candidateModalId"
+                    >
+                        Candidate ID: --
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-live-indicator">
+
+                <span></span>
+
+                Candidate Profile
+
+            </div>
+
+        </div>
+
+
+        <!-- Main Metrics -->
+
+        <div class="candidate-detail-metrics">
+
+
+            <!-- Integrity -->
+
+            <div class="detail-metric integrity-metric">
+
+                <div class="metric-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+
+
+                <div class="metric-info">
+
+                    <span>
+                        Integrity Score
+                    </span>
+
+                    <strong id="candidateModalIntegrity">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div
+                    class="integrity-ring"
+                    id="candidateIntegrityRing"
+                >
+
+                    <div>
+                        <span id="candidateIntegrityRingValue">
+                            0
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Risk -->
+
+            <div class="detail-metric">
+
+                <div class="metric-icon risk-metric-icon">
+                    <i class="fa-solid fa-gauge-high"></i>
+                </div>
+
+                <div class="metric-info">
+
+                    <span>
+                        Risk Level
+                    </span>
+
+                    <strong
+                        id="candidateModalRisk"
+                        class="risk-badge risk-low"
+                    >
+                        Low
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- Violations -->
+
+            <div class="detail-metric">
+
+                <div class="metric-icon violation-metric-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+
+                <div class="metric-info">
+
+                    <span>
+                        Violations
+                    </span>
+
+                    <strong id="candidateModalViolations">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- Exams -->
+
+            <div class="detail-metric">
+
+                <div class="metric-icon exam-metric-icon">
+                    <i class="fa-solid fa-file-circle-check"></i>
+                </div>
+
+                <div class="metric-info">
+
+                    <span>
+                        Exams Completed
+                    </span>
+
+                    <strong id="candidateModalExamCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Examination History -->
+
+        <div class="candidate-history-section">
+
+            <div class="candidate-history-title">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        PERFORMANCE
+                    </span>
+
+                    <h3>
+                        Examination History
+                    </h3>
+
+                </div>
+
+
+                <div class="average-score-pill">
+
+                    <i class="fa-solid fa-chart-line"></i>
+
+                    Average Score:
+
+                    <strong id="candidateModalAverageScore">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="candidate-exam-history"
+                id="candidateExamHistory"
+            >
+
+                <!-- JavaScript inserts exams here -->
+
+            </div>
+
+        </div>
+
+
+        <!-- Footer -->
+
+        <div class="candidate-modal-footer">
+
+            <div class="modal-footer-info">
+
+                <i class="fa-solid fa-clock"></i>
+
+                Last activity:
+
+                <strong id="candidateModalLastActivity">
+                    --
+                </strong>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close-button"
+                id="candidateModalCloseBottom"
+            >
+
+                <i class="fa-solid fa-check"></i>
+
+                Done
+
+            </button>
+
+        </div>
+
+    </div>
 
 </div>
 

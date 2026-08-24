@@ -33,8 +33,7 @@
 
 <body>
 
-<!-- ========================= NAVBAR ========================= -->
-{% if request.endpoint != 'pages.start_exam' %}
+
 <nav class="navbar">
 
     <div class="logo">
@@ -45,36 +44,7 @@
 
     </div>
 
-    {% if request.endpoint in ['pages.home', 'auth.login', 'auth.register'] %}
 
-    <!-- PUBLIC NAVBAR -->
-
-    <ul class="nav-links">
-
-        <li>
-            <a href="{{ url_for('pages.home') }}">
-                <i class="fa-solid fa-house"></i>
-                Home
-            </a>
-        </li>
-
-        <li>
-            <a href="{{ url_for('auth.register') }}">
-                <i class="fa-solid fa-user-plus"></i>
-                Register
-            </a>
-        </li>
-
-        <li>
-            <a href="{{ url_for('auth.login') }}">
-                <i class="fa-solid fa-right-to-bracket"></i>
-                Login
-            </a>
-        </li>
-
-    </ul>
-
-    {% else %}
 
     <!-- CANDIDATE NAVBAR -->
 
@@ -121,10 +91,8 @@
 
     </ul>
 
-    {% endif %}
-
 </nav>
-{% endif %}
+
 
 <!-- ========================= MAIN CONTENT ========================= -->
 

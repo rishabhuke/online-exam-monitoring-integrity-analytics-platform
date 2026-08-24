@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>ExamGuard AI | Support Requests</title>
+
+    <!-- Admin Sidebar -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/admin_sidebar.css') }}">
+
+    <!-- Support Page -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/support_request.css') }}">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+
+<body>
+
+<div class="support-page">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    {% set active_page = 'support' %}
+
+    {% include 'admin_sidebar.html' %}
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="support-main">
+
+        <!-- =================================================
+             TOP BAR
+        ================================================== -->
+
+        <header class="support-topbar">
+
+            <div class="topbar-left">
+
+                <button id="toggleSidebar"
+                        class="sidebar-toggle"
+                        type="button">
+
+                    <i class="fa-solid fa-bars"></i>
+
+                </button>
+
+                <div>
+
+                    <h1>Support Requests</h1>
+
+                    <p>
+                        Manage and respond to candidate help requests.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button id="refreshSupport"
+                    class="refresh-btn"
+                    type="button">
+
+                <i id="refreshSupportIcon"
+                   class="fa-solid fa-rotate"></i>
+
+                <span>Refresh</span>
+
+            </button>
+
+        </header>
+
+
+        <!-- =================================================
+             SUMMARY CARDS
+        ================================================== -->
+
+        <section class="support-summary">
+
+            <div class="summary-card">
+
+                <div class="summary-icon open">
+
+                    <i class="fa-solid fa-envelope-open"></i>
+
+                </div>
+
+                <div class="summary-content">
+
+                    <span>Open Requests</span>
+
+                    <strong id="openSupportCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon pending">
+
+                    <i class="fa-solid fa-clock"></i>
+
+                </div>
+
+                <div class="summary-content">
+
+                    <span>Pending Requests</span>
+
+                    <strong id="pendingSupportCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon resolved">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                </div>
+
+                <div class="summary-content">
+
+                    <span>Resolved Requests</span>
+
+                    <strong id="resolvedSupportCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <div class="summary-icon total">
+
+                    <i class="fa-solid fa-headset"></i>
+
+                </div>
+
+                <div class="summary-content">
+
+                    <span>Total Requests</span>
+
+                    <strong id="totalSupportCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SUPPORT PANEL
+        ================================================== -->
+
+        <section class="support-panel">
+
+            <!-- PANEL HEADER -->
+
+            <div class="support-panel-header">
+
+                <div class="panel-heading">
+
+                    <div class="panel-icon">
+
+                        <i class="fa-solid fa-headset"></i>
+
+                    </div>
+
+                    <div>
+
+                        <h2>
+                            Candidate Support Requests
+                        </h2>
+
+                        <p>
+                            View candidate issues and send responses.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- SEARCH + FILTER -->
+
+                <div class="support-tools">
+
+                    <div class="support-search">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input
+                            type="text"
+                            id="supportSearch"
+                            placeholder="Search candidate, email or subject..."
+                            autocomplete="off">
+
+                    </div>
+
+
+                    <select id="supportStatusFilter">
+
+                        <option value="all">
+                            All Status
+                        </option>
+
+                        <option value="open">
+                            Open
+                        </option>
+
+                        <option value="pending">
+                            Pending
+                        </option>
+
+                        <option value="resolved">
+                            Resolved
+                        </option>
+
+                        <option value="closed">
+                            Closed
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 TICKET LIST
+            ================================================== -->
+
+            <div id="supportTicketsList"
+                 class="support-ticket-list">
+
+                <div class="loading-state">
+
+                    <div class="loading-spinner"></div>
+
+                    <span>
+                        Loading support requests...
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     SUPPORT RESPONSE MODAL
+========================================================= -->
+
+<div id="supportModal"
+     class="support-modal">
+
+    <div class="support-modal-overlay"></div>
+
+
+    <div class="support-modal-box">
+
+
+        <!-- MODAL HEADER -->
+
+        <div class="support-modal-header">
+
+            <div>
+
+                <div class="modal-title-icon">
+
+                    <i class="fa-solid fa-headset"></i>
+
+                </div>
+
+                <div>
+
+                    <h2>
+                        Support Request
+                    </h2>
+
+                    <p>
+                        Review the candidate request and respond.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button id="closeSupportModal"
+                    class="modal-close"
+                    type="button">
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <!-- MODAL BODY -->
+
+        <div class="support-modal-body">
+
+
+            <!-- CANDIDATE -->
+
+            <div class="modal-section">
+
+                <h3>
+
+                    <i class="fa-solid fa-user"></i>
+
+                    Candidate Information
+
+                </h3>
+
+
+                <div class="modal-info-grid">
+
+                    <div class="modal-info-item">
+
+                        <span>
+                            Candidate Name
+                        </span>
+
+                        <strong id="modalCandidateName">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="modal-info-item">
+
+                        <span>
+                            Email Address
+                        </span>
+
+                        <strong id="modalCandidateEmail">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- REQUEST -->
+
+            <div class="modal-section">
+
+                <h3>
+
+                    <i class="fa-solid fa-circle-info"></i>
+
+                    Request Information
+
+                </h3>
+
+
+                <div class="modal-info-grid">
+
+                    <div class="modal-info-item">
+
+                        <span>
+                            Issue Type
+                        </span>
+
+                        <strong id="modalIssueType">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="modal-info-item">
+
+                        <span>
+                            Priority
+                        </span>
+
+                        <strong id="modalPriority">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="modal-info-item modal-full">
+
+                        <span>
+                            Subject
+                        </span>
+
+                        <strong id="modalSubject">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CANDIDATE MESSAGE -->
+
+            <div class="modal-section">
+
+                <h3>
+
+                    <i class="fa-solid fa-message"></i>
+
+                    Candidate Message
+
+                </h3>
+
+
+                <textarea
+                    id="modalCandidateMessage"
+                    readonly
+                    rows="5"
+                    placeholder="Candidate message..."></textarea>
+
+            </div>
+
+
+            <!-- ADMIN RESPONSE -->
+
+            <div class="modal-section">
+
+                <h3>
+
+                    <i class="fa-solid fa-reply"></i>
+
+                    Admin Response
+
+                </h3>
+
+
+                <textarea
+                    id="modalAdminResponse"
+                    rows="5"
+                    placeholder="Enter your response to the candidate..."></textarea>
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            <div class="modal-section">
+
+                <h3>
+
+                    <i class="fa-solid fa-flag"></i>
+
+                    Request Status
+
+                </h3>
+
+<select id="supportStatusFilter">
+
+    <option value="all">
+        All Status
+    </option>
+
+    <option value="Open">
+        Open
+    </option>
+
+    <option value="In Progress">
+        In Progress
+    </option>
+
+    <option value="Resolved">
+        Resolved
+    </option>
+
+    <option value="Closed">
+        Closed
+    </option>
+
+</select>
+
+            </div>
+
+        </div>
+
+
+        <!-- MODAL FOOTER -->
+
+        <div class="support-modal-footer">
+
+            <button id="cancelSupportModal"
+                    class="modal-cancel-btn"
+                    type="button">
+
+                Cancel
+
+            </button>
+
+
+            <button id="saveSupportResponse"
+                    class="modal-save-btn"
+                    type="button">
+
+                <i class="fa-solid fa-paper-plane"></i>
+
+                Save Response
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="{{ url_for('static', filename='js/support_request.js') }}"></script>
+
+</body>
+
+</html>

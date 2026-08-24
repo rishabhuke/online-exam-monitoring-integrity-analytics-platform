@@ -196,3 +196,44 @@ CREATE TABLE IF NOT EXISTS AIReports (
         REFERENCES Exams(id)
         ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS SupportTickets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    candidate_id INTEGER NOT NULL,
+
+    issue_type TEXT NOT NULL,
+
+    priority TEXT NOT NULL DEFAULT 'Medium',
+
+    subject TEXT NOT NULL,
+
+    message TEXT NOT NULL,
+
+    status TEXT NOT NULL DEFAULT 'Open',
+
+    admin_response TEXT,
+
+    assigned_admin_id INTEGER,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    resolved_at TIMESTAMP,
+
+    FOREIGN KEY(candidate_id)
+        REFERENCES Candidates(id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY(assigned_admin_id)
+        REFERENCES Admins(id)
+        ON DELETE SET NULL
+);
+CREATE TABLE IF NOT EXISTS FAQs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    category TEXT,
+    active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

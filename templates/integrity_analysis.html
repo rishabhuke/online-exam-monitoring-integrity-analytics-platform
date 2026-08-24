@@ -75,40 +75,7 @@
 
             </div>
 
-
-            <div class="header-actions">
-
-                <button class="icon-btn">
-                    <i class="fa-regular fa-bell"></i>
-                    <b>12</b>
-                </button>
-
-                <button
-                    class="icon-btn"
-                    id="themeBtn"
-                    type="button"
-                >
-                    <i class="fa-regular fa-moon"></i>
-                </button>
-
-
-                <div class="admin-profile">
-
-                    <div class="admin-avatar">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-
-                    <div>
-                        <strong>Admin User</strong>
-                        <small>Super Administrator</small>
-                    </div>
-
-                    <i class="fa-solid fa-chevron-down"></i>
-
-                </div>
-
-            </div>
-
+       
         </header>
 
 
@@ -382,27 +349,34 @@
 
             <div class="panel sessions-panel">
 
-                <div class="panel-header">
+             <div class="panel-header">
 
-                    <div>
+    <div>
 
-                        <h2>
-                            Integrity Scores
-                        </h2>
+        <h2>
+            Integrity Scores
+        </h2>
 
-                        <span>
-                            Candidate / Session Level
-                        </span>
+        <span>
+            Candidate / Session Level
+        </span>
 
-                    </div>
+    </div>
 
-                    <div class="panel-badge">
-                        <i class="fa-solid fa-database"></i>
-                        Live Database
-                    </div>
+    <div class="panel-header-actions">
 
-                </div>
+        <button
+        class="export-btn"
+        id="exportReportBtn"
+        type="button"
+    >
+        <i class="fa-solid fa-download"></i>
+        Export Report
+    </button>
 
+    </div>
+
+</div>
 
                 <div class="table-wrapper">
 
@@ -905,6 +879,73 @@
     </main>
 
 </div>
+<!-- =====================================================
+     SESSION DETAILS MODAL
+     ===================================================== -->
+
+<div
+    class="details-modal-overlay"
+    id="detailsModal"
+>
+
+    <div class="details-modal">
+
+        <div class="details-modal-header">
+
+            <div>
+
+                <h2>
+                    <i class="fa-solid fa-shield-halved"></i>
+                    Integrity Analysis
+                </h2>
+
+                <span>
+                    Candidate / Session Details
+                </span>
+
+            </div>
+
+            <button
+                class="modal-close-btn"
+                id="closeDetailsModal"
+                type="button"
+                aria-label="Close"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+
+        <div
+            class="details-modal-body"
+            id="detailsModalBody"
+        >
+        </div>
+
+
+        <div class="details-modal-footer">
+
+            <button
+                class="modal-footer-close"
+                id="closeDetailsModalFooter"
+                type="button"
+            >
+                <i class="fa-solid fa-xmark"></i>
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     ADMIN PROFILE PANEL
+     ===================================================== -->
+
 
 
 <script

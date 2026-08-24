@@ -135,11 +135,11 @@ def validate_admin_registration(
 # ============================================================
 # ADMIN LOGIN PAGE
 # ============================================================
-
 @admin_bp.route("/admin/login")
 def admin_login_page():
-    if "admin_id" in session:
-        return redirect(url_for("admin_dashboard.dashboard"))
+
+    session.clear()
+
     return render_template("admin_login.html")
 
 

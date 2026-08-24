@@ -2,26 +2,28 @@
    EXAMINATIONS PAGE
 ========================================================== */
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-    initializeSidebar();
+        initializeSidebar();
 
-    initializeLogout();
+        initializeLogout();
 
-    loadAdminProfile();
+        initializeSearch();
 
-    loadExaminations();
+        initializeFilters();
 
-    initializeSearch();
+        initializePagination();
 
-    initializeFilters();
+        initializeModal();
 
-    initializePagination();
+        initializeUpcomingButton();
 
-    initializeModal();
+        loadExaminations();
 
-});
-
+    }
+);
 
 
 /* ==========================================================
@@ -39,6 +41,13 @@ let rowsPerPage = 6;
 let selectedExam = null;
 
 
+/* ==========================================================
+   API URL
+========================================================== */
+
+const EXAMINATIONS_API =
+    "/admin/api/examinations";
+
 
 /* ==========================================================
    SIDEBAR
@@ -47,23 +56,34 @@ let selectedExam = null;
 function initializeSidebar() {
 
     const toggleButton =
-        document.getElementById("toggleSidebar");
+        document.getElementById(
+            "toggleSidebar"
+        );
 
     const sidebar =
-        document.querySelector(".sidebar");
+        document.querySelector(
+            ".sidebar"
+        );
 
-    if (!toggleButton || !sidebar) {
+    if (
+        !toggleButton ||
+        !sidebar
+    ) {
         return;
     }
 
-    toggleButton.addEventListener("click", function () {
+    toggleButton.addEventListener(
+        "click",
+        function () {
 
-        sidebar.classList.toggle("collapsed");
+            sidebar.classList.toggle(
+                "collapsed"
+            );
 
-    });
+        }
+    );
 
 }
-
 
 
 /* ==========================================================
@@ -81,86 +101,25 @@ function initializeLogout() {
         return;
     }
 
-    logout.addEventListener("click", function (event) {
+    logout.addEventListener(
+        "click",
+        function (event) {
 
-        const confirmed =
-            confirm(
-                "Are you sure you want to logout?"
-            );
+            const confirmed =
+                confirm(
+                    "Are you sure you want to logout?"
+                );
 
-        if (!confirmed) {
+            if (!confirmed) {
 
-            event.preventDefault();
+                event.preventDefault();
+
+            }
 
         }
-
-    });
+    );
 
 }
-
-
-
-/* ==========================================================
-   ADMIN PROFILE
-========================================================== */
-
-async function loadAdminProfile() {
-
-    try {
-
-        const response =
-            await fetch(
-                "/admin/api/profile"
-            );
-
-        if (!response.ok) {
-            return;
-        }
-
-        const result =
-            await response.json();
-
-        if (!result.success) {
-            return;
-        }
-
-        const admin =
-            result.admin || {};
-
-        const name =
-            document.getElementById("adminName");
-
-        const role =
-            document.getElementById("adminRole");
-
-        if (name) {
-
-            name.textContent =
-                admin.full_name ||
-                "Administrator";
-
-        }
-
-        if (role) {
-
-            role.textContent =
-                admin.role ||
-                "Administrator";
-
-        }
-
-    }
-    catch (error) {
-
-        console.error(
-            "Profile loading error:",
-            error
-        );
-
-    }
-
-}
-
 
 
 /* ==========================================================
@@ -180,80 +139,188 @@ async function loadExaminations() {
             "loading"
         );
 
+        refreshButton.disabled = true;
+
     }
 
     showTableLoading();
 
     try {
 
-        /*
-         * EXISTING BACKEND ENDPOINT
-         *
-         * GET /api/integrity/exams
-         */
+        console.log(
+            "Loading examinations from:",
+            EXAMINATIONS_API
+        );
+
 
         const response =
             await fetch(
-                "/api/integrity/exams",
+                EXAMINATIONS_API,
                 {
                     method: "GET",
+
                     headers: {
                         "Accept":
                             "application/json"
-                    }
+                    },
+
+                    credentials:
+                        "same-origin",
+
+                    cache: "no-store"
                 }
             );
 
+
+        console.log(
+            "Examinations HTTP status:",
+            response.status
+        );
+
+
         if (!response.ok) {
 
+            let errorMessage =
+                `Server returned HTTP ${response.status}`;
+
+            try {
+
+                const errorData =
+                    await response.json();
+
+                if (
+                    errorData.message
+                ) {
+
+                    errorMessage =
+                        errorData.message;
+
+                }
+
+            }
+            catch (error) {
+
+                console.warn(
+                    "Could not parse error response."
+                );
+
+            }
+
             throw new Error(
-                "HTTP " +
-                response.status
+                errorMessage
             );
 
         }
 
+
         const result =
             await response.json();
 
+
         console.log(
-            "EXAMINATIONS RESPONSE:",
+            "===== EXAMINATIONS API RESPONSE ====="
+        );
+
+        console.log(
             result
         );
 
+        console.log(
+            "======================================"
+        );
 
-        if (!result.success) {
+
+        if (
+            !result ||
+            result.success !== true
+        ) {
 
             throw new Error(
-                result.message ||
+                result?.message ||
                 "Unable to load examinations."
             );
 
         }
 
 
+        if (
+            !Array.isArray(
+                result.exams
+            )
+        ) {
+
+            throw new Error(
+                "Invalid examinations data received from server."
+            );
+
+        }
+
+
+        /* ==================================================
+           NORMALIZE BACKEND DATA
+        ================================================== */
+
         allExaminations =
-            Array.isArray(result.exams)
-                ? result.exams
-                : [];
-
-
-        /*
-         * Calculate status from the backend
-         * start_time / end_time.
-         */
-
-        allExaminations =
-            allExaminations.map(
+            result.exams.map(
                 function (exam) {
+
+                    const normalizedExam = {
+
+                        id:
+                            exam.id,
+
+                        title:
+                            exam.title ?? "",
+
+                        topic:
+                            exam.topic ?? "",
+
+                        difficulty:
+                            exam.difficulty ?? "",
+
+                        description:
+                            exam.description ?? "",
+
+                        duration:
+                            Number(
+                                exam.duration ?? 0
+                            ),
+
+                        total_questions:
+                            Number(
+                                exam.total_questions ?? 0
+                            ),
+
+                        total_marks:
+                            Number(
+                                exam.total_marks ?? 0
+                            ),
+
+                        start_time:
+                            exam.start_time ?? null,
+
+                        end_time:
+                            exam.end_time ?? null,
+
+                        created_at:
+                            exam.created_at ?? null
+
+                    };
+
+
+                    console.log(
+                        "Normalized examination:",
+                        normalizedExam
+                    );
+
 
                     return {
 
-                        ...exam,
+                        ...normalizedExam,
 
                         status:
                             calculateExamStatus(
-                                exam
+                                normalizedExam
                             )
 
                     };
@@ -262,11 +329,30 @@ async function loadExaminations() {
             );
 
 
+        console.log(
+            "===== NORMALIZED EXAMINATIONS ====="
+        );
+
+        console.table(
+            allExaminations
+        );
+
+        console.log(
+            "===================================="
+        );
+
+
+        currentPage = 1;
+
+
         updateStatistics();
+
 
         populateSubjectFilter();
 
+
         applyFilters();
+
 
         loadUpcomingExaminations();
 
@@ -274,12 +360,13 @@ async function loadExaminations() {
     catch (error) {
 
         console.error(
-            "Examination loading error:",
+            "EXAMINATION LOADING ERROR:",
             error
         );
 
         showTableError(
-            error.message
+            error.message ||
+            "Unable to load examinations."
         );
 
     }
@@ -291,6 +378,8 @@ async function loadExaminations() {
                 "loading"
             );
 
+            refreshButton.disabled = false;
+
         }
 
     }
@@ -298,33 +387,11 @@ async function loadExaminations() {
 }
 
 
-
 /* ==========================================================
    CALCULATE EXAM STATUS
 ========================================================== */
 
 function calculateExamStatus(exam) {
-
-    /*
-     * If backend later provides a status field,
-     * use it directly.
-     */
-
-    if (
-        exam.status &&
-        [
-            "Active",
-            "Upcoming",
-            "Completed",
-            "Draft",
-            "Cancelled"
-        ].includes(exam.status)
-    ) {
-
-        return exam.status;
-
-    }
-
 
     const start =
         parseDate(
@@ -337,11 +404,10 @@ function calculateExamStatus(exam) {
         );
 
 
-    /*
-     * No availability information.
-     */
-
-    if (!start && !end) {
+    if (
+        !start &&
+        !end
+    ) {
 
         return "Draft";
 
@@ -384,10 +450,20 @@ function calculateExamStatus(exam) {
     }
 
 
+    if (
+        start &&
+        !end &&
+        now >= start
+    ) {
+
+        return "Active";
+
+    }
+
+
     return "Draft";
 
 }
-
 
 
 /* ==========================================================
@@ -403,6 +479,7 @@ function parseDate(value) {
     const date =
         new Date(value);
 
+
     if (
         Number.isNaN(
             date.getTime()
@@ -413,10 +490,10 @@ function parseDate(value) {
 
     }
 
+
     return date;
 
 }
-
 
 
 /* ==========================================================
@@ -431,22 +508,40 @@ function updateStatistics() {
 
     const upcoming =
         allExaminations.filter(
-            exam =>
-                exam.status === "Upcoming"
+            function (exam) {
+
+                return (
+                    exam.status ===
+                    "Upcoming"
+                );
+
+            }
         ).length;
 
 
     const active =
         allExaminations.filter(
-            exam =>
-                exam.status === "Active"
+            function (exam) {
+
+                return (
+                    exam.status ===
+                    "Active"
+                );
+
+            }
         ).length;
 
 
     const completed =
         allExaminations.filter(
-            exam =>
-                exam.status === "Completed"
+            function (exam) {
+
+                return (
+                    exam.status ===
+                    "Completed"
+                );
+
+            }
         ).length;
 
 
@@ -473,7 +568,6 @@ function updateStatistics() {
 }
 
 
-
 /* ==========================================================
    SUBJECT FILTER
 ========================================================== */
@@ -490,18 +584,26 @@ function populateSubjectFilter() {
     }
 
 
+    const currentValue =
+        select.value;
+
+
     const subjects =
         [
             ...new Set(
                 allExaminations
                     .map(
-                        exam =>
-                            exam.topic
+                        function (exam) {
+
+                            return String(
+                                exam.topic || ""
+                            ).trim();
+
+                        }
                     )
                     .filter(Boolean)
             )
-        ]
-        .sort(
+        ].sort(
             function (a, b) {
 
                 return a.localeCompare(b);
@@ -538,8 +640,29 @@ function populateSubjectFilter() {
         }
     );
 
-}
 
+    if (
+        currentValue &&
+        [
+            ...select.options
+        ].some(
+            function (option) {
+
+                return (
+                    option.value ===
+                    currentValue
+                );
+
+            }
+        )
+    ) {
+
+        select.value =
+            currentValue;
+
+    }
+
+}
 
 
 /* ==========================================================
@@ -570,7 +693,6 @@ function initializeSearch() {
     );
 
 }
-
 
 
 /* ==========================================================
@@ -664,7 +786,6 @@ function initializeFilters() {
 }
 
 
-
 /* ==========================================================
    APPLY FILTERS
 ========================================================== */
@@ -702,7 +823,7 @@ function applyFilters() {
 
     const statusValue =
         statusFilter
-            ? statusFilter.value
+            ? statusFilter.value.toLowerCase()
             : "all";
 
 
@@ -727,14 +848,22 @@ function applyFilters() {
                         exam.title || ""
                     ).toLowerCase();
 
+
                 const topic =
                     String(
                         exam.topic || ""
                     ).toLowerCase();
 
+
                 const difficulty =
                     String(
                         exam.difficulty || ""
+                    ).toLowerCase();
+
+
+                const description =
+                    String(
+                        exam.description || ""
                     ).toLowerCase();
 
 
@@ -748,20 +877,27 @@ function applyFilters() {
                     ) ||
                     difficulty.includes(
                         searchValue
+                    ) ||
+                    description.includes(
+                        searchValue
                     );
 
 
                 const matchesStatus =
                     statusValue === "all" ||
-                    exam.status.toLowerCase() ===
-                        statusValue;
+                    String(
+                        exam.status ||
+                        "Draft"
+                    ).toLowerCase() ===
+                    statusValue;
 
 
                 const matchesSubject =
                     subjectValue === "all" ||
                     String(
                         exam.topic || ""
-                    ) === subjectValue;
+                    ) ===
+                    subjectValue;
 
 
                 return (
@@ -785,9 +921,8 @@ function applyFilters() {
 }
 
 
-
 /* ==========================================================
-   SORT
+   SORT EXAMINATIONS
 ========================================================== */
 
 function sortExaminations(
@@ -798,7 +933,9 @@ function sortExaminations(
     exams.sort(
         function (a, b) {
 
-            if (sortValue === "title") {
+            if (
+                sortValue === "title"
+            ) {
 
                 return String(
                     a.title || ""
@@ -846,20 +983,27 @@ function sortExaminations(
                     ? dateA.getTime()
                     : 0;
 
+
             const timeB =
                 dateB
                     ? dateB.getTime()
                     : 0;
 
 
-            if (sortValue === "oldest") {
+            if (
+                sortValue === "oldest"
+            ) {
 
-                return timeA - timeB;
+                return (
+                    timeA - timeB
+                );
 
             }
 
 
-            return timeB - timeA;
+            return (
+                timeB - timeA
+            );
 
         }
     );
@@ -867,9 +1011,8 @@ function sortExaminations(
 }
 
 
-
 /* ==========================================================
-   RENDER TABLE
+   RENDER EXAMINATIONS
 ========================================================== */
 
 function renderExaminations() {
@@ -928,7 +1071,9 @@ function renderExaminations() {
         );
 
 
-    if (!pageExams.length) {
+    if (
+        !pageExams.length
+    ) {
 
         tbody.innerHTML = `
 
@@ -1026,9 +1171,11 @@ function renderExaminations() {
 
                 <td>
 
-                    ${Number(
-                        exam.total_questions || 0
-                    )}
+                    <strong>
+                        ${Number(
+                            exam.total_questions ?? 0
+                        )}
+                    </strong>
 
                 </td>
 
@@ -1036,8 +1183,9 @@ function renderExaminations() {
                 <td>
 
                     ${Number(
-                        exam.duration || 0
-                    )} min
+                        exam.duration ?? 0
+                    )}
+                    min
 
                 </td>
 
@@ -1073,45 +1221,51 @@ function renderExaminations() {
                 </td>
 
 
-                  <td>
+                <td>
 
-    <div class="exam-actions">
+                    <div class="exam-actions">
 
-        <!-- VIEW -->
-        <button
-            class="exam-action-btn"
-            title="View Examination"
-            data-action="view"
-            data-id="${exam.id}"
-        >
-            <i class="fa-regular fa-eye"></i>
-        </button>
+                        <button
+                            type="button"
+                            class="exam-action-btn"
+                            title="View Examination"
+                            data-action="view"
+                            data-id="${exam.id}"
+                        >
 
+                            <i class="fa-regular fa-eye"></i>
 
-        <!-- DELETE -->
-        <button
-            class="exam-action-btn delete-action-btn"
-            title="Delete Examination"
-            data-action="delete"
-            data-id="${exam.id}"
-        >
-            <i class="fa-solid fa-trash"></i>
-        </button>
+                        </button>
 
 
-        <!-- MORE -->
-        <button
-            class="exam-action-btn"
-            title="More"
-            data-action="more"
-            data-id="${exam.id}"
-        >
-            <i class="fa-solid fa-ellipsis-vertical"></i>
-        </button>
+                        <button
+                            type="button"
+                            class="exam-action-btn delete-action-btn"
+                            title="Delete Examination"
+                            data-action="delete"
+                            data-id="${exam.id}"
+                        >
 
-    </div>
+                            <i class="fa-solid fa-trash"></i>
 
-</td>
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="exam-action-btn"
+                            title="More"
+                            data-action="more"
+                            data-id="${exam.id}"
+                        >
+
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+
+                        </button>
+
+                    </div>
+
+                </td>
 
             `;
 
@@ -1131,11 +1285,6 @@ function renderExaminations() {
 }
 
 
-
-/* ==========================================================
-   TABLE ACTIONS
-========================================================== */
-
 /* ==========================================================
    TABLE ACTIONS
 ========================================================== */
@@ -1143,90 +1292,113 @@ function renderExaminations() {
 function attachTableActions() {
 
     document
-        .querySelectorAll(".exam-action-btn")
-        .forEach(function (button) {
+        .querySelectorAll(
+            ".exam-action-btn"
+        )
+        .forEach(
+            function (button) {
 
-            button.addEventListener(
-                "click",
-                function () {
+                button.addEventListener(
+                    "click",
+                    function () {
 
-                    const id =
-                        this.dataset.id;
+                        const id =
+                            this.dataset.id;
 
-                    const action =
-                        this.dataset.action;
-
-
-                    const exam =
-                        allExaminations.find(
-                            function (item) {
-
-                                return String(
-                                    item.id
-                                ) === String(id);
-
-                            }
-                        );
+                        const action =
+                            this.dataset.action;
 
 
-                    if (!exam) {
-                        return;
+                        const exam =
+                            allExaminations.find(
+                                function (item) {
+
+                                    return (
+                                        String(
+                                            item.id
+                                        ) ===
+                                        String(
+                                            id
+                                        )
+                                    );
+
+                                }
+                            );
+
+
+                        if (!exam) {
+
+                            console.error(
+                                "Examination not found:",
+                                id
+                            );
+
+                            return;
+
+                        }
+
+
+                        if (
+                            action === "view"
+                        ) {
+
+                            openExamModal(
+                                exam
+                            );
+
+                            return;
+
+                        }
+
+
+                        if (
+                            action === "delete"
+                        ) {
+
+                            deleteExamination(
+                                exam
+                            );
+
+                            return;
+
+                        }
+
+
+                        if (
+                            action === "more"
+                        ) {
+
+                            showExamOptions(
+                                exam
+                            );
+
+                        }
+
                     }
+                );
 
-
-                    /* =========================
-                       VIEW
-                    ========================= */
-
-                    if (action === "view") {
-
-                        openExamModal(exam);
-
-                        return;
-
-                    }
-
-
-                    /* =========================
-                       DELETE
-                    ========================= */
-
-                    if (action === "delete") {
-
-                        deleteExamination(exam);
-
-                        return;
-
-                    }
-
-
-                    /* =========================
-                       MORE
-                    ========================= */
-
-                    if (action === "more") {
-
-                        showExamOptions(exam);
-
-                        return;
-
-                    }
-
-                }
-            );
-
-        });
+            }
+        );
 
 }
+
+
 /* ==========================================================
    DELETE EXAMINATION
 ========================================================== */
 
-async function deleteExamination(exam) {
+async function deleteExamination(
+    exam
+) {
 
-    if (!exam || !exam.id) {
+    if (
+        !exam ||
+        !exam.id
+    ) {
 
-        alert("Invalid examination.");
+        alert(
+            "Invalid examination."
+        );
 
         return;
 
@@ -1246,9 +1418,7 @@ async function deleteExamination(exam) {
 
 
     if (!confirmed) {
-
         return;
-
     }
 
 
@@ -1256,89 +1426,97 @@ async function deleteExamination(exam) {
 
         const response =
             await fetch(
-                `/api/integrity/exams/${encodeURIComponent(exam.id)}`,
+                `${EXAMINATIONS_API}/${encodeURIComponent(exam.id)}`,
                 {
                     method: "DELETE",
 
                     headers: {
                         "Accept":
                             "application/json"
-                    }
+                    },
+
+                    credentials:
+                        "same-origin"
                 }
             );
 
 
-        const result =
-            await response.json();
+        let result = {};
 
 
-        if (!response.ok || !result.success) {
+        try {
 
-            throw new Error(
-                result.message ||
-                "Unable to delete examination."
+            result =
+                await response.json();
+
+        }
+        catch (error) {
+
+            console.warn(
+                "Delete response was not JSON."
             );
 
         }
 
 
-        /*
-         * Remove examination from
-         * local arrays.
-         */
+        if (
+            !response.ok ||
+            result.success !== true
+        ) {
+
+            throw new Error(
+                result.message ||
+                `Unable to delete examination. HTTP ${response.status}`
+            );
+
+        }
+
 
         allExaminations =
             allExaminations.filter(
                 function (item) {
 
-                    return String(item.id) !==
-                           String(exam.id);
+                    return (
+                        String(
+                            item.id
+                        ) !==
+                        String(
+                            exam.id
+                        )
+                    );
 
                 }
             );
 
 
-        filteredExaminations =
-            filteredExaminations.filter(
+        allExaminations =
+            allExaminations.map(
                 function (item) {
 
-                    return String(item.id) !==
-                           String(exam.id);
+                    return {
+
+                        ...item,
+
+                        status:
+                            calculateExamStatus(
+                                item
+                            )
+
+                    };
 
                 }
             );
-
-
-        /*
-         * If current page becomes empty,
-         * move back one page.
-         */
-
-        const totalPages =
-            Math.max(
-                1,
-                Math.ceil(
-                    filteredExaminations.length /
-                    rowsPerPage
-                )
-            );
-
-
-        if (
-            currentPage > totalPages
-        ) {
-
-            currentPage =
-                totalPages;
-
-        }
 
 
         updateStatistics();
 
-        renderExaminations();
+        populateSubjectFilter();
+
+        applyFilters();
 
         loadUpcomingExaminations();
+
+        closeExamModal();
 
 
         alert(
@@ -1353,7 +1531,6 @@ async function deleteExamination(exam) {
             error
         );
 
-
         alert(
             error.message ||
             "Unable to delete examination."
@@ -1364,15 +1541,22 @@ async function deleteExamination(exam) {
 }
 
 
-
 /* ==========================================================
    VIEW EXAMINATION
 ========================================================== */
 
-function openExamModal(exam) {
+function openExamModal(
+    exam
+) {
 
     selectedExam =
         exam;
+
+
+    console.log(
+        "Opening examination:",
+        exam
+    );
 
 
     setText(
@@ -1381,11 +1565,13 @@ function openExamModal(exam) {
         "Examination"
     );
 
+
     setText(
         "modalExamTopic",
         exam.topic ||
         "No topic"
     );
+
 
     setText(
         "modalSubject",
@@ -1393,26 +1579,30 @@ function openExamModal(exam) {
         "-"
     );
 
+
     setText(
         "modalDifficulty",
         exam.difficulty ||
         "-"
     );
 
+
     setText(
         "modalQuestions",
-        exam.total_questions ||
-        0
+        Number(
+            exam.total_questions ?? 0
+        )
     );
+
 
     setText(
         "modalDuration",
-        (
-            exam.duration ||
-            0
+        Number(
+            exam.duration ?? 0
         ) +
         " minutes"
     );
+
 
     setText(
         "modalStart",
@@ -1421,12 +1611,14 @@ function openExamModal(exam) {
         )
     );
 
+
     setText(
         "modalEnd",
         formatDateTime(
             exam.end_time
         )
     );
+
 
     setText(
         "modalDescription",
@@ -1440,10 +1632,15 @@ function openExamModal(exam) {
             "examModal"
         );
 
+
     if (modal) {
 
         modal.classList.add(
             "show"
+        );
+
+        document.body.classList.add(
+            "modal-open"
         );
 
     }
@@ -1451,9 +1648,8 @@ function openExamModal(exam) {
 }
 
 
-
 /* ==========================================================
-   MODAL
+   MODAL INITIALIZATION
 ========================================================== */
 
 function initializeModal() {
@@ -1463,10 +1659,12 @@ function initializeModal() {
             "examModal"
         );
 
+
     const closeButton =
         document.getElementById(
             "closeExamModal"
         );
+
 
     const overlay =
         modal
@@ -1475,10 +1673,11 @@ function initializeModal() {
             )
             : null;
 
-   const closeModalButton =
-    document.getElementById(
-        "closeExamDetails"
-    );
+
+    const closeModalButton =
+        document.getElementById(
+            "closeExamDetails"
+        );
 
 
     if (closeButton) {
@@ -1501,14 +1700,14 @@ function initializeModal() {
     }
 
 
- if (closeModalButton) {
+    if (closeModalButton) {
 
-    closeModalButton.addEventListener(
-        "click",
-        closeExamModal
-    );
+        closeModalButton.addEventListener(
+            "click",
+            closeExamModal
+        );
 
-}
+    }
 
 
     document.addEventListener(
@@ -1516,7 +1715,8 @@ function initializeModal() {
         function (event) {
 
             if (
-                event.key === "Escape"
+                event.key ===
+                "Escape"
             ) {
 
                 closeExamModal();
@@ -1529,12 +1729,17 @@ function initializeModal() {
 }
 
 
+/* ==========================================================
+   CLOSE MODAL
+========================================================== */
+
 function closeExamModal() {
 
     const modal =
         document.getElementById(
             "examModal"
         );
+
 
     if (modal) {
 
@@ -1544,36 +1749,73 @@ function closeExamModal() {
 
     }
 
+
+    document.body.classList.remove(
+        "modal-open"
+    );
+
+
+    selectedExam =
+        null;
+
 }
-
-
 
 
 /* ==========================================================
    MORE OPTIONS
 ========================================================== */
 
-function showExamOptions(exam) {
+function showExamOptions(
+    exam
+) {
 
     const message =
+
         "Examination: " +
-        (exam.title || "Untitled") +
+        (
+            exam.title ||
+            "Untitled"
+        ) +
+
         "\n\n" +
+
         "Status: " +
-        exam.status +
+        (
+            exam.status ||
+            "Draft"
+        ) +
+
         "\n" +
+
         "Questions: " +
-        (exam.total_questions || 0) +
+        (
+            exam.total_questions ??
+            0
+        ) +
+
         "\n" +
+
         "Duration: " +
-        (exam.duration || 0) +
-        " minutes";
+        (
+            exam.duration ??
+            0
+        ) +
+        " minutes" +
+
+        "\n" +
+
+        "Total Marks: " +
+        (
+            exam.total_marks ??
+            0
+        );
 
 
-    alert(message);
+    alert(
+        message
+    );
 
 }
-
 
 
 /* ==========================================================
@@ -1587,6 +1829,7 @@ function loadUpcomingExaminations() {
             "upcomingExamList"
         );
 
+
     if (!container) {
         return;
     }
@@ -1595,9 +1838,14 @@ function loadUpcomingExaminations() {
     const upcoming =
         allExaminations
             .filter(
-                exam =>
-                    exam.status ===
-                    "Upcoming"
+                function (exam) {
+
+                    return (
+                        exam.status ===
+                        "Upcoming"
+                    );
+
+                }
             )
             .sort(
                 function (a, b) {
@@ -1614,12 +1862,16 @@ function loadUpcomingExaminations() {
 
 
                     return (
-                        (dateA
-                            ? dateA.getTime()
-                            : 0) -
-                        (dateB
-                            ? dateB.getTime()
-                            : 0)
+                        (
+                            dateA
+                                ? dateA.getTime()
+                                : 0
+                        ) -
+                        (
+                            dateB
+                                ? dateB.getTime()
+                                : 0
+                        )
                     );
 
                 }
@@ -1630,7 +1882,9 @@ function loadUpcomingExaminations() {
             );
 
 
-    if (!upcoming.length) {
+    if (
+        !upcoming.length
+    ) {
 
         container.innerHTML = `
 
@@ -1658,6 +1912,7 @@ function loadUpcomingExaminations() {
                     "div"
                 );
 
+
             item.className =
                 "upcoming-item";
 
@@ -1665,19 +1920,39 @@ function loadUpcomingExaminations() {
             item.innerHTML = `
 
                 <strong>
+
                     ${escapeHTML(
                         exam.title ||
                         "Untitled Examination"
                     )}
+
                 </strong>
 
                 <span>
+
                     ${formatDateTime(
                         exam.start_time
                     )}
+
                 </span>
 
             `;
+
+
+            item.style.cursor =
+                "pointer";
+
+
+            item.addEventListener(
+                "click",
+                function () {
+
+                    openExamModal(
+                        exam
+                    );
+
+                }
+            );
 
 
             container.appendChild(
@@ -1690,7 +1965,6 @@ function loadUpcomingExaminations() {
 }
 
 
-
 /* ==========================================================
    UPCOMING VIEW ALL
 ========================================================== */
@@ -1701,6 +1975,7 @@ function initializeUpcomingButton() {
         document.getElementById(
             "viewAllUpcoming"
         );
+
 
     if (!button) {
         return;
@@ -1716,6 +1991,7 @@ function initializeUpcomingButton() {
                     "statusFilter"
                 );
 
+
             if (status) {
 
                 status.value =
@@ -1723,18 +1999,32 @@ function initializeUpcomingButton() {
 
             }
 
+
             currentPage = 1;
 
+
             applyFilters();
+
+
+            const table =
+                document.querySelector(
+                    ".exam-table-panel"
+                );
+
+
+            if (table) {
+
+                table.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            }
 
         }
     );
 
 }
-
-
-initializeUpcomingButton();
-
 
 
 /* ==========================================================
@@ -1748,10 +2038,12 @@ function initializePagination() {
             "previousPage"
         );
 
+
     const next =
         document.getElementById(
             "nextPage"
         );
+
 
     const rows =
         document.getElementById(
@@ -1825,7 +2117,9 @@ function initializePagination() {
                         this.value
                     ) || 6;
 
+
                 currentPage = 1;
+
 
                 renderExaminations();
 
@@ -1835,7 +2129,6 @@ function initializePagination() {
     }
 
 }
-
 
 
 /* ==========================================================
@@ -1863,10 +2156,12 @@ function updatePagination() {
             "previousPage"
         );
 
+
     const next =
         document.getElementById(
             "nextPage"
         );
+
 
     const pageNumbers =
         document.getElementById(
@@ -1897,23 +2192,62 @@ function updatePagination() {
             "";
 
 
-        const maxPages =
-            Math.min(
-                totalPages,
-                5
+        const maxVisiblePages =
+            5;
+
+
+        let startPage =
+            Math.max(
+                1,
+                currentPage -
+                Math.floor(
+                    maxVisiblePages / 2
+                )
             );
 
 
+        let endPage =
+            Math.min(
+                totalPages,
+                startPage +
+                maxVisiblePages -
+                1
+            );
+
+
+        if (
+            endPage -
+            startPage +
+            1 <
+            maxVisiblePages
+        ) {
+
+            startPage =
+                Math.max(
+                    1,
+                    endPage -
+                    maxVisiblePages +
+                    1
+                );
+
+        }
+
+
         for (
-            let i = 1;
-            i <= maxPages;
+            let i = startPage;
+            i <= endPage;
             i++
         ) {
 
             const button =
                 document.createElement(
-                    "div"
+                    "button"
                 );
+
+
+            button.type =
+                "button";
+
 
             button.className =
                 "page-number";
@@ -1959,9 +2293,11 @@ function updatePagination() {
     const start =
         total === 0
             ? 0
-            : (
+            :
+            (
                 (
-                    currentPage - 1
+                    currentPage -
+                    1
                 ) *
                 rowsPerPage
             ) + 1;
@@ -1983,11 +2319,14 @@ function updatePagination() {
 
     setText(
         "tableSummary",
-        `${total} examination${total === 1 ? "" : "s"} found`
+        `${total} examination${
+            total === 1
+                ? ""
+                : "s"
+        } found`
     );
 
 }
-
 
 
 /* ==========================================================
@@ -2000,6 +2339,7 @@ function showTableLoading() {
         document.getElementById(
             "examinationTableBody"
         );
+
 
     if (!tbody) {
         return;
@@ -2029,17 +2369,19 @@ function showTableLoading() {
 }
 
 
-
 /* ==========================================================
    TABLE ERROR
 ========================================================== */
 
-function showTableError(message) {
+function showTableError(
+    message
+) {
 
     const tbody =
         document.getElementById(
             "examinationTableBody"
         );
+
 
     if (!tbody) {
         return;
@@ -2067,6 +2409,18 @@ function showTableError(message) {
                         )}
                     </p>
 
+                    <button
+                        type="button"
+                        class="retry-exam-btn"
+                        id="retryExaminations"
+                    >
+
+                        <i class="fa-solid fa-rotate"></i>
+
+                        Try Again
+
+                    </button>
+
                 </div>
 
             </td>
@@ -2074,6 +2428,22 @@ function showTableError(message) {
         </tr>
 
     `;
+
+
+    const retry =
+        document.getElementById(
+            "retryExaminations"
+        );
+
+
+    if (retry) {
+
+        retry.addEventListener(
+            "click",
+            loadExaminations
+        );
+
+    }
 
 
     setText(
@@ -2084,16 +2454,18 @@ function showTableError(message) {
 }
 
 
-
 /* ==========================================================
    STATUS BADGE
 ========================================================== */
 
-function getStatusBadge(status) {
+function getStatusBadge(
+    status
+) {
 
     const normalized =
         String(
-            status || "Draft"
+            status ||
+            "Draft"
         ).toLowerCase();
 
 
@@ -2106,7 +2478,8 @@ function getStatusBadge(status) {
 
 
     if (
-        normalized === "active"
+        normalized ===
+        "active"
     ) {
 
         label =
@@ -2117,7 +2490,8 @@ function getStatusBadge(status) {
 
     }
     else if (
-        normalized === "upcoming"
+        normalized ===
+        "upcoming"
     ) {
 
         label =
@@ -2128,7 +2502,8 @@ function getStatusBadge(status) {
 
     }
     else if (
-        normalized === "completed"
+        normalized ===
+        "completed"
     ) {
 
         label =
@@ -2139,7 +2514,8 @@ function getStatusBadge(status) {
 
     }
     else if (
-        normalized === "cancelled"
+        normalized ===
+        "cancelled"
     ) {
 
         label =
@@ -2164,12 +2540,19 @@ function getStatusBadge(status) {
 }
 
 
-
 /* ==========================================================
    EXAM ICON
 ========================================================== */
 
-function getExamIcon(exam) {
+function getExamIcon(
+    exam
+) {
+
+    const title =
+        String(
+            exam.title || ""
+        ).toLowerCase();
+
 
     const topic =
         String(
@@ -2177,8 +2560,12 @@ function getExamIcon(exam) {
         ).toLowerCase();
 
 
+    const text =
+        `${title} ${topic}`;
+
+
     if (
-        topic.includes("java")
+        text.includes("java")
     ) {
 
         return "fa-brands fa-java";
@@ -2187,7 +2574,7 @@ function getExamIcon(exam) {
 
 
     if (
-        topic.includes("python")
+        text.includes("python")
     ) {
 
         return "fa-brands fa-python";
@@ -2196,9 +2583,9 @@ function getExamIcon(exam) {
 
 
     if (
-        topic.includes("database") ||
-        topic.includes("dbms") ||
-        topic.includes("sql")
+        text.includes("database") ||
+        text.includes("dbms") ||
+        text.includes("sql")
     ) {
 
         return "fa-solid fa-database";
@@ -2207,9 +2594,10 @@ function getExamIcon(exam) {
 
 
     if (
-        topic.includes("web") ||
-        topic.includes("html") ||
-        topic.includes("javascript")
+        text.includes("web") ||
+        text.includes("html") ||
+        text.includes("javascript") ||
+        text.includes("css")
     ) {
 
         return "fa-solid fa-globe";
@@ -2218,8 +2606,10 @@ function getExamIcon(exam) {
 
 
     if (
-        topic.includes("data structure") ||
-        topic.includes("algorithm")
+        text.includes("data structure") ||
+        text.includes("algorithm") ||
+        text.includes("dsa") ||
+        text.includes("tree")
     ) {
 
         return "fa-solid fa-code";
@@ -2228,10 +2618,41 @@ function getExamIcon(exam) {
 
 
     if (
-        topic.includes("operating")
+        text.includes("operating system") ||
+        text.includes("operating")
     ) {
 
         return "fa-solid fa-microchip";
+
+    }
+
+
+    if (
+        text.includes("computer network") ||
+        text.includes("network")
+    ) {
+
+        return "fa-solid fa-network-wired";
+
+    }
+
+
+    if (
+        title.includes("c++") ||
+        title === "cpp"
+    ) {
+
+        return "fa-solid fa-code";
+
+    }
+
+
+    if (
+        text.includes("c programming") ||
+        title === "c"
+    ) {
+
+        return "fa-solid fa-c";
 
     }
 
@@ -2241,15 +2662,18 @@ function getExamIcon(exam) {
 }
 
 
-
 /* ==========================================================
    DATE FORMAT
 ========================================================== */
 
-function formatDateTime(value) {
+function formatDateTime(
+    value
+) {
 
     const date =
-        parseDate(value);
+        parseDate(
+            value
+        );
 
 
     if (!date) {
@@ -2263,15 +2687,18 @@ function formatDateTime(value) {
         "en-IN",
         {
             day: "2-digit",
+
             month: "short",
+
             year: "numeric",
+
             hour: "2-digit",
+
             minute: "2-digit"
         }
     );
 
 }
-
 
 
 /* ==========================================================
@@ -2288,22 +2715,25 @@ function setText(
             id
         );
 
+
     if (!element) {
         return;
     }
 
+
     element.textContent =
-        value;
+        value ?? "";
 
 }
-
 
 
 /* ==========================================================
    ESCAPE HTML
 ========================================================== */
 
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
     if (
         value === null ||

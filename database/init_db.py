@@ -245,7 +245,98 @@ def init_database():
 
     if "report_type" not in existing_columns:
         cursor.execute("ALTER TABLE AIReports ADD COLUMN report_type TEXT NOT NULL DEFAULT 'candidate'")
+    # ==========================
+    # Support Tickets Table
+    # ==========================
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS SupportTickets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
 
+        candidate_id INTEGER NOT NULL,
+
+        issue_type TEXT NOT NULL,
+
+        priority TEXT NOT NULL DEFAULT 'Medium',
+
+        subject TEXT NOT NULL,
+
+        message TEXT NOT NULL,
+
+        status TEXT NOT NULL DEFAULT 'Open',
+
+        admin_response TEXT,
+
+        assigned_admin_id INTEGER,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        resolved_at TIMESTAMP,
+
+        FOREIGN KEY(candidate_id)
+            REFERENCES Candidates(id)
+            ON DELETE CASCADE,
+
+        FOREIGN KEY(assigned_admin_id)
+            REFERENCES Admins(id)
+            ON DELETE SET NULL
+    )
+    """)
+
+    # ==========================
+    # FAQs Table
+    # ==========================
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS FAQs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        question TEXT NOT NULL,
+
+        answer TEXT NOT NULL,
+
+        category TEXT,
+
+        active INTEGER DEFAULT 1,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # ==========================
+    # Default FAQs
+    # ==========================
+    default_faqs = [
+        (
+            "How do I start an exam?",
+            "Login to your account, open the Exams page, and click Start Exam."
+        ),
+        (
+            "What should I do if my webcam is not detected?",
+            "Allow camera permission in your browser and reconnect your webcam before starting the exam."
+        ),
+        (
+            "Can I resume an interrupted exam?",
+            "No. Once an exam session is interrupted, contact the administrator for assistance."
+        ),
+        (
+            "How can I view my exam results?",
+            "Go to the Results or Analytics page after your exam has been evaluated."
+        ),
+        (
+            "How do I contact support?",
+            "Navigate to the Help & Support page and create a new support ticket."
+        )
+    ]
+
+    cursor.executemany("""
+        INSERT OR IGNORE INTO FAQs (
+            question,
+            answer
+        )
+        VALUES (?, ?)
+    """, default_faqs)
+    
     # Save Changes
     conn.commit()
     conn.close()

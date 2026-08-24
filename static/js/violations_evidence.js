@@ -1164,7 +1164,597 @@ function renderRelatedEvents(
     `;
 
 }
+/* =====================================================
+   EXPORT EVIDENCE FILE
+===================================================== */
 
+async function exportEvidenceFile(event) {
+
+    if (!event) {
+        console.error("No evidence event selected.");
+        return;
+    }
+
+    if (!event.evidence) {
+        alert("No evidence file is available for this event.");
+        return;
+    }
+
+    try {
+
+        const evidenceUrl =
+            getEvidenceUrl(event.evidence);
+
+        const response =
+            await fetch(evidenceUrl);
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Unable to download evidence: ${response.status}`
+            );
+
+        }
+
+        const blob =
+            await response.blob();
+
+        const blobUrl =
+            window.URL.createObjectURL(blob);
+
+        const link =
+            document.createElement("a");
+
+        link.href =
+            blobUrl;
+
+        /*
+         * Use the original evidence filename
+         * when possible.
+         */
+
+        const originalPath =
+            String(event.evidence);
+
+        const fileName =
+            originalPath
+                .split("/")
+                .pop()
+                .split("\\")
+                .pop()
+                .split("?")[0]
+                || `evidence_${event.id}.jpg`;
+
+        link.download =
+            fileName;
+
+        document.body.appendChild(
+            link
+        );
+
+        link.click();
+
+        document.body.removeChild(
+            link
+        );
+
+        window.URL.revokeObjectURL(
+            blobUrl
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Evidence export failed:",
+            error
+        );
+
+        alert(
+            "Unable to export evidence. Please try again."
+        );
+
+    }
+
+}
+/* =====================================================
+   EXPORT REPORT
+===================================================== */
+
+async function exportReport() {
+
+    const params =
+        new URLSearchParams();
+
+    const search =
+        document
+            .getElementById("candidateSearch")
+            .value
+            .trim();
+
+    const exam =
+        document
+            .getElementById("examFilter")
+            .value;
+
+    const category =
+        document
+            .getElementById("categoryFilter")
+            .value;
+
+    const severity =
+        document
+            .getElementById("severityFilter")
+            .value;
+
+
+    if (search) {
+
+        params.set(
+            "search",
+            search
+        );
+
+    }
+
+
+    if (
+        exam &&
+        exam !== "ALL"
+    ) {
+
+        params.set(
+            "exam_id",
+            exam
+        );
+
+    }
+
+
+    if (
+        category &&
+        category !== "ALL"
+    ) {
+
+        params.set(
+            "category",
+            category
+        );
+
+    }
+
+
+    if (
+        severity &&
+        severity !== "ALL"
+    ) {
+
+        params.set(
+            "severity",
+            severity
+        );
+
+    }
+
+
+    try {
+
+        /*
+         * Request the complete filtered dataset.
+         *
+         * We intentionally use a very large per_page
+         * value so the report contains all matching
+         * events instead of only the current page.
+         */
+
+        params.set(
+            "page",
+            1
+        );
+
+        params.set(
+            "per_page",
+            100000
+        );
+
+
+        const response =
+            await fetch(
+                `${API_URL}?${params.toString()}`
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+
+            throw new Error(
+                data.message ||
+                "Unable to load report data."
+            );
+
+        }
+
+
+        const events =
+            data.events || [];
+
+
+        if (!events.length) {
+
+            alert(
+                "There are no events to export."
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * Create CSV content.
+         */
+
+        const headers = [
+
+            "Candidate",
+            "Candidate ID",
+            "Email",
+            "Examination",
+            "Violation Type",
+            "Category",
+            "Severity",
+            "Detected At",
+            "Face Count",
+            "Evidence",
+            "Status"
+
+        ];
+
+
+        const csvRows = [];
+
+
+        csvRows.push(
+            headers
+                .map(csvEscape)
+                .join(",")
+        );
+
+
+        events.forEach(
+            event => {
+
+                csvRows.push(
+
+                    [
+
+                        event.candidate_name || "",
+
+                        event.candidate_id ?? "",
+
+                        event.candidate_email || "",
+
+                        event.exam_title || "",
+
+                        event.violation_type || "",
+
+                        event.category || "",
+
+                        event.severity || "",
+
+                        event.detected_at || "",
+
+                        event.face_count ?? 0,
+
+                        event.evidence || "",
+
+                        event.status || ""
+
+                    ]
+                        .map(csvEscape)
+                        .join(",")
+
+                );
+
+            }
+        );
+
+
+        const csvContent =
+            "\uFEFF" +
+            csvRows.join("\r\n");
+
+
+        const blob =
+            new Blob(
+                [csvContent],
+                {
+                    type:
+                        "text/csv;charset=utf-8;"
+                }
+            );
+
+
+        const url =
+            window.URL.createObjectURL(
+                blob
+            );
+
+
+        const link =
+            document.createElement("a");
+
+
+        link.href =
+            url;
+
+
+        const date =
+            new Date()
+                .toISOString()
+                .slice(0, 10);
+
+
+        link.download =
+            `ExamGuard_Violations_Report_${date}.csv`;
+
+
+        document.body.appendChild(
+            link
+        );
+
+
+        link.click();
+
+
+        document.body.removeChild(
+            link
+        );
+
+
+        window.URL.revokeObjectURL(
+            url
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Report export failed:",
+            error
+        );
+
+        alert(
+            "Unable to export report. Please try again."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   CSV ESCAPE
+===================================================== */
+
+function csvEscape(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "\"\"";
+
+    }
+
+
+    return "\"" +
+        String(value)
+            .replace(
+                /"/g,
+                "\"\""
+            ) +
+        "\"";
+
+}
+/* =====================================================
+   EXPORT REPORT BUTTON
+===================================================== */
+
+document
+    .getElementById(
+        "exportBtn"
+    )
+    .addEventListener(
+        "click",
+        exportReport
+    );
+
+    /* =====================================================
+   EXPORT SELECTED EVIDENCE
+===================================================== */
+
+document
+    .getElementById(
+        "exportEvidenceBtn"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            if (!selectedEvent) {
+
+                alert(
+                    "No evidence is selected."
+                );
+
+                return;
+
+            }
+
+            exportEvidenceFile(
+                selectedEvent
+            );
+
+        }
+    );
+
+    /* =====================================================
+   VIEW FULL EVIDENCE
+===================================================== */
+
+document
+    .getElementById("viewFullEvidenceBtn")
+    .addEventListener("click", () => {
+
+        if (!selectedEvent) {
+            alert("No evidence selected.");
+            return;
+        }
+
+        if (!selectedEvent.evidence) {
+            alert("No evidence image available.");
+            return;
+        }
+
+        const evidenceUrl =
+            getEvidenceUrl(selectedEvent.evidence);
+
+        const viewerWindow =
+            window.open("", "_blank");
+
+        if (!viewerWindow) {
+            alert("Please allow pop-ups for this site.");
+            return;
+        }
+
+        viewerWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Evidence - ${escapeHtml(
+                    selectedEvent.violation_type || "Evidence"
+                )}</title>
+
+                <style>
+                    * {
+                        box-sizing: border-box;
+                    }
+
+                    body {
+                        margin: 0;
+                        background: #0b1020;
+                        color: white;
+                        min-height: 100vh;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        font-family: Arial, sans-serif;
+                    }
+
+                    .header {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        padding: 15px 20px;
+                        background: rgba(10, 15, 30, 0.95);
+                        border-bottom: 1px solid #29334d;
+                        z-index: 10;
+                    }
+
+                    .header h2 {
+                        margin: 0;
+                        font-size: 18px;
+                    }
+
+                    .header p {
+                        margin: 5px 0 0;
+                        color: #9aa7c2;
+                        font-size: 13px;
+                    }
+
+                    .image-container {
+                        width: 100%;
+                        height: 100vh;
+                        padding: 100px 30px 30px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    .image-container img {
+                        max-width: 100%;
+                        max-height: 100%;
+                        object-fit: contain;
+                        border-radius: 8px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                    }
+
+                    .error {
+                        color: #ff6b6b;
+                        font-size: 16px;
+                    }
+                </style>
+            </head>
+
+            <body>
+
+                <div class="header">
+                    <h2>
+                        ${escapeHtml(
+                            selectedEvent.violation_type || "Evidence"
+                        )}
+                    </h2>
+
+                    <p>
+                        ${escapeHtml(
+                            selectedEvent.candidate_name || ""
+                        )}
+                    </p>
+                </div>
+
+                <div class="image-container">
+
+                    <img
+                        src="${escapeAttribute(evidenceUrl)}"
+                        alt="Full Evidence"
+                        onerror="
+                            this.style.display='none';
+                            document.getElementById('errorMessage').style.display='block';
+                        "
+                    >
+
+                    <div
+                        id="errorMessage"
+                        class="error"
+                        style="display:none;"
+                    >
+                        Unable to load evidence image.
+                    </div>
+
+                </div>
+
+            </body>
+            </html>
+        `);
+
+        viewerWindow.document.close();
+
+    });
 
 /* =====================================================
    CLOSE DRAWER
@@ -1307,7 +1897,18 @@ document
         }
     );
 
+if (exportBtn) {
 
+    exportBtn.addEventListener(
+        "click",
+        function () {
+
+            exportIntegrityData();
+
+        }
+    );
+
+}
 /* =====================================================
    AUTO REFRESH
 ===================================================== */
