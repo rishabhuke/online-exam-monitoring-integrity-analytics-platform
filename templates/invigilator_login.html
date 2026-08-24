@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invigilator Login</title>
+    <!--
+        Minimal functional placeholder (Milestone 4) so /invigilator/login
+        has a GET page to render, matching login.html's pattern. Not
+        styled to match the candidate-facing pages - Prashanthi's
+        dashboard shell should replace/restyle this once it exists.
+    -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1f2937;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            background: #111827;
+            padding: 30px;
+            border-radius: 8px;
+            width: 320px;
+        }
+        h2 { text-align: center; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9em; }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            border: 1px solid #374151;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background: #2563eb;
+            color: #fff;
+            cursor: pointer;
+        }
+        #message { text-align: center; margin-top: 10px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Invigilator Login</h2>
+        <form id="invigilator-login-form">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Log In</button>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        document.getElementById("invigilator-login-form").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const messageEl = document.getElementById("message");
+
+            try {
+                const response = await fetch("/invigilator/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+
+                if (response.ok && data.status === "success") {
+                    messageEl.textContent = "Login successful.";
+                    window.location.href = "/dashboard";
+                } else {
+                    messageEl.textContent = data.message || "Login failed.";
+                }
+            } catch (err) {
+                messageEl.textContent = "Something went wrong. Please try again.";
+            }
+        });
+    </script>
+</body>
+</html>
