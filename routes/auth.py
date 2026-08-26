@@ -1,5 +1,6 @@
 import re
 import sqlite3
+from functools import wraps
 from typing import Tuple, Dict, Any, Union
 from pathlib import Path
 from flask import Blueprint, request, jsonify, render_template, session, redirect, url_for, Response
@@ -208,3 +209,98 @@ def logout() -> str:
     """Logout the candidate and clear the session."""
     session.clear()
     return "Logged Out Successfully"
+
+
+# --- Invigilator auth (Milestone 4) ---------------------------------------
+# Separate account type from Candidates - see the Invigilators table in
+# database/schema.sql for why. Accounts are provisioned via
+# scripts/create_invigilator.py, not self-registration.
+
+@auth_bp.route('/invigilator/login', methods=['GET', 'POST'])
+def invigilator_login() -> Union[str, Response, Tuple[Response, int]]:
+    """Invigilator login handler. Mirrors the candidate login() above but
+    checks the Invigilators table and sets session["invigilator_id"]
+    instead of session["candidate_id"], so the two roles never collide."""
+    if request.method == 'GET':
+        return render_template('invigilator_login.html')
+
+    if request.is_json:
+        data: Dict[str, Any] = request.get_json() or {}
+        email = data.get('email', '')
+        password = data.get('password', '')
+    else:
+        email = request.form.get('email', '')
+        password = request.form.get('password', '')
+
+    if not email or not password:
+        return jsonify({
+            "status": "error",
+            "message": "Email and password are required"
+        }), 400
+
+    email = email.strip().lower()
+
+    conn = get_db_connection()
+    try:
+        row = conn.execute("SELECT * FROM Invigilators WHERE email = ?", (email,)).fetchone()
+        if not row:
+            return jsonify({
+                "status": "error",
+                "message": "User not found"
+            }), 404
+
+        if not check_password_hash(row['password_hash'], password):
+            return jsonify({
+                "status": "error",
+                "message": "Invalid credentials"
+            }), 401
+
+        session["invigilator_id"] = row['id']
+
+        return jsonify({
+            "status": "success",
+            "message": "Login successful",
+            "invigilator": {
+                "invigilator_id": row['id'],
+                "name": row['name'],
+                "email": row['email'],
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Database error occurred: {str(e)}"
+        }), 500
+    finally:
+        conn.close()
+
+
+@auth_bp.route('/invigilator/logout')
+def invigilator_logout() -> str:
+    """Logout the invigilator only - does not touch a candidate session
+    (they're separate session keys, so this is technically redundant with
+    logout() above, but kept separate so the intent is explicit)."""
+    session.pop("invigilator_id", None)
+    return "Logged Out Successfully"
+
+
+def invigilator_required(view_func):
+    """
+    Decorator for any dashboard-facing route that must only be reachable
+    by a logged-in invigilator - NOT a candidate, even a valid one.
+
+    Use this instead of a bare `"candidate_id" in session` check on
+    invigilator-facing routes (see the TODO(auth) that used to be in
+    routes/report.py, and the previously-unauthenticated
+    routes/alert_evidence.py, both of which this decorator now covers).
+    """
+    @wraps(view_func)
+    def wrapped(*args, **kwargs):
+        if "invigilator_id" not in session:
+            return jsonify({
+                "status": "error",
+                "message": "Invigilator authentication required"
+            }), 401
+        return view_func(*args, **kwargs)
+    return wrapped

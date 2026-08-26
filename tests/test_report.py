@@ -1,6 +1,6 @@
 """
 Tests for routes/report.py - both the M3 candidate self-service endpoint
-and the M4 dashboard endpoint (Milestone 3/4). Owner: Rishabh
+and the M4 invigilator dashboard endpoint (Milestone 3/4). Owner: Rishabh
 
 Run with:
     python -m pytest tests/test_report.py -v
@@ -10,6 +10,7 @@ import os
 import sys
 import sqlite3
 import pytest
+from werkzeug.security import generate_password_hash
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -24,8 +25,9 @@ import modules.scoring as scoring
 def test_db_and_client(monkeypatch, tmp_path):
     """
     Fixture providing an isolated SQLite database and Flask test client.
-    Seeds test candidates and exams for FK constraints. Also forces
-    report_agent onto the template path (no real LLM call in tests).
+    Seeds test candidates, an exam, and an invigilator account for FK
+    constraints and auth. Also forces report_agent onto the template path
+    (no real LLM call in tests).
     """
     test_db = tmp_path / "test_report.db"
 
@@ -34,6 +36,9 @@ def test_db_and_client(monkeypatch, tmp_path):
     monkeypatch.setattr(monitoring_storage, "DATABASE", test_db)
     monkeypatch.setattr(scoring, "DATABASE", test_db)
     monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
+
+    import routes.auth as auth_module
+    monkeypatch.setattr(auth_module, "DATABASE", test_db)
 
     conn = sqlite3.connect(test_db)
     conn.execute("PRAGMA foreign_keys = ON")
@@ -49,6 +54,10 @@ def test_db_and_client(monkeypatch, tmp_path):
     )
     conn.execute(
         "INSERT INTO Exams (id, title, duration) VALUES (101, 'Python Fundamentals Exam', 60)"
+    )
+    conn.execute(
+        "INSERT INTO Invigilators (id, name, email, password_hash) VALUES (1, 'Invig', 'invig@test.com', ?)",
+        (generate_password_hash("SecurePass123"),)
     )
     conn.commit()
     conn.close()
@@ -79,25 +88,30 @@ def test_get_report_returns_own_session_summary(test_db_and_client):
     assert "risk_label" in body
 
 
-# --- New M4 dashboard endpoint ---------------------------------------------
+# --- New M4 dashboard endpoint (invigilator-only) --------------------------
 
-def test_get_dashboard_report_requires_auth(test_db_and_client):
-    """Unauthenticated requests are rejected. Note: this only checks that
-    *some* session exists, not that the caller is an invigilator - see the
-    TODO(auth) in routes/report.py."""
+def test_get_dashboard_report_requires_invigilator_auth(test_db_and_client):
+    """No session at all -> 401."""
     client, _ = test_db_and_client
     resp = client.get("/api/report/dashboard/1/101")
     assert resp.status_code == 401
 
 
-def test_get_dashboard_report_returns_any_candidates_summary(test_db_and_client):
-    """With a valid session, the dashboard endpoint can fetch a DIFFERENT
-    candidate's summary (candidate 2's session, viewed by candidate 1's
-    login) - this is the behavior the dashboard needs, and exactly the gap
-    flagged in the TODO(auth): there's no role check preventing this."""
+def test_get_dashboard_report_rejects_candidate_session(test_db_and_client):
+    """A valid CANDIDATE session must not satisfy @invigilator_required -
+    this is the exact gap the previous TODO(auth) flagged, now closed."""
     client, _ = test_db_and_client
     with client.session_transaction() as sess:
         sess["candidate_id"] = 1
+
+    resp = client.get("/api/report/dashboard/2/101")
+    assert resp.status_code == 401
+
+
+def test_get_dashboard_report_allows_invigilator_session(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
 
     resp = client.get("/api/report/dashboard/2/101")
     assert resp.status_code == 200
@@ -113,7 +127,7 @@ def test_get_dashboard_report_matches_scoring_module(test_db_and_client):
     through Priyanshu's scoring module rather than its own fallback."""
     client, _ = test_db_and_client
     with client.session_transaction() as sess:
-        sess["candidate_id"] = 1
+        sess["invigilator_id"] = 1
 
     resp = client.get("/api/report/dashboard/2/101")
     body = resp.get_json()

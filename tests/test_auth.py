@@ -190,3 +190,76 @@ def test_session_expiration_config_is_set():
     rather than sessions lasting forever by default.
     """
     assert app_module.app.config.get("PERMANENT_SESSION_LIFETIME") is not None
+
+
+# --- Invigilator auth (Milestone 4) ----------------------------------------
+
+def _seed_invigilator(test_db, email="invig@test.com", password="SecurePass123"):
+    """Directly seeds an Invigilators row (mirrors create_invigilator.py's
+    logic) so login tests don't need a registration endpoint - invigilators
+    are provisioned by script, not self-registration."""
+    import sqlite3
+    from werkzeug.security import generate_password_hash
+
+    conn = sqlite3.connect(test_db)
+    conn.execute(
+        "INSERT INTO Invigilators (name, email, password_hash) VALUES (?, ?, ?)",
+        ("Test Invigilator", email, generate_password_hash(password)),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_invigilator_login_success(client, monkeypatch):
+    _seed_invigilator(app_module.DATABASE)
+
+    response = client.post("/invigilator/login", json={
+        "email": "invig@test.com",
+        "password": "SecurePass123",
+    })
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == "success"
+
+    with client.session_transaction() as sess:
+        assert "invigilator_id" in sess
+        assert "candidate_id" not in sess
+
+
+def test_invigilator_login_wrong_password_rejected(client):
+    _seed_invigilator(app_module.DATABASE)
+
+    response = client.post("/invigilator/login", json={
+        "email": "invig@test.com",
+        "password": "WrongPassword",
+    })
+    assert response.status_code == 401
+
+
+def test_invigilator_login_nonexistent_user_rejected(client):
+    response = client.post("/invigilator/login", json={
+        "email": "nobody@test.com",
+        "password": "SecurePass123",
+    })
+    assert response.status_code == 404
+
+
+def test_invigilator_session_separate_from_candidate_session(client):
+    """A candidate login must NOT satisfy @invigilator_required, and vice
+    versa - these are deliberately separate session keys."""
+    _seed_invigilator(app_module.DATABASE)
+    photo = make_fake_photo_data_url()
+    client.post("/register", json={
+        "name": "Candidate Only",
+        "email": "candidateonly@example.com",
+        "password": "SecurePass123",
+        "photo_data": photo,
+    })
+    client.post("/login", json={
+        "email": "candidateonly@example.com",
+        "password": "SecurePass123",
+    })
+
+    with client.session_transaction() as sess:
+        assert "candidate_id" in sess
+        assert "invigilator_id" not in sess

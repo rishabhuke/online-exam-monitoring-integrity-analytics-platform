@@ -1,117 +1,28 @@
+"""
+Initializes database.db from database/schema.sql (Milestone 1, updated
+Milestone 4).
+
+Previously this script had its own hardcoded CREATE TABLE statements,
+duplicated from and drifting out of sync with database/schema.sql (which
+is what tests/ actually use to build their isolated test DBs). That's why
+adding the Invigilators table to schema.sql alone didn't create it here -
+this script never read that file. Fixed to read schema.sql directly, so
+there's exactly one source of truth for the schema from now on.
+"""
+
 from pathlib import Path
 import sqlite3
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "database.db"
+SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
 
 conn = sqlite3.connect(DB_PATH)
 conn.execute("PRAGMA foreign_keys = ON")
-cursor = conn.cursor()
 
+with open(SCHEMA_PATH) as f:
+    conn.executescript(f.read())
 
-# Candidates Table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS Candidates (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    photo_path TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
-""")
-
-# Exams Table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS Exams (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    duration INTEGER NOT NULL
-)
-""")
-
-# Questions Table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS Questions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    exam_id INTEGER,
-    question TEXT NOT NULL,
-    option_a TEXT,
-    option_b TEXT,
-    option_c TEXT,
-    option_d TEXT,
-    correct_option TEXT,
-    FOREIGN KEY(exam_id) REFERENCES Exams(id)
-)
-""")
-
-# Answers Table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS Answers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    candidate_id INTEGER,
-    question_id INTEGER,
-    selected_option TEXT,
-    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
-    FOREIGN KEY(question_id) REFERENCES Questions(id)
-)
-""")
-
-# Session Logs Table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS SessionLogs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    candidate_id INTEGER,
-    login_time TIMESTAMP,
-    logout_time TIMESTAMP,
-    status TEXT,
-    FOREIGN KEY(candidate_id) REFERENCES Candidates(id)
-)
-""")
-
-# FaceAbsenceEvents Table (Milestone 2)
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS FaceAbsenceEvents (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    candidate_id INTEGER,
-    exam_id INTEGER,
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
-    duration_seconds REAL,
-    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
-    FOREIGN KEY(exam_id) REFERENCES Exams(id)
-)
-""")
-
-# IntegrityFlags Table (Milestone 2)
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS IntegrityFlags (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    candidate_id INTEGER,
-    exam_id INTEGER,
-    flag_type TEXT,
-    severity TEXT,
-    detail TEXT,
-    threshold_breached TEXT,
-    created_at TIMESTAMP,
-    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
-    FOREIGN KEY(exam_id) REFERENCES Exams(id)
-)
-""")
-
-# BrowserEvents Table (Milestone 2)
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS BrowserEvents (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    candidate_id INTEGER,
-    exam_id INTEGER,
-    event_type TEXT NOT NULL,
-    event_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    details TEXT,
-    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
-    FOREIGN KEY(exam_id) REFERENCES Exams(id)
-)
-""")
 conn.commit()
 conn.close()
 

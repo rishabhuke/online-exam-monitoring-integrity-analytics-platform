@@ -90,3 +90,16 @@ CREATE TABLE IF NOT EXISTS IntegrityFlags (
     FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
     FOREIGN KEY(exam_id) REFERENCES Exams(id)
 );
+-- Invigilators Table (Milestone 4)
+-- Separate account type from Candidates. Invigilators are created via
+-- scripts/create_invigilator.py (no public self-registration - accounts
+-- are provisioned by whoever administers the deployment), and log in via
+-- /invigilator/login (routes/auth.py) into a separate session key
+-- (session["invigilator_id"]) that never overlaps with candidate sessions.
+CREATE TABLE IF NOT EXISTS Invigilators (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

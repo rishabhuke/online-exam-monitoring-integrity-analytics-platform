@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify
 from modules import flags_storage, monitoring_storage
+from routes.auth import invigilator_required
 
 alert_evidence_bp = Blueprint(
     "alert_evidence",
@@ -8,6 +9,7 @@ alert_evidence_bp = Blueprint(
 )
 
 @alert_evidence_bp.route("/flag/<int:flag_id>", methods=["GET"])
+@invigilator_required
 def get_alert_evidence(flag_id):
     """
     Returns an alert together with all related evidence
@@ -18,6 +20,10 @@ def get_alert_evidence(flag_id):
     - Browser events
     - Face absence events
     - Evidence summary
+
+    Gated by @invigilator_required (routes/auth.py, Milestone 4) - this
+    endpoint previously had NO auth check at all, meaning anyone (no login
+    of any kind) could pull any candidate's flag + evidence data.
     """
     flag = flags_storage.get_flag_by_id(flag_id)
 
