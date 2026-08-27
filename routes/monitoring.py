@@ -7,12 +7,6 @@ monitoring_bp = Blueprint(
     url_prefix="/api/monitoring"
 )
 
-monitoring_bp = Blueprint(
-    "monitoring",
-    __name__,
-    url_prefix="/api/monitoring"
-)
-
 
 @monitoring_bp.route("/face-event", methods=["POST"])
 def create_face_event():
@@ -61,14 +55,15 @@ def create_browser_event():
 
     candidate_id = int(session["candidate_id"])
     exam_id = int(data["exam_id"])
-    # Normalized locally (independent of fix/browser-event-type-casing,
-    # a separate PR) so this dispatch is correct regardless of merge order.
+    # Normalized once here so both storage (persisted event_type) and
+    # detection dispatch (tab_switch/focus_loss below) see consistent
+    # casing, regardless of what the frontend sends.
     event_type_normalized = str(data["event_type"]).strip().lower()
 
     event = monitoring_storage.create_browser_event(
         candidate_id=candidate_id,
         exam_id=exam_id,
-        event_type=data["event_type"],
+        event_type=event_type_normalized,
         details=data.get("details", ""),
         event_timestamp=data.get("event_timestamp")
     )

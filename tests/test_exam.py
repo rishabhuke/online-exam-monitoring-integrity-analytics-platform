@@ -310,8 +310,7 @@ def test_evaluate_focus_loss_ignores_other_event_types(isolated_db):
 def test_evaluate_focus_loss_counts_case_insensitively(isolated_db, monkeypatch):
     """Mirrors the real frontend payload shape (exam_window.js sends
     'FOCUS_LOSS', uppercase) - evaluate_focus_loss() must count these
-    regardless of the storage layer's casing, since this fix is independent
-    of fix/browser-event-type-casing (a separate PR)."""
+    regardless of the storage layer's casing."""
     monkeypatch.setattr(detection_engine, "THRESHOLDS", {
         **detection_engine.THRESHOLDS, "max_focus_loss_count": 2,
     })
@@ -324,8 +323,16 @@ def test_evaluate_focus_loss_counts_case_insensitively(isolated_db, monkeypatch)
 
 
 # ---------------------------------------------------------------------------
-# HTTP-level test proving routes/monitoring.py dispatches focus_loss events
-# to evaluate_focus_loss(), using the real frontend payload casing.
+# Regression test for the browser-event event_type casing bug (fix/browser-
+# event-type-casing). The real frontend (exam_window.js) sends "TAB_SWITCH"
+# (uppercase), but routes/monitoring.py and detection_engine.py originally
+# compared against lowercase "tab_switch" only, so flags never fired in
+# production even though every existing test passed (they all constructed
+# events with lowercase strings directly, bypassing the real bug).
+#
+# HTTP-level tests below prove both routes/monitoring.py dispatch paths
+# (tab_switch and focus_loss) work correctly against the real frontend
+# payload casing.
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
@@ -361,6 +368,38 @@ def http_isolated_db(monkeypatch, tmp_path):
     app_module.app.config["TESTING"] = True
     with app_module.app.test_client() as client:
         yield client
+
+
+def test_uppercase_tab_switch_from_frontend_raises_flag(http_isolated_db, monkeypatch):
+    """Reproduces the real frontend payload shape (exam_window.js sends
+    'TAB_SWITCH', uppercase) through the actual HTTP route, and asserts a
+    flag is raised once the threshold is crossed. Before the casing fix,
+    this failed silently: the event was stored but 'flags_raised' was
+    always [] because 'TAB_SWITCH' != 'tab_switch'."""
+    client = http_isolated_db
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_tab_switches": 2,
+    })
+
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp1 = client.post("/api/monitoring/browser-event", json={
+        "exam_id": 1, "event_type": "TAB_SWITCH", "details": "Exam page became hidden."
+    })
+    assert resp1.status_code == 201
+    assert resp1.get_json()["flags_raised"] == []
+
+    resp2 = client.post("/api/monitoring/browser-event", json={
+        "exam_id": 1, "event_type": "TAB_SWITCH", "details": "Exam page became hidden."
+    })
+    assert resp2.status_code == 201
+    body = resp2.get_json()
+    assert "excessive_tab_switching" in body["flags_raised"]
+
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["flag_type"] == "excessive_tab_switching"
 
 
 def test_uppercase_focus_loss_from_frontend_raises_flag(http_isolated_db, monkeypatch):

@@ -97,6 +97,7 @@ def create_browser_event(
     details: str = "",
     event_timestamp: Optional[str] = None,
 ) -> Dict[str, Any]:
+    event_type = event_type.strip().lower()
 
     if event_timestamp is None:
         event_timestamp = datetime.now().isoformat()
