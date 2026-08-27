@@ -9,10 +9,10 @@ Invigilator-only (bulk/investigative tool, not a candidate self-service
 feature - matches how the brief groups this with the dashboard, not with
 the per-candidate report/score endpoints).
 
-NOTE: "cluster_assignments" is included as null/omitted pending the Data
-Science Analytics module (K-Means clustering) - not yet implemented
-anywhere in the codebase as of this module's authoring. Wire it in here
-once that module lands.
+cluster_assignment is computed via modules.analytics.cluster_cohort_risk()
+(K-Means over the exam's full cohort) and this candidate's assignment is
+pulled out of that result. Returns None if the candidate isn't in the
+cohort (no monitoring data yet) or the cohort is too small to cluster.
 """
 
 import csv
@@ -20,10 +20,24 @@ import io
 
 from flask import Blueprint, jsonify, request, Response
 
-from modules import scoring, monitoring_storage, flags_storage, report_agent
+from modules import scoring, monitoring_storage, flags_storage, report_agent, analytics
 from routes.auth import invigilator_required
 
 export_bp = Blueprint("export", __name__, url_prefix="/api/export")
+
+
+def _get_cluster_assignment(candidate_id: int, exam_id: int):
+    """
+    Pulls this candidate's cluster assignment out of the exam-wide
+    K-Means result (modules.analytics.cluster_cohort_risk). Returns None
+    if the candidate isn't in the cohort (no monitoring data) or the
+    cohort was too small to cluster meaningfully.
+    """
+    cluster_result = analytics.cluster_cohort_risk(exam_id)
+    for assignment in cluster_result.get("assignments", []):
+        if assignment["candidate_id"] == candidate_id:
+            return assignment
+    return None
 
 
 def _build_export_payload(candidate_id: int, exam_id: int) -> dict:
@@ -47,7 +61,7 @@ def _build_export_payload(candidate_id: int, exam_id: int) -> dict:
             "risk_label": report["risk_label"],
             "source": report["source"],
         },
-        "cluster_assignment": None,  # TODO: wire in once DS Analytics module (K-Means) lands
+        "cluster_assignment": _get_cluster_assignment(candidate_id, exam_id),
     }
 
 
