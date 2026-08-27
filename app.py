@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 from flask import Flask, session, redirect, url_for, request, jsonify
 import sqlite3
 from pathlib import Path
@@ -14,7 +19,7 @@ from routes.analytics import analytics_bp
 from routes.alert_evidence import alert_evidence_bp
 
 app = Flask(__name__)
-app.secret_key = "online_exam_monitoring_2026_secret"
+app.secret_key = os.getenv("SECRET_KEY", "online_exam_monitoring_2026_secret")
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 
 # Register Blueprints
