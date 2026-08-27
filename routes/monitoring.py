@@ -61,6 +61,9 @@ def create_browser_event():
 
     candidate_id = int(session["candidate_id"])
     exam_id = int(data["exam_id"])
+    # Normalized locally (independent of fix/browser-event-type-casing,
+    # a separate PR) so this dispatch is correct regardless of merge order.
+    event_type_normalized = str(data["event_type"]).strip().lower()
 
     event = monitoring_storage.create_browser_event(
         candidate_id=candidate_id,
@@ -71,8 +74,10 @@ def create_browser_event():
     )
 
     flags_raised = []
-    if data["event_type"] == "tab_switch":
+    if event_type_normalized == "tab_switch":
         flags_raised = detection_engine.evaluate_tab_switches(candidate_id, exam_id)
+    elif event_type_normalized == "focus_loss":
+        flags_raised = detection_engine.evaluate_focus_loss(candidate_id, exam_id)
 
     return jsonify({
         "status": "success",

@@ -43,6 +43,7 @@ THRESHOLDS = {
     "max_face_absent_seconds": 120,        # single continuous absence
     "max_cumulative_absent_seconds": 180,  # total absence across a session
     "max_tab_switches": 3,
+    "max_focus_loss_count": 5,
 }
 
 
@@ -137,6 +138,38 @@ def evaluate_tab_switches(candidate_id: int, exam_id: int) -> list:
             threshold_breached=f"max_tab_switches={THRESHOLDS['max_tab_switches']}",
         )
         return ["excessive_tab_switching"]
+
+    return []
+
+
+def evaluate_focus_loss(candidate_id: int, exam_id: int) -> list:
+    """
+    Counts "focus_loss" events logged in BrowserEvents for this session
+    (via monitoring_storage) and flags when THRESHOLDS["max_focus_loss_count"]
+    is breached. Mirrors evaluate_tab_switches()'s pattern - safe to call
+    repeatedly, only re-raises when the count first crosses the threshold.
+
+    Counts case-insensitively since the frontend (exam_window.js) currently
+    sends "FOCUS_LOSS" (uppercase) - this does not depend on event_type
+    being normalized to lowercase before storage (see fix/browser-event-
+    type-casing, a separate PR).
+
+    Returns a list of flag_type strings that were raised (empty if none).
+    """
+    events = monitoring_storage.get_browser_events(candidate_id=candidate_id, exam_id=exam_id)
+    focus_loss_count = sum(
+        1 for e in events if str(e.get("event_type", "")).strip().lower() == "focus_loss"
+    )
+
+    if focus_loss_count == THRESHOLDS["max_focus_loss_count"]:
+        _raise_flag(
+            candidate_id, exam_id,
+            flag_type="excessive_focus_loss",
+            severity="low",
+            detail=f"{focus_loss_count} focus-loss events recorded this session",
+            threshold_breached=f"max_focus_loss_count={THRESHOLDS['max_focus_loss_count']}",
+        )
+        return ["excessive_focus_loss"]
 
     return []
 
