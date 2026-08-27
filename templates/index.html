@@ -2,87 +2,191 @@
 
 {% block title %}Home{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+
 {% block content %}
 
-<section class="hero">
-
-    <div class="hero-content">
-
-        <h1>Online Exam Monitoring & Integrity Analytics Platform</h1>
-
+<section class="home-hero">
+    <div class="home-hero-text">
+        <span class="home-eyebrow">Exam Integrity Platform</span>
+        <h1>Secure exams. Fair assessment.<br><span>Intelligent monitoring.</span></h1>
         <p>
-            Secure, AI-enabled online examination system with candidate authentication,
-            session management, integrity monitoring, and real-time analytics.
+            An AI-enabled proctoring and integrity analytics platform — built for
+            candidates who want a fair test, and invigilators who need real visibility
+            into what's happening during it.
         </p>
-
-        <div class="hero-buttons">
-
-            <a href="/login" class="btn">
-                <i class="fa-solid fa-right-to-bracket"></i>
-                Login
+        <div class="home-hero-ctas">
+            <a href="#portals" class="home-btn-primary">
+                <i class="fa-solid fa-compass"></i>
+                Explore Platform
             </a>
-
-            <a href="/register" class="btn btn-success">
-                <i class="fa-solid fa-user-plus"></i>
-                Register
+            <a href="{{ url_for('auth.register') }}" class="home-btn-secondary">
+                <i class="fa-solid fa-arrow-right"></i>
+                Get Started
             </a>
-
         </div>
-
     </div>
-
+    <div class="home-hero-visual">
+        <div class="home-hero-orb">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+    </div>
 </section>
 
-<section class="features">
-
-    <div class="feature-card">
-
-        <i class="fa-solid fa-camera"></i>
-
-        <h3>Webcam Verification</h3>
-
-        <p>
-            Capture candidate photo during registration using OpenCV.
-        </p>
-
+<section class="home-section" id="portals">
+    <div class="home-section-head">
+        <span class="home-eyebrow">Choose Your Portal</span>
+        <h2>Two journeys, one platform</h2>
+        <p>Whether you're sitting an exam or invigilating one, your portal is one click away.</p>
     </div>
-
-    <div class="feature-card">
-
-        <i class="fa-solid fa-user-shield"></i>
-
-        <h3>Secure Authentication</h3>
-
-        <p>
-            Session-based login with protected dashboard access.
-        </p>
-
+    <div class="portal-grid">
+        <div class="portal-card">
+            <div class="portal-icon"><i class="fa-solid fa-user-graduate"></i></div>
+            <h3>Candidate</h3>
+            <p>Take secure online examinations, monitor your progress, and view your results.</p>
+            <a href="{{ url_for('auth.login') }}" class="portal-cta">
+                Candidate Login <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+        <div class="portal-card">
+            <div class="portal-icon"><i class="fa-solid fa-user-shield"></i></div>
+            <h3>Invigilator</h3>
+            <p>Monitor examinations, observe integrity events, and analyze candidate activity.</p>
+            <a href="{{ url_for('auth.invigilator_login') }}" class="portal-cta">
+                Invigilator Login <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
     </div>
+</section>
 
-    <div class="feature-card">
-
-        <i class="fa-solid fa-clock"></i>
-
-        <h3>Timed Online Exams</h3>
-
-        <p>
-            Countdown timer with automatic submission after time expires.
-        </p>
-
+<section class="home-section">
+    <div class="home-section-head">
+        <span class="home-eyebrow">Explore the Platform</span>
+        <h2>Everything a fair exam needs</h2>
     </div>
-
-    <div class="feature-card">
-
-        <i class="fa-solid fa-chart-line"></i>
-
-        <h3>Integrity Analytics</h3>
-
-        <p>
-            Store sessions and generate monitoring reports.
-        </p>
-
+    <div class="explore-grid">
+        <div class="explore-card">
+            <i class="fa-solid fa-camera"></i>
+            <h3>AI-Based Monitoring</h3>
+            <p>Face and environment checks powered by OpenCV during registration and exams.</p>
+        </div>
+        <div class="explore-card">
+            <i class="fa-solid fa-lock"></i>
+            <h3>Secure Examination</h3>
+            <p>Session-based authentication keeps candidate and invigilator access fully separate.</p>
+        </div>
+        <div class="explore-card">
+            <i class="fa-solid fa-eye"></i>
+            <h3>Real-Time Integrity Monitoring</h3>
+            <p>Tab switches, focus loss, and face-visibility events are captured as they happen.</p>
+        </div>
+        <div class="explore-card">
+            <i class="fa-solid fa-chart-line"></i>
+            <h3>Integrity Analytics</h3>
+            <p>Every session rolls up into risk scores and integrity trends invigilators can act on.</p>
+        </div>
+        <div class="explore-card">
+            <i class="fa-solid fa-file-lines"></i>
+            <h3>Automated Reporting</h3>
+            <p>Detailed candidate reports connect score, events, and risk in one place.</p>
+        </div>
     </div>
+</section>
 
+<section class="home-section">
+    <div class="home-section-head">
+        <span class="home-eyebrow">How It Works</span>
+        <h2>From registration to results</h2>
+    </div>
+    <div class="steps-row">
+        <div class="step-card">
+            <div class="step-num">01</div>
+            <h4>Register</h4>
+            <p>Create your account with a quick face verification photo.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">02</div>
+            <h4>Environment Check</h4>
+            <p>Confirm your camera, microphone, and browser are exam-ready.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">03</div>
+            <h4>Take Exam</h4>
+            <p>Answer questions in a timed window with monitoring active.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">04</div>
+            <h4>Integrity Analysis</h4>
+            <p>Your session is scored against detected integrity events.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">05</div>
+            <h4>Results</h4>
+            <p>View your score and detailed report as soon as it's ready.</p>
+        </div>
+    </div>
+</section>
+
+<section class="home-section">
+    <div class="home-section-head">
+        <span class="home-eyebrow">Why This Platform</span>
+        <h2>Built to be trusted by both sides</h2>
+    </div>
+    <div class="why-grid">
+        <div class="why-item">
+            <i class="fa-solid fa-scale-balanced"></i>
+            <div>
+                <h4>Fairness</h4>
+                <p>Every candidate is held to the same monitored standard.</p>
+            </div>
+        </div>
+        <div class="why-item">
+            <i class="fa-solid fa-shield-halved"></i>
+            <div>
+                <h4>Security</h4>
+                <p>Separate, session-scoped access for candidates and invigilators.</p>
+            </div>
+        </div>
+        <div class="why-item">
+            <i class="fa-solid fa-eye"></i>
+            <div>
+                <h4>Transparency</h4>
+                <p>Candidates can see that monitoring is active, not hidden.</p>
+            </div>
+        </div>
+        <div class="why-item">
+            <i class="fa-solid fa-bolt"></i>
+            <div>
+                <h4>Real-Time Monitoring</h4>
+                <p>Integrity events are captured and surfaced as they occur.</p>
+            </div>
+        </div>
+        <div class="why-item">
+            <i class="fa-solid fa-chart-pie"></i>
+            <div>
+                <h4>Analytics</h4>
+                <p>Risk and performance data invigilators can actually use.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="home-section final-cta">
+    <h2>Ready to conduct smarter examinations?</h2>
+    <p>Get started as a candidate, or sign in to invigilate.</p>
+    <div class="home-hero-ctas" style="justify-content:center;">
+        <a href="{{ url_for('auth.register') }}" class="home-btn-primary">
+            <i class="fa-solid fa-arrow-right"></i>
+            Get Started
+        </a>
+        <a href="{{ url_for('auth.invigilator_login') }}" class="home-btn-secondary">
+            <i class="fa-solid fa-user-shield"></i>
+            Invigilator Login
+        </a>
+    </div>
 </section>
 
 {% endblock %}
