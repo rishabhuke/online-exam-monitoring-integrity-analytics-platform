@@ -15,6 +15,7 @@ module) rather than re-deriving integrity scores.
 """
 
 import sqlite3
+import time
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -25,6 +26,40 @@ from modules import scoring
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATABASE = BASE_DIR / "database.db"
+
+# ---------------------------------------------------------------------------
+# cluster_cohort_risk() cache (Milestone 5 - performance pass).
+#
+# export_session() (routes/export.py) calls cluster_cohort_risk(exam_id) to
+# pull ONE candidate's cluster assignment out of the full cohort result, but
+# the function recomputes the whole cohort - re-querying candidate ids,
+# recalculating every candidate's integrity score, and re-fitting KMeans -
+# from scratch on every call. Exporting N candidates for the same exam
+# therefore reruns the same clustering N times.
+#
+# Fix: cache the result per (exam_id, n_clusters) for a short TTL. Short
+# enough that new monitoring data for a still-active exam is picked up
+# quickly; long enough that a burst of back-to-back exports for the same
+# exam (the realistic invigilator workflow) shares one computation.
+# ---------------------------------------------------------------------------
+_CLUSTER_CACHE_TTL_SECONDS = 30.0
+_cluster_cache: Dict[Any, Any] = {}
+
+
+def _cached_cluster_cohort_risk(exam_id: int, n_clusters: int) -> Dict[str, Any]:
+    # Include DATABASE in the key so a different database (as in tests,
+    # where each test monkeypatches DATABASE to its own temp file) can
+    # never serve another database's cached result for the same exam_id.
+    cache_key = (str(DATABASE), exam_id, n_clusters)
+    cached = _cluster_cache.get(cache_key)
+    if cached is not None:
+        cached_at, result = cached
+        if time.monotonic() - cached_at < _CLUSTER_CACHE_TTL_SECONDS:
+            return result
+
+    result = _compute_cluster_cohort_risk(exam_id, n_clusters)
+    _cluster_cache[cache_key] = (time.monotonic(), result)
+    return result
 
 
 def get_db_connection() -> sqlite3.Connection:
@@ -161,6 +196,14 @@ def get_event_frequency_heatmap(exam_id: int) -> Dict[str, Any]:
 
 
 def cluster_cohort_risk(exam_id: int, n_clusters: int = 3) -> Dict[str, Any]:
+    """
+    Public entry point - cached (see _cached_cluster_cohort_risk above).
+    Same signature and return shape as before; callers are unaffected.
+    """
+    return _cached_cluster_cohort_risk(exam_id, n_clusters)
+
+
+def _compute_cluster_cohort_risk(exam_id: int, n_clusters: int = 3) -> Dict[str, Any]:
     """
     K-Means clustering of candidates in this exam's cohort, using each
     candidate's scoring.calculate_session_score() output as the feature
