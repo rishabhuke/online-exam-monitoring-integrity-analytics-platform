@@ -97,8 +97,12 @@ def _build_export_csv(payload: dict) -> str:
     _rows_to_csv_section(writer, "FLAGS", payload["flags"])
     _rows_to_csv_section(writer, "AI_SUMMARY", [payload["ai_summary"]])
 
-    writer.writerow(["# CLUSTER_ASSIGNMENT"])
-    writer.writerow(["(pending Data Science Analytics module)"])
+    cluster_assignment = payload["cluster_assignment"]
+    _rows_to_csv_section(
+        writer,
+        "CLUSTER_ASSIGNMENT",
+        [cluster_assignment] if cluster_assignment is not None else [],
+    )
 
     return output.getvalue()
 
