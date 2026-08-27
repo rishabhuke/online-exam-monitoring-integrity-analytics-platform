@@ -7,8 +7,8 @@ Per the project brief: "score distribution, event frequency heatmaps,
 K-Means clustering, cohort risk profiling" across the examination cohort.
 
 Returns raw JSON-friendly data only - no chart image generation here.
-Chart rendering happens in the Streamlit dashboard, which is the natural
-place for matplotlib/seaborn, not this API layer.
+Chart rendering happens client-side (Chart.js) in the invigilator
+dashboard template, not in this API layer.
 
 Builds on modules.scoring.calculate_session_score() (Priyanshu's M3
 module) rather than re-deriving integrity scores.
@@ -31,6 +31,16 @@ def get_db_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def list_exams() -> List[Dict[str, Any]]:
+    """All exams, for populating the invigilator dashboard's exam selector."""
+    conn = get_db_connection()
+    try:
+        rows = conn.execute("SELECT id, title, duration FROM Exams ORDER BY id").fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
 
 
 def _get_cohort_candidate_ids(exam_id: int) -> List[int]:

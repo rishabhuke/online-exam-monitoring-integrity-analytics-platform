@@ -12,6 +12,8 @@ pages that don't touch the database directly.
 
 from flask import Blueprint, render_template, session, redirect, url_for
 
+from routes.auth import invigilator_required
+
 pages_bp = Blueprint("pages", __name__)
 
 
@@ -51,6 +53,12 @@ def analytics():
 @pages_bp.route("/environment-check")
 def environment_check():
     return render_template("environment_check.html")
+
+
+@pages_bp.route("/invigilator/dashboard")
+@invigilator_required
+def invigilator_dashboard():
+    return render_template("invigilator_dashboard.html")
 
 
 @pages_bp.route("/help-support")

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}
+Invigilator Dashboard
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/invigilator_dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="invig-dashboard-container">
+
+    <section class="invig-welcome-card">
+        <h1><i class="fa-solid fa-user-shield"></i> Invigilator Dashboard</h1>
+        <p>Select an exam to review cohort integrity analytics.</p>
+    </section>
+
+    <section class="invig-controls">
+        <label for="exam-select">Exam:</label>
+        <select id="exam-select">
+            <option value="">Loading exams...</option>
+        </select>
+        <span id="cohort-summary"></span>
+    </section>
+
+    <section class="invig-charts-grid">
+
+        <div class="invig-chart-card">
+            <h3>Integrity Score Distribution</h3>
+            <canvas id="distribution-chart"></canvas>
+        </div>
+
+        <div class="invig-chart-card">
+            <h3>Event Frequency Heatmap</h3>
+            <div id="heatmap-container"></div>
+        </div>
+
+        <div class="invig-chart-card">
+            <h3>Cohort Risk Clusters</h3>
+            <canvas id="cluster-chart"></canvas>
+        </div>
+
+    </section>
+
+    <section class="invig-table-card">
+        <h3>Candidates</h3>
+        <table id="candidates-table">
+            <thead>
+                <tr>
+                    <th>Candidate ID</th>
+                    <th>Integrity Score</th>
+                    <th>Risk Label</th>
+                    <th>Cluster Risk</th>
+                    <th>Export</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/invigilator_dashboard.js') }}"></script>
+{% endblock %}

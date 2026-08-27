@@ -79,7 +79,7 @@
 
                 if (response.ok && data.status === "success") {
                     messageEl.textContent = "Login successful.";
-                    window.location.href = "/dashboard";
+                    window.location.href = "/invigilator/dashboard";
                 } else {
                     messageEl.textContent = data.message || "Login failed.";
                 }
