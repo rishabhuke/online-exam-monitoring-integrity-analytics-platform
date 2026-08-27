@@ -146,10 +146,42 @@ def test_storage_summary_stats(test_db_and_client):
 
 # ---------------------------------------------------------------------------
 # Flask API Endpoint Tests (routes/flags.py)
+#
+# Auth boundary (added after these routes were found to have NO auth at
+# all): list/create/delete/summary are invigilator-only; GET by id is
+# self-service for the owning candidate, or open to any invigilator.
 # ---------------------------------------------------------------------------
+
+def _as_invigilator(client):
+    with client.session_transaction() as sess:
+        sess.clear()
+        sess["invigilator_id"] = 1
+
+
+def _as_candidate(client, candidate_id):
+    with client.session_transaction() as sess:
+        sess.clear()
+        sess["candidate_id"] = candidate_id
+
+
+def test_api_create_flag_requires_invigilator(test_db_and_client):
+    client, _ = test_db_and_client
+
+    res = client.post("/api/flags", json={
+        "candidate_id": 1, "exam_id": 101, "flag_type": "face_absent", "severity": "high"
+    })
+    assert res.status_code == 401
+
+    _as_candidate(client, 1)
+    res = client.post("/api/flags", json={
+        "candidate_id": 1, "exam_id": 101, "flag_type": "face_absent", "severity": "high"
+    })
+    assert res.status_code == 401
+
 
 def test_api_create_flag_success(test_db_and_client):
     client, _ = test_db_and_client
+    _as_invigilator(client)
 
     payload = {
         "candidate_id": 1,
@@ -170,6 +202,7 @@ def test_api_create_flag_success(test_db_and_client):
 
 def test_api_create_flag_validation_errors(test_db_and_client):
     client, _ = test_db_and_client
+    _as_invigilator(client)
 
     # Missing required field
     res = client.post("/api/flags", json={"candidate_id": 1, "exam_id": 101})
@@ -186,8 +219,20 @@ def test_api_create_flag_validation_errors(test_db_and_client):
     assert res.status_code == 400
 
 
+def test_api_list_flags_requires_invigilator(test_db_and_client):
+    client, _ = test_db_and_client
+
+    res = client.get("/api/flags")
+    assert res.status_code == 401
+
+    _as_candidate(client, 1)
+    res = client.get("/api/flags")
+    assert res.status_code == 401
+
+
 def test_api_list_flags_with_filtering(test_db_and_client):
     client, _ = test_db_and_client
+    _as_invigilator(client)
 
     client.post("/api/flags", json={"candidate_id": 1, "exam_id": 101, "flag_type": "face_absent", "severity": "high"})
     client.post("/api/flags", json={"candidate_id": 1, "exam_id": 101, "flag_type": "tab_switch", "severity": "medium"})
@@ -209,26 +254,75 @@ def test_api_list_flags_with_filtering(test_db_and_client):
     assert res.get_json()["count"] == 2
 
 
+def test_api_get_flag_by_id_requires_auth(test_db_and_client):
+    client, _ = test_db_and_client
+    _as_invigilator(client)
+    post_res = client.post("/api/flags", json={
+        "candidate_id": 1, "exam_id": 101, "flag_type": "face_absent", "severity": "high"
+    })
+    flag_id = post_res.get_json()["flag"]["id"]
+
+    with client.session_transaction() as sess:
+        sess.clear()
+
+    res = client.get(f"/api/flags/{flag_id}")
+    assert res.status_code == 401
+
+
+def test_api_get_flag_by_id_rejects_other_candidate(test_db_and_client):
+    client, _ = test_db_and_client
+    _as_invigilator(client)
+    post_res = client.post("/api/flags", json={
+        "candidate_id": 1, "exam_id": 101, "flag_type": "face_absent", "severity": "high"
+    })
+    flag_id = post_res.get_json()["flag"]["id"]
+
+    _as_candidate(client, 2)
+    res = client.get(f"/api/flags/{flag_id}")
+    assert res.status_code == 403
+
+
 def test_api_get_flag_by_id(test_db_and_client):
     client, _ = test_db_and_client
+    _as_invigilator(client)
 
     post_res = client.post("/api/flags", json={
         "candidate_id": 1, "exam_id": 101, "flag_type": "face_absent", "severity": "high"
     })
     flag_id = post_res.get_json()["flag"]["id"]
 
-    # Fetch valid flag
+    # Invigilator can fetch any flag
     res = client.get(f"/api/flags/{flag_id}")
     assert res.status_code == 200
     assert res.get_json()["flag"]["id"] == flag_id
 
-    # Fetch non-existent flag
+    # Owning candidate can fetch their own flag
+    _as_candidate(client, 1)
+    res = client.get(f"/api/flags/{flag_id}")
+    assert res.status_code == 200
+    assert res.get_json()["flag"]["id"] == flag_id
+
+    # Fetch non-existent flag (still as an authenticated candidate)
     res_404 = client.get("/api/flags/99999")
     assert res_404.status_code == 404
 
 
+def test_api_delete_flag_requires_invigilator(test_db_and_client):
+    client, _ = test_db_and_client
+    _as_invigilator(client)
+    post_res = client.post("/api/flags", json={
+        "candidate_id": 1, "exam_id": 101, "flag_type": "face_absent", "severity": "high"
+    })
+    flag_id = post_res.get_json()["flag"]["id"]
+
+    _as_candidate(client, 1)
+    res = client.delete(f"/api/flags/{flag_id}")
+    assert res.status_code == 401
+
+
 def test_api_delete_flag(test_db_and_client):
     client, _ = test_db_and_client
+    _as_invigilator(client)
 
     post_res = client.post("/api/flags", json={
         "candidate_id": 1, "exam_id": 101, "flag_type": "face_absent", "severity": "high"
@@ -244,8 +338,16 @@ def test_api_delete_flag(test_db_and_client):
     assert get_res.status_code == 404
 
 
+def test_api_summary_stats_requires_invigilator(test_db_and_client):
+    client, _ = test_db_and_client
+
+    res = client.get("/api/flags/summary")
+    assert res.status_code == 401
+
+
 def test_api_summary_stats(test_db_and_client):
     client, _ = test_db_and_client
+    _as_invigilator(client)
 
     client.post("/api/flags", json={"candidate_id": 1, "exam_id": 101, "flag_type": "face_absent", "severity": "high"})
     client.post("/api/flags", json={"candidate_id": 2, "exam_id": 101, "flag_type": "tab_switch", "severity": "medium"})

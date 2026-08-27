@@ -7,11 +7,13 @@ suspicious event flags raised during online exam monitoring sessions.
 
 from flask import Blueprint, request, jsonify, session
 from modules import flags_storage
+from routes.auth import invigilator_required
 
 flags_bp = Blueprint("flags", __name__, url_prefix="/api/flags")
 
 
 @flags_bp.route("", methods=["GET"])
+@invigilator_required
 def list_flags():
     """
     GET /api/flags
@@ -40,15 +42,26 @@ def get_flag(flag_id: int):
     """
     GET /api/flags/<flag_id>
     Retrieves detailed record of a specific integrity flag.
+
+    Self-service for candidates (their own flags only) or open to any
+    invigilator. Auth is checked before the DB lookup so an unauthenticated
+    caller can't use the 404/200 split to probe which flag IDs exist.
     """
+    if "invigilator_id" not in session and "candidate_id" not in session:
+        return jsonify({"status": "error", "message": "Not authenticated"}), 401
+
     flag = flags_storage.get_flag_by_id(flag_id)
     if not flag:
         return jsonify({"status": "error", "message": f"Flag with ID {flag_id} not found"}), 404
 
-    return jsonify({"status": "success", "flag": flag}), 200
+    if "invigilator_id" in session or session.get("candidate_id") == flag["candidate_id"]:
+        return jsonify({"status": "success", "flag": flag}), 200
+
+    return jsonify({"status": "error", "message": "Not authorized to view this flag"}), 403
 
 
 @flags_bp.route("", methods=["POST"])
+@invigilator_required
 def create_flag():
     """
     POST /api/flags
@@ -99,6 +112,7 @@ def create_flag():
 
 
 @flags_bp.route("/<int:flag_id>", methods=["DELETE"])
+@invigilator_required
 def delete_flag(flag_id: int):
     """
     DELETE /api/flags/<flag_id>
@@ -112,6 +126,7 @@ def delete_flag(flag_id: int):
 
 
 @flags_bp.route("/summary", methods=["GET"])
+@invigilator_required
 def get_flag_summary():
     """
     GET /api/flags/summary
