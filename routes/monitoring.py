@@ -61,17 +61,18 @@ def create_browser_event():
 
     candidate_id = int(session["candidate_id"])
     exam_id = int(data["exam_id"])
+    event_type_normalized = str(data["event_type"]).strip().lower()
 
     event = monitoring_storage.create_browser_event(
         candidate_id=candidate_id,
         exam_id=exam_id,
-        event_type=data["event_type"],
+        event_type=event_type_normalized,
         details=data.get("details", ""),
         event_timestamp=data.get("event_timestamp")
     )
 
     flags_raised = []
-    if data["event_type"] == "tab_switch":
+    if event_type_normalized == "tab_switch":
         flags_raised = detection_engine.evaluate_tab_switches(candidate_id, exam_id)
 
     return jsonify({
