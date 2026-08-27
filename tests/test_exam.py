@@ -274,3 +274,120 @@ def test_evaluate_tab_switches_ignores_other_event_types(isolated_db):
     monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
     monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
     assert detection_engine.evaluate_tab_switches(1, 1) == []
+
+
+def test_evaluate_focus_loss_below_threshold_raises_nothing(isolated_db):
+    monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
+    assert detection_engine.evaluate_focus_loss(1, 1) == []
+    assert detection_engine.get_flags(1, 1) == []
+
+
+def test_evaluate_focus_loss_above_threshold_raises_flag(isolated_db, monkeypatch):
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_focus_loss_count": 2,
+    })
+
+    monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
+    assert detection_engine.evaluate_focus_loss(1, 1) == []
+
+    monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
+    raised = detection_engine.evaluate_focus_loss(1, 1)
+
+    assert "excessive_focus_loss" in raised
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["flag_type"] == "excessive_focus_loss"
+    assert flags[0]["severity"] == "low"
+
+
+def test_evaluate_focus_loss_ignores_other_event_types(isolated_db):
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    assert detection_engine.evaluate_focus_loss(1, 1) == []
+
+
+def test_evaluate_focus_loss_counts_case_insensitively(isolated_db, monkeypatch):
+    """Mirrors the real frontend payload shape (exam_window.js sends
+    'FOCUS_LOSS', uppercase) - evaluate_focus_loss() must count these
+    regardless of the storage layer's casing, since this fix is independent
+    of fix/browser-event-type-casing (a separate PR)."""
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_focus_loss_count": 2,
+    })
+
+    monitoring_storage.create_browser_event(1, 1, event_type="FOCUS_LOSS")
+    monitoring_storage.create_browser_event(1, 1, event_type="FOCUS_LOSS")
+    raised = detection_engine.evaluate_focus_loss(1, 1)
+
+    assert "excessive_focus_loss" in raised
+
+
+# ---------------------------------------------------------------------------
+# HTTP-level test proving routes/monitoring.py dispatches focus_loss events
+# to evaluate_focus_loss(), using the real frontend payload casing.
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def http_isolated_db(monkeypatch, tmp_path):
+    """Same isolation as isolated_db, but also patches app.DATABASE and
+    returns a Flask test client, since this test needs to go through the
+    real HTTP route (routes/monitoring.py) rather than calling storage/
+    detection functions directly."""
+    import app as app_module
+
+    test_db = tmp_path / "test_http.db"
+    monkeypatch.setattr(app_module, "DATABASE", test_db)
+    monkeypatch.setattr(photo_capture, "DATABASE", test_db)
+    monkeypatch.setattr(detection_engine, "DATABASE", test_db)
+    monkeypatch.setattr(flags_storage, "DATABASE", test_db)
+    monkeypatch.setattr(monitoring_storage, "DATABASE", test_db)
+
+    conn = sqlite3.connect(test_db)
+    conn.execute("PRAGMA foreign_keys = ON")
+    schema_path = os.path.join(os.path.dirname(__file__), "..", "database", "schema.sql")
+    with open(schema_path) as f:
+        conn.executescript(f.read())
+
+    conn.execute(
+        "INSERT INTO Candidates (id, name, email, password_hash) VALUES (1, 'Test Candidate', 'candidate@example.com', 'hash')"
+    )
+    conn.execute(
+        "INSERT INTO Exams (id, title, duration) VALUES (1, 'Test Exam', 60)"
+    )
+    conn.commit()
+    conn.close()
+
+    app_module.app.config["TESTING"] = True
+    with app_module.app.test_client() as client:
+        yield client
+
+
+def test_uppercase_focus_loss_from_frontend_raises_flag(http_isolated_db, monkeypatch):
+    """Reproduces the real frontend payload shape (exam_window.js sends
+    'FOCUS_LOSS', uppercase) through the actual HTTP route, and asserts a
+    flag is raised once the threshold is crossed."""
+    client = http_isolated_db
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_focus_loss_count": 2,
+    })
+
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp1 = client.post("/api/monitoring/browser-event", json={
+        "exam_id": 1, "event_type": "FOCUS_LOSS", "details": "Exam window lost focus."
+    })
+    assert resp1.status_code == 201
+    assert resp1.get_json()["flags_raised"] == []
+
+    resp2 = client.post("/api/monitoring/browser-event", json={
+        "exam_id": 1, "event_type": "FOCUS_LOSS", "details": "Exam window lost focus."
+    })
+    assert resp2.status_code == 201
+    body = resp2.get_json()
+    assert "excessive_focus_loss" in body["flags_raised"]
+
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["flag_type"] == "excessive_focus_loss"
