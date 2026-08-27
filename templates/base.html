@@ -23,32 +23,62 @@
     <!-- Navbar -->
     <nav class="navbar">
 
-        <div class="logo">
+        <a href="{{ url_for('pages.home') }}" class="logo">
             <i class="fa-solid fa-graduation-cap"></i>
             Exam Integrity Platform
-        </div>
+        </a>
+
+        <input type="checkbox" id="nav-toggle" class="nav-toggle-checkbox">
+        <label for="nav-toggle" class="nav-toggle-btn" aria-label="Toggle navigation menu">
+            <i class="fa-solid fa-bars"></i>
+        </label>
 
         {% if request.endpoint in ['pages.home', 'auth.login', 'auth.register', 'auth.invigilator_login'] %}
         <!-- ================= PUBLIC NAVBAR ================= -->
         <ul class="nav-links">
             <li>
-                <a href="{{ url_for('pages.home') }}">
+                <a href="{{ url_for('pages.home') }}" class="{{ 'active' if request.endpoint == 'pages.home' }}">
                     <i class="fa-solid fa-house"></i>
                     Home
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('auth.register') }}">
+                <a href="{{ url_for('auth.register') }}" class="{{ 'active' if request.endpoint == 'auth.register' }}">
                     <i class="fa-solid fa-user-plus"></i>
                     Register
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('auth.login') }}">
+                <a href="{{ url_for('auth.login') }}" class="{{ 'active' if request.endpoint == 'auth.login' }}">
                     <i class="fa-solid fa-right-to-bracket"></i>
                     Login
+                </a>
+            </li>
+        </ul>
+
+        {% elif request.endpoint == 'pages.invigilator_dashboard' %}
+        <!-- ================= INVIGILATOR NAVBAR ================= -->
+        <ul class="nav-links">
+            <li>
+                <a href="{{ url_for('pages.invigilator_dashboard') }}" class="active">
+                    <i class="fa-solid fa-table-columns"></i>
+                    Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('pages.help_support') }}">
+                    <i class="fa-solid fa-headset"></i>
+                    Help
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('auth.invigilator_logout') }}" class="logout-link">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
                 </a>
             </li>
         </ul>
@@ -57,28 +87,35 @@
         <!-- ================= CANDIDATE / INTERNAL NAVBAR ================= -->
         <ul class="nav-links">
             <li>
-                <a href="{{ url_for('pages.dashboard_page') }}">
+                <a href="{{ url_for('pages.dashboard_page') }}" class="{{ 'active' if request.endpoint == 'pages.dashboard_page' }}">
                     <i class="fa-solid fa-table-columns"></i>
                     Dashboard
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('pages.exams') }}">
+                <a href="{{ url_for('pages.exams') }}" class="{{ 'active' if request.endpoint in ['pages.exams', 'pages.start_exam', 'pages.environment_check'] }}">
                     <i class="fa-solid fa-file-lines"></i>
                     Exams
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('pages.analytics') }}">
+                <a href="{{ url_for('pages.results') }}" class="{{ 'active' if request.endpoint == 'pages.results' }}">
+                    <i class="fa-solid fa-square-poll-vertical"></i>
+                    Results
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('pages.analytics') }}" class="{{ 'active' if request.endpoint == 'pages.analytics' }}">
                     <i class="fa-solid fa-chart-line"></i>
                     Analytics
                 </a>
             </li>
 
             <li>
-                <a href="{{ url_for('pages.help_support') }}">
+                <a href="{{ url_for('pages.help_support') }}" class="{{ 'active' if request.endpoint == 'pages.help_support' }}">
                     <i class="fa-solid fa-headset"></i>
                     Help
                 </a>
