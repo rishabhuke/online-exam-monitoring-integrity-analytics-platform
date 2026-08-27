@@ -82,6 +82,47 @@ def test_submit_exam_success(client, tmp_path):
     assert _get_answers_count(db_path) == 1
 
 
+def test_submit_exam_partial_answers_saves_only_provided(client, tmp_path):
+    """A candidate can submit answers for only some of an exam's questions;
+    only the provided answers should be persisted, no error for the rest."""
+    db_path = tmp_path / "test_submit_exam.db"
+
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        "INSERT INTO Questions (id, exam_id, question, option_a, option_b, option_c, option_d, correct_option) "
+        "VALUES (11, 101, 'Q2?', '1', '2', '3', '4', 'a')"
+    )
+    conn.execute(
+        "INSERT INTO Questions (id, exam_id, question, option_a, option_b, option_c, option_d, correct_option) "
+        "VALUES (12, 101, 'Q3?', '1', '2', '3', '4', 'd')"
+    )
+    conn.commit()
+    conn.close()
+
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    payload = {
+        "answers": [
+            {"question_id": 10, "selected_option": "b"}
+        ]
+    }
+
+    response = client.post("/submit_exam", json=payload)
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == "success"
+    assert _get_answers_count(db_path) == 1
+
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute("SELECT question_id, selected_option FROM Answers").fetchall()
+    conn.close()
+    assert len(rows) == 1
+    assert rows[0]["question_id"] == 10
+    assert rows[0]["selected_option"] == "b"
+
+
 def test_submit_exam_unauthorized_redirects(client):
     # Do not set session candidate_id
     payload = {
