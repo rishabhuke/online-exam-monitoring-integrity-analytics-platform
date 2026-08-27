@@ -103,6 +103,13 @@
 
     <!-- Footer -->
     <footer>
+        <nav class="footer-links">
+            <a href="{{ url_for('pages.home') }}">Home</a>
+            <a href="{{ url_for('pages.exams') }}">Exams</a>
+            <a href="{{ url_for('pages.help_support') }}">Help</a>
+            <a href="{{ url_for('auth.login') }}">Login</a>
+            <a href="{{ url_for('auth.invigilator_login') }}">Invigilator Login</a>
+        </nav>
         <p>&copy; 2026 Online Exam Monitoring & Integrity Analytics Platform</p>
     </footer>
 
