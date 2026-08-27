@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from modules import monitoring_storage, detection_engine
+from routes.auth import invigilator_required
 
 monitoring_bp = Blueprint(
     "monitoring",
@@ -10,9 +11,11 @@ monitoring_bp = Blueprint(
 
 @monitoring_bp.route("/face-event", methods=["POST"])
 def create_face_event():
+    if "candidate_id" not in session:
+        return jsonify({"status": "error", "message": "Not authenticated"}), 401
+
     data = request.get_json(silent=True) or {}
     required = [
-        "candidate_id",
         "exam_id",
         "start_time",
         "end_time",
@@ -26,7 +29,7 @@ def create_face_event():
         }), 400
 
     event = monitoring_storage.create_face_event(
-        candidate_id=int(data["candidate_id"]),
+        candidate_id=int(session["candidate_id"]),
         exam_id=int(data["exam_id"]),
         start_time=data["start_time"],
         end_time=data["end_time"],
@@ -41,6 +44,9 @@ def create_face_event():
 
 @monitoring_bp.route("/browser-event", methods=["POST"])
 def create_browser_event():
+    if "candidate_id" not in session:
+        return jsonify({"status": "error", "message": "Not authenticated"}), 401
+
     data = request.get_json(silent=True) or {}
     required = [
         "exam_id",
@@ -82,6 +88,7 @@ def create_browser_event():
 
 
 @monitoring_bp.route("/face-events", methods=["GET"])
+@invigilator_required
 def get_face_events():
     candidate_id = request.args.get("candidate_id", type=int)
     exam_id = request.args.get("exam_id", type=int)
@@ -97,6 +104,7 @@ def get_face_events():
 
 
 @monitoring_bp.route("/browser-events", methods=["GET"])
+@invigilator_required
 def get_browser_events():
     candidate_id = request.args.get("candidate_id", type=int)
     exam_id = request.args.get("exam_id", type=int)
