@@ -9,7 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Greeting based on time
     // -------------------------------
 
-    
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
     const candidateName = localStorage.getItem("candidateName") || "Candidate";
 
@@ -24,23 +25,5 @@ document.addEventListener("DOMContentLoaded", () => {
     // -------------------------------
 
     console.log("Candidate Session Active");
-
-    // -------------------------------
-    // Card Click Animation
-    // -------------------------------
-
-    const cards = document.querySelectorAll(".service-card");
-
-    cards.forEach(card => {
-
-        card.addEventListener("click", () => {
-
-            const title = card.querySelector("h3").innerText;
-
-            alert(title + " module will be available after backend integration.");
-
-        });
-
-    });
 
 });
