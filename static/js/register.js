@@ -1,221 +1,113 @@
-// ==============================
-// VARIABLES
-// ==============================
+/*
+ * Candidate registration form handling.
+ * Camera capture is owned entirely by webcam.js (video#webcam, canvas#snapshot,
+ * button#capture-btn, img#preview, input#photo_data) — do not duplicate that
+ * logic here; this file only validates the rest of the form and submits to
+ * the real POST /register backend (routes/auth.py).
+ */
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const photoPreview = document.getElementById("photoPreview");
+(function () {
+    const form = document.getElementById("registerForm");
+    if (!form) return;
 
-const startCameraBtn = document.getElementById("startCamera");
-const captureBtn = document.getElementById("captureBtn");
+    const nameInput = document.getElementById("name");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const confirmInput = document.getElementById("confirmPassword");
+    const photoDataInput = document.getElementById("photo_data");
+    const messageDiv = document.getElementById("message");
+    const registerBtn = document.getElementById("registerBtn");
 
-const registerForm = document.getElementById("registerForm");
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-let stream = null;
-let capturedImage = "";
-
-// ==============================
-// START CAMERA
-// ==============================
-
-startCameraBtn.addEventListener("click", async () => {
-
-    try {
-
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: true
+    document.querySelectorAll(".toggle-password").forEach((btn) => {
+        btn.addEventListener("click", function () {
+            const targetId = btn.getAttribute("data-target");
+            const input = document.getElementById(targetId);
+            if (!input) return;
+            const isHidden = input.type === "password";
+            input.type = isHidden ? "text" : "password";
+            btn.innerHTML = isHidden
+                ? '<i class="fa-solid fa-eye-slash"></i>'
+                : '<i class="fa-solid fa-eye"></i>';
+            btn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
         });
+    });
 
-        video.srcObject = stream;
-
-    } catch (error) {
-
-        alert("Unable to access webcam.\nPlease allow camera permission.");
-
-        console.error(error);
-
+    function showMessage(text, type) {
+        messageDiv.textContent = text;
+        messageDiv.className = "message-box " + type;
+        messageDiv.style.display = "block";
     }
 
-});
-
-// ==============================
-// CAPTURE PHOTO
-// ==============================
-
-captureBtn.addEventListener("click", () => {
-
-    if (!stream) {
-
-        alert("Please start the camera first.");
-
-        return;
-
+    function clearFieldErrors() {
+        document.querySelectorAll(".field-error").forEach((el) => (el.textContent = ""));
     }
 
-    const context = canvas.getContext("2d");
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    context.drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    capturedImage = canvas.toDataURL("image/png");
-
-    photoPreview.src = capturedImage;
-    photoPreview.style.display = "block";
-
-});
-
-// ==============================
-// SHOW / HIDE PASSWORD
-// ==============================
-
-function togglePassword(id, icon) {
-
-    const input = document.getElementById(id);
-
-    if (input.type === "password") {
-
-        input.type = "text";
-
-        icon.innerHTML = `<i class="fa-solid fa-eye-slash"></i>`;
-
-    } else {
-
-        input.type = "password";
-
-        icon.innerHTML = `<i class="fa-solid fa-eye"></i>`;
-
+    function setLoading(isLoading) {
+        registerBtn.disabled = isLoading;
+        registerBtn.innerHTML = isLoading
+            ? '<i class="fa-solid fa-spinner fa-spin"></i> Registering...'
+            : "<span class=\"btn-label\">Register</span>";
     }
 
-}
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        messageDiv.style.display = "none";
+        clearFieldErrors();
 
-// ==============================
-// EMAIL VALIDATION
-// ==============================
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmInput.value;
+        const photo_data = photoDataInput.value;
 
-function validateEmail(email) {
+        let valid = true;
+        if (name.length < 3) {
+            document.getElementById("name-error").textContent = "Name must be at least 3 characters.";
+            valid = false;
+        }
+        if (!EMAIL_REGEX.test(email)) {
+            document.getElementById("email-error").textContent = "Enter a valid email address.";
+            valid = false;
+        }
+        if (password.length < 8) {
+            document.getElementById("password-error").textContent = "Password must be at least 8 characters.";
+            valid = false;
+        }
+        if (password !== confirmPassword) {
+            document.getElementById("confirmPassword-error").textContent = "Passwords do not match.";
+            valid = false;
+        }
+        if (!photo_data) {
+            document.getElementById("photo-error").textContent = "Please capture your face photo before registering.";
+            valid = false;
+        }
+        if (!valid) return;
 
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        setLoading(true);
+        try {
+            const response = await fetch("/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password, photo_data }),
+            });
+            const result = await response.json().catch(() => ({}));
 
-    return regex.test(email);
+            if (response.ok && result.status === "success") {
+                showMessage(result.message || "Registration successful. Redirecting to login...", "success");
+                setTimeout(() => {
+                    window.location.href = "/login";
+                }, 1800);
+                return;
+            }
 
-}
-
-// ==============================
-// FORM SUBMIT
-// ==============================
-
-registerForm.addEventListener("submit", async function (e) {
-
-    e.preventDefault();
-
-    const name = document.getElementById("name").value.trim();
-
-    const email = document.getElementById("email").value.trim();
-
-    const password = document.getElementById("password").value;
-
-    const confirmPassword =
-        document.getElementById("confirmPassword").value;
-
-    // ------------------------------
-
-    if (name.length < 3) {
-
-        alert("Name must contain at least 3 characters.");
-
-        return;
-
-    }
-
-    if (!validateEmail(email)) {
-
-        alert("Enter a valid email address.");
-
-        return;
-
-    }
-
-    if (password.length < 6) {
-
-        alert("Password must contain at least 6 characters.");
-
-        return;
-
-    }
-
-    if (password !== confirmPassword) {
-
-        alert("Passwords do not match.");
-
-        return;
-
-    }
-
-    if (capturedImage === "") {
-
-        alert("Please capture your photograph.");
-
-        return;
-
-    }
-
-    // ------------------------------
-    // READY FOR BACKEND
-    // ------------------------------
-
-    const candidate = {
-
-        name: name,
-
-        email: email,
-
-        password: password,
-
-        photo: capturedImage
-
-    };
-
-    console.log(candidate);
-
-    // ------------------------------
-    // Flask API
-    // ------------------------------
-
-    /*
-    try{
-
-        const response = await fetch("/register",{
-
-            method:"POST",
-
-            headers:{
-                "Content-Type":"application/json"
-            },
-
-            body:JSON.stringify(candidate)
-
-        });
-
-        const result = await response.json();
-
-        alert(result.message);
-
-    }
-    catch(error){
-
-        console.log(error);
-
-    }
-    */
-
-    alert("Registration form is ready!\nBackend API will be connected later.");
-
-});
+            showMessage(result.message || "Registration failed. Please check your details.", "error");
+        } catch (err) {
+            console.error("Registration request failed:", err);
+            showMessage("Could not reach the server. Please try again.", "error");
+        } finally {
+            setLoading(false);
+        }
+    });
+})();
