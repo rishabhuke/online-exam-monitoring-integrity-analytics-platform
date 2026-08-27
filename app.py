@@ -48,6 +48,8 @@ def get_db_connection():
 @app.route("/api/exam/<int:exam_id>")
 def get_exam(exam_id):
     if "candidate_id" not in session:
+        if "application/json" in request.headers.get("Accept", ""):
+            return jsonify({"status": "error", "message": "Not authenticated"}), 401
         return redirect(url_for("auth.login"))
 
     conn = get_db_connection()

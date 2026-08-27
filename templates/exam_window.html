@@ -37,54 +37,21 @@ Exam Window
         <!-- Question Navigation -->
         <aside class="question-palette">
             <h3>Questions</h3>
-            <div class="palette-grid">
-                <button class="palette-btn active">1</button>
-                <button class="palette-btn">2</button>
-                <button class="palette-btn">3</button>
-                <button class="palette-btn">4</button>
-                <button class="palette-btn">5</button>
-                <button class="palette-btn">6</button>
-                <button class="palette-btn">7</button>
-                <button class="palette-btn">8</button>
-                <button class="palette-btn">9</button>
-                <button class="palette-btn">10</button>
-            </div>
+            <div class="palette-grid" id="paletteGrid"></div>
         </aside>
 
         <!-- Question Area -->
         <div class="question-panel">
             <div class="question-card">
-                <h2>Question 1</h2>
-                <p class="question-text">
-                    Which of the following is not a primitive data type in Java?
-                </p>
+                <h2 id="questionNumber">Loading...</h2>
+                <p class="question-text" id="questionText"></p>
 
-                <div class="options-list">
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="A">
-                        <span>int</span>
-                    </label>
-
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="B">
-                        <span>String</span>
-                    </label>
-
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="C">
-                        <span>boolean</span>
-                    </label>
-
-                    <label class="option-item">
-                        <input type="radio" name="q1" value="D">
-                        <span>double</span>
-                    </label>
-                </div>
+                <div class="options-list" id="optionsList"></div>
             </div>
 
             <div class="question-actions">
-                <button class="nav-btn secondary-btn">Previous</button>
-                <button class="nav-btn primary-btn">Next</button>
+                <button class="nav-btn secondary-btn" id="prevBtn">Previous</button>
+                <button class="nav-btn primary-btn" id="nextBtn">Next</button>
             </div>
         </div>
 
@@ -92,7 +59,7 @@ Exam Window
 
     <!-- ================= SUBMIT BAR ================= -->
     <section class="submit-section">
-        <button class="submit-btn">Submit Exam</button>
+        <button class="submit-btn" id="submitBtn">Submit Exam</button>
     </section>
 
 </div>
