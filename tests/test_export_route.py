@@ -25,6 +25,7 @@ import modules.report_agent as report_agent
 import modules.flags_storage as flags_storage
 import modules.monitoring_storage as monitoring_storage
 import modules.scoring as scoring
+import modules.analytics as analytics
 
 
 @pytest.fixture
@@ -35,6 +36,7 @@ def test_db_and_client(monkeypatch, tmp_path):
     monkeypatch.setattr(flags_storage, "DATABASE", test_db)
     monkeypatch.setattr(monitoring_storage, "DATABASE", test_db)
     monkeypatch.setattr(scoring, "DATABASE", test_db)
+    monkeypatch.setattr(analytics, "DATABASE", test_db)
     monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
 
     import routes.auth as auth_module
@@ -116,7 +118,11 @@ def test_export_json_default_format(test_db_and_client):
     assert "ai_summary" in body
     assert "summary" in body["ai_summary"]
     assert "risk_label" in body["ai_summary"]
-    assert body["cluster_assignment"] is None
+    # Cohort here is just 1 candidate (below n_clusters=3 default), so
+    # this hits the "Insufficient Data" branch: a dict, not None.
+    assert body["cluster_assignment"] is not None
+    assert body["cluster_assignment"]["candidate_id"] == 2
+    assert body["cluster_assignment"]["cluster_risk_label"] == "Insufficient Data"
 
 
 def test_export_json_explicit_format(test_db_and_client):
