@@ -7,12 +7,6 @@ monitoring_bp = Blueprint(
     url_prefix="/api/monitoring"
 )
 
-monitoring_bp = Blueprint(
-    "monitoring",
-    __name__,
-    url_prefix="/api/monitoring"
-)
-
 
 @monitoring_bp.route("/face-event", methods=["POST"])
 def create_face_event():
@@ -61,6 +55,9 @@ def create_browser_event():
 
     candidate_id = int(session["candidate_id"])
     exam_id = int(data["exam_id"])
+    # Normalized once here so both storage (persisted event_type) and
+    # detection dispatch (tab_switch/focus_loss below) see consistent
+    # casing, regardless of what the frontend sends.
     event_type_normalized = str(data["event_type"]).strip().lower()
 
     event = monitoring_storage.create_browser_event(
@@ -74,6 +71,8 @@ def create_browser_event():
     flags_raised = []
     if event_type_normalized == "tab_switch":
         flags_raised = detection_engine.evaluate_tab_switches(candidate_id, exam_id)
+    elif event_type_normalized == "focus_loss":
+        flags_raised = detection_engine.evaluate_focus_loss(candidate_id, exam_id)
 
     return jsonify({
         "status": "success",

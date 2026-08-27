@@ -276,6 +276,52 @@ def test_evaluate_tab_switches_ignores_other_event_types(isolated_db):
     assert detection_engine.evaluate_tab_switches(1, 1) == []
 
 
+def test_evaluate_focus_loss_below_threshold_raises_nothing(isolated_db):
+    monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
+    assert detection_engine.evaluate_focus_loss(1, 1) == []
+    assert detection_engine.get_flags(1, 1) == []
+
+
+def test_evaluate_focus_loss_above_threshold_raises_flag(isolated_db, monkeypatch):
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_focus_loss_count": 2,
+    })
+
+    monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
+    assert detection_engine.evaluate_focus_loss(1, 1) == []
+
+    monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
+    raised = detection_engine.evaluate_focus_loss(1, 1)
+
+    assert "excessive_focus_loss" in raised
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["flag_type"] == "excessive_focus_loss"
+    assert flags[0]["severity"] == "low"
+
+
+def test_evaluate_focus_loss_ignores_other_event_types(isolated_db):
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    assert detection_engine.evaluate_focus_loss(1, 1) == []
+
+
+def test_evaluate_focus_loss_counts_case_insensitively(isolated_db, monkeypatch):
+    """Mirrors the real frontend payload shape (exam_window.js sends
+    'FOCUS_LOSS', uppercase) - evaluate_focus_loss() must count these
+    regardless of the storage layer's casing."""
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_focus_loss_count": 2,
+    })
+
+    monitoring_storage.create_browser_event(1, 1, event_type="FOCUS_LOSS")
+    monitoring_storage.create_browser_event(1, 1, event_type="FOCUS_LOSS")
+    raised = detection_engine.evaluate_focus_loss(1, 1)
+
+    assert "excessive_focus_loss" in raised
+
+
 # ---------------------------------------------------------------------------
 # Regression test for the browser-event event_type casing bug (fix/browser-
 # event-type-casing). The real frontend (exam_window.js) sends "TAB_SWITCH"
@@ -283,6 +329,10 @@ def test_evaluate_tab_switches_ignores_other_event_types(isolated_db):
 # compared against lowercase "tab_switch" only, so flags never fired in
 # production even though every existing test passed (they all constructed
 # events with lowercase strings directly, bypassing the real bug).
+#
+# HTTP-level tests below prove both routes/monitoring.py dispatch paths
+# (tab_switch and focus_loss) work correctly against the real frontend
+# payload casing.
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
@@ -350,3 +400,33 @@ def test_uppercase_tab_switch_from_frontend_raises_flag(http_isolated_db, monkey
     flags = detection_engine.get_flags(1, 1)
     assert len(flags) == 1
     assert flags[0]["flag_type"] == "excessive_tab_switching"
+
+
+def test_uppercase_focus_loss_from_frontend_raises_flag(http_isolated_db, monkeypatch):
+    """Reproduces the real frontend payload shape (exam_window.js sends
+    'FOCUS_LOSS', uppercase) through the actual HTTP route, and asserts a
+    flag is raised once the threshold is crossed."""
+    client = http_isolated_db
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_focus_loss_count": 2,
+    })
+
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp1 = client.post("/api/monitoring/browser-event", json={
+        "exam_id": 1, "event_type": "FOCUS_LOSS", "details": "Exam window lost focus."
+    })
+    assert resp1.status_code == 201
+    assert resp1.get_json()["flags_raised"] == []
+
+    resp2 = client.post("/api/monitoring/browser-event", json={
+        "exam_id": 1, "event_type": "FOCUS_LOSS", "details": "Exam window lost focus."
+    })
+    assert resp2.status_code == 201
+    body = resp2.get_json()
+    assert "excessive_focus_loss" in body["flags_raised"]
+
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["flag_type"] == "excessive_focus_loss"
