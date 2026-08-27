@@ -274,3 +274,79 @@ def test_evaluate_tab_switches_ignores_other_event_types(isolated_db):
     monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
     monitoring_storage.create_browser_event(1, 1, event_type="focus_loss")
     assert detection_engine.evaluate_tab_switches(1, 1) == []
+
+
+# ---------------------------------------------------------------------------
+# Regression test for the browser-event event_type casing bug (fix/browser-
+# event-type-casing). The real frontend (exam_window.js) sends "TAB_SWITCH"
+# (uppercase), but routes/monitoring.py and detection_engine.py originally
+# compared against lowercase "tab_switch" only, so flags never fired in
+# production even though every existing test passed (they all constructed
+# events with lowercase strings directly, bypassing the real bug).
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def http_isolated_db(monkeypatch, tmp_path):
+    """Same isolation as isolated_db, but also patches app.DATABASE and
+    returns a Flask test client, since this test needs to go through the
+    real HTTP route (routes/monitoring.py) rather than calling storage/
+    detection functions directly."""
+    import app as app_module
+
+    test_db = tmp_path / "test_http.db"
+    monkeypatch.setattr(app_module, "DATABASE", test_db)
+    monkeypatch.setattr(photo_capture, "DATABASE", test_db)
+    monkeypatch.setattr(detection_engine, "DATABASE", test_db)
+    monkeypatch.setattr(flags_storage, "DATABASE", test_db)
+    monkeypatch.setattr(monitoring_storage, "DATABASE", test_db)
+
+    conn = sqlite3.connect(test_db)
+    conn.execute("PRAGMA foreign_keys = ON")
+    schema_path = os.path.join(os.path.dirname(__file__), "..", "database", "schema.sql")
+    with open(schema_path) as f:
+        conn.executescript(f.read())
+
+    conn.execute(
+        "INSERT INTO Candidates (id, name, email, password_hash) VALUES (1, 'Test Candidate', 'candidate@example.com', 'hash')"
+    )
+    conn.execute(
+        "INSERT INTO Exams (id, title, duration) VALUES (1, 'Test Exam', 60)"
+    )
+    conn.commit()
+    conn.close()
+
+    app_module.app.config["TESTING"] = True
+    with app_module.app.test_client() as client:
+        yield client
+
+
+def test_uppercase_tab_switch_from_frontend_raises_flag(http_isolated_db, monkeypatch):
+    """Reproduces the real frontend payload shape (exam_window.js sends
+    'TAB_SWITCH', uppercase) through the actual HTTP route, and asserts a
+    flag is raised once the threshold is crossed. Before the casing fix,
+    this failed silently: the event was stored but 'flags_raised' was
+    always [] because 'TAB_SWITCH' != 'tab_switch'."""
+    client = http_isolated_db
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "max_tab_switches": 2,
+    })
+
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp1 = client.post("/api/monitoring/browser-event", json={
+        "exam_id": 1, "event_type": "TAB_SWITCH", "details": "Exam page became hidden."
+    })
+    assert resp1.status_code == 201
+    assert resp1.get_json()["flags_raised"] == []
+
+    resp2 = client.post("/api/monitoring/browser-event", json={
+        "exam_id": 1, "event_type": "TAB_SWITCH", "details": "Exam page became hidden."
+    })
+    assert resp2.status_code == 201
+    body = resp2.get_json()
+    assert "excessive_tab_switching" in body["flags_raised"]
+
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["flag_type"] == "excessive_tab_switching"
