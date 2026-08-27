@@ -5,6 +5,7 @@ Invigilator Dashboard
 {% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/invigilator_dashboard.css') }}">
 {% endblock %}
 
@@ -13,47 +14,113 @@ Invigilator Dashboard
 <div class="invig-dashboard-container">
 
     <section class="invig-welcome-card">
+        <span class="home-eyebrow">Integrity Analytics</span>
         <h1><i class="fa-solid fa-user-shield"></i> Invigilator Dashboard</h1>
         <p>Select an exam to review cohort integrity analytics.</p>
     </section>
 
     <section class="invig-controls">
-        <label for="exam-select">Exam:</label>
+        <label for="exam-select">Exam</label>
         <select id="exam-select">
             <option value="">Loading exams...</option>
         </select>
-        <span id="cohort-summary"></span>
+        <span id="cohort-summary" aria-live="polite"></span>
+    </section>
+
+    <section class="invig-kpi-grid" id="kpi-grid" aria-live="polite">
+        <div class="invig-kpi-card">
+            <div class="invig-kpi-icon"><i class="fa-solid fa-users"></i></div>
+            <div>
+                <div class="invig-kpi-value" id="kpi-total">—</div>
+                <div class="invig-kpi-label">Total Candidates</div>
+            </div>
+        </div>
+        <div class="invig-kpi-card kpi-high">
+            <div class="invig-kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div>
+                <div class="invig-kpi-value" id="kpi-high">—</div>
+                <div class="invig-kpi-label">High Risk</div>
+            </div>
+        </div>
+        <div class="invig-kpi-card kpi-medium">
+            <div class="invig-kpi-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <div>
+                <div class="invig-kpi-value" id="kpi-medium">—</div>
+                <div class="invig-kpi-label">Medium Risk</div>
+            </div>
+        </div>
+        <div class="invig-kpi-card kpi-low">
+            <div class="invig-kpi-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div>
+                <div class="invig-kpi-value" id="kpi-low">—</div>
+                <div class="invig-kpi-label">Low Risk</div>
+            </div>
+        </div>
+        <div class="invig-kpi-card">
+            <div class="invig-kpi-icon"><i class="fa-solid fa-flag"></i></div>
+            <div>
+                <div class="invig-kpi-value" id="kpi-events">—</div>
+                <div class="invig-kpi-label">Integrity Events</div>
+            </div>
+        </div>
     </section>
 
     <section class="invig-charts-grid">
 
         <div class="invig-chart-card">
-            <h3>Integrity Score Distribution</h3>
-            <canvas id="distribution-chart"></canvas>
+            <h3 id="distribution-heading">Integrity Score Distribution</h3>
+            <canvas id="distribution-chart" role="img" aria-labelledby="distribution-heading" aria-describedby="distribution-desc"></canvas>
+            <p id="distribution-desc" class="sr-only">Bar chart showing how many candidates fall into each integrity score range for the selected exam.</p>
         </div>
 
         <div class="invig-chart-card">
-            <h3>Event Frequency Heatmap</h3>
-            <div id="heatmap-container"></div>
+            <h3 id="heatmap-heading">Event Frequency Heatmap</h3>
+            <div id="heatmap-container" role="table" aria-labelledby="heatmap-heading"></div>
         </div>
 
         <div class="invig-chart-card">
-            <h3>Cohort Risk Clusters</h3>
-            <canvas id="cluster-chart"></canvas>
+            <h3 id="cluster-heading">Cohort Risk Clusters</h3>
+            <canvas id="cluster-chart" role="img" aria-labelledby="cluster-heading" aria-describedby="cluster-desc"></canvas>
+            <p id="cluster-desc" class="sr-only">Scatter plot of each candidate's integrity score, colored by risk cluster: green for low risk, amber for medium, red for high.</p>
+            <div class="invig-legend" aria-hidden="true">
+                <span><i class="legend-dot" style="background:#16a34a"></i>Low</span>
+                <span><i class="legend-dot" style="background:#d97706"></i>Medium</span>
+                <span><i class="legend-dot" style="background:#dc2626"></i>High</span>
+            </div>
         </div>
 
     </section>
 
     <section class="invig-table-card">
-        <h3>Candidates</h3>
-        <table id="candidates-table">
+        <h3 id="events-heading">Recent Integrity Events</h3>
+        <table id="events-table" aria-labelledby="events-heading">
+            <caption class="sr-only">Most recent integrity events detected for the selected exam.</caption>
             <thead>
                 <tr>
-                    <th>Candidate ID</th>
-                    <th>Integrity Score</th>
-                    <th>Risk Label</th>
-                    <th>Cluster Risk</th>
-                    <th>Export</th>
+                    <th scope="col">Candidate</th>
+                    <th scope="col">Event</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Severity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="4" class="invig-empty-row">Select an exam to view events.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="invig-table-card">
+        <h3 id="candidates-heading">Candidate Monitoring</h3>
+        <table id="candidates-table" aria-labelledby="candidates-heading">
+            <caption class="sr-only">Per-candidate integrity score, risk level, and monitoring status for the selected exam.</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Candidate</th>
+                    <th scope="col">Integrity Score</th>
+                    <th scope="col">Risk</th>
+                    <th scope="col">Cluster Risk</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Action</th>
                 </tr>
             </thead>
             <tbody></tbody>
