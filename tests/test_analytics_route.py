@@ -212,3 +212,20 @@ def test_clusters_insufficient_data_for_small_cohort(test_db_and_client):
     body = resp.get_json()
     assert body["cohort_size"] == 0
     assert body["assignments"] == []
+
+
+def test_get_exams_requires_invigilator_auth(test_db_and_client):
+    client, _ = test_db_and_client
+    resp = client.get("/api/analytics/exams")
+    assert resp.status_code == 401
+
+
+def test_get_exams_returns_seeded_exam(test_db_and_client):
+    client, _ = test_db_and_client
+    _login_invigilator(client)
+
+    resp = client.get("/api/analytics/exams")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["status"] == "success"
+    assert {"id": 101, "title": "Python Fundamentals Exam", "duration": 60} in body["exams"]

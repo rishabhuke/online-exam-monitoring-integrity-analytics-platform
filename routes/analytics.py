@@ -16,6 +16,14 @@ from routes.auth import invigilator_required
 analytics_bp = Blueprint("analytics", __name__, url_prefix="/api/analytics")
 
 
+@analytics_bp.route("/exams", methods=["GET"])
+@invigilator_required
+def get_exams():
+    """All exams, for populating the invigilator dashboard's exam selector."""
+    result = analytics.list_exams()
+    return jsonify({"status": "success", "exams": result}), 200
+
+
 @analytics_bp.route("/distribution/<int:exam_id>", methods=["GET"])
 @invigilator_required
 def get_distribution(exam_id):
