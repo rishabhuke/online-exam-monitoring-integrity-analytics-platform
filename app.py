@@ -8,7 +8,7 @@ from routes.pages import pages_bp
 from routes.exam import exam_bp
 from routes.flags import flags_bp
 from routes.monitoring import monitoring_bp
-from routes.report import report_bp
+from routes.report import report_bp, score_bp
 from routes.alert_evidence import alert_evidence_bp
 
 app = Flask(__name__)
@@ -22,6 +22,7 @@ app.register_blueprint(exam_bp)
 app.register_blueprint(flags_bp)
 app.register_blueprint(monitoring_bp)
 app.register_blueprint(report_bp)
+app.register_blueprint(score_bp)
 app.register_blueprint(alert_evidence_bp)
 
 BASE_DIR = Path(__file__).resolve().parent
