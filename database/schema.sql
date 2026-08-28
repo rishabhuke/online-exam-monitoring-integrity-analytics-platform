@@ -103,3 +103,24 @@ CREATE TABLE IF NOT EXISTS Invigilators (
     password_hash TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ExamAttempts Table
+-- Represents one completed, graded attempt at an exam. Answers (above)
+-- are the raw per-question selections a candidate submitted; this table
+-- is the derived summary - score/percentage/status - computed once at
+-- submit_exam time. Needed because Answers alone has no concept of "this
+-- group of rows constitutes one finished attempt" (no timestamp, no
+-- submission boundary), which /results needs to display real completed
+-- exams instead of a hardcoded table.
+CREATE TABLE IF NOT EXISTS ExamAttempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id INTEGER NOT NULL,
+    exam_id INTEGER NOT NULL,
+    score INTEGER NOT NULL,
+    total_questions INTEGER NOT NULL,
+    percentage REAL NOT NULL,
+    status TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
+    FOREIGN KEY(exam_id) REFERENCES Exams(id)
+);

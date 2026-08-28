@@ -137,6 +137,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const payload = {
+            exam_id: EXAM_ID,
             answers: Object.entries(answers).map(([questionId, selectedOption]) => ({
                 question_id: Number(questionId),
                 selected_option: selectedOption
