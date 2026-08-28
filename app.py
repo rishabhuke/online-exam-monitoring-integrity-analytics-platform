@@ -13,7 +13,7 @@ from routes.pages import pages_bp
 from routes.exam import exam_bp
 from routes.flags import flags_bp
 from routes.monitoring import monitoring_bp
-from routes.report import report_bp, score_bp
+from routes.report import report_bp, score_bp, attempt_bp
 from routes.export import export_bp
 from routes.analytics import analytics_bp
 from routes.alert_evidence import alert_evidence_bp
@@ -30,6 +30,7 @@ app.register_blueprint(flags_bp)
 app.register_blueprint(monitoring_bp)
 app.register_blueprint(report_bp)
 app.register_blueprint(score_bp)
+app.register_blueprint(attempt_bp)
 app.register_blueprint(export_bp)
 app.register_blueprint(analytics_bp)
 app.register_blueprint(alert_evidence_bp)

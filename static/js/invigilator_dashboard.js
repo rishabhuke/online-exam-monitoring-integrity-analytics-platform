@@ -163,15 +163,36 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function renderTable(clusters, examId) {
+    function renderExamResultCell(attempt) {
+        if (!attempt || !attempt.submitted) {
+            return '<span class="status-pill status-pill-muted">Not submitted</span>';
+        }
+        const resultClass = attempt.result === "Passed" ? "risk-low" : "risk-high";
+        return `
+            <span class="risk-badge ${resultClass}">${attempt.result}</span>
+            <div class="exam-result-detail">${attempt.score}/${attempt.total_questions} (${attempt.percentage}%)</div>
+        `;
+    }
+
+    async function renderTable(clusters, examId) {
         tableBody.innerHTML = "";
-        clusters.assignments.forEach(a => {
+
+        const assignments = clusters.assignments || [];
+        const attempts = await Promise.all(
+            assignments.map(a =>
+                fetchJSON(`/api/attempt/dashboard/${a.candidate_id}/${examId}`).catch(() => null)
+            )
+        );
+
+        assignments.forEach((a, i) => {
+            const attempt = attempts[i];
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>#${a.candidate_id}</td>
                 <td>${a.integrity_score}</td>
                 <td><span class="risk-badge ${riskClass(a.risk_label)}">${a.risk_label}</span></td>
                 <td><span class="risk-badge ${riskClass(a.cluster_risk_label)}">${a.cluster_risk_label}</span></td>
+                <td>${renderExamResultCell(attempt)}</td>
                 <td><span class="status-pill">Monitored</span></td>
                 <td><a class="table-action" href="/api/export/${a.candidate_id}/${examId}?format=csv">Export CSV</a></td>
             `;
@@ -225,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderDistributionChart(dist);
             renderHeatmap(heatmap);
             renderClusterChart(clusters);
-            renderTable(clusters, examId);
+            await renderTable(clusters, examId);
             renderKPIs(clusters, flagsResult.count ?? (flagsResult.flags || []).length);
             renderEvents(flagsResult.flags);
         } catch (err) {

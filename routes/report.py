@@ -8,7 +8,7 @@ as routes/monitoring.py and routes/flags.py.
 
 from flask import Blueprint, jsonify, session
 
-from modules import report_agent, scoring
+from modules import report_agent, scoring, grading
 from routes.auth import invigilator_required
 
 report_bp = Blueprint("report", __name__, url_prefix="/api/report")
@@ -71,4 +71,30 @@ def get_dashboard_score(candidate_id, exam_id):
     invigilator can call this, not just any candidate.
     """
     result = scoring.calculate_session_score(candidate_id, exam_id)
+    return jsonify({"status": "success", **result}), 200
+
+
+# ---------------------------------------------------------------------------
+# Exam Attempt / Grading Summary API
+#
+# Separate concern from the Integrity Score API above - this exposes
+# modules.grading.get_exam_attempt_summary() (exam correctness/completion),
+# not proctoring signal. Invigilator-only: no candidate self-service route,
+# since /api/results already serves that need for the candidate's own view.
+# ---------------------------------------------------------------------------
+
+attempt_bp = Blueprint("attempt", __name__, url_prefix="/api/attempt")
+
+
+@attempt_bp.route("/dashboard/<int:candidate_id>/<int:exam_id>", methods=["GET"])
+@invigilator_required
+def get_dashboard_attempt(candidate_id, exam_id):
+    """
+    Returns an ARBITRARY candidate's exam attempt/grading summary, for the
+    invigilator dashboard.
+
+    Gated by @invigilator_required (routes/auth.py) - only a logged-in
+    invigilator can call this, not just any candidate.
+    """
+    result = grading.get_exam_attempt_summary(candidate_id, exam_id)
     return jsonify({"status": "success", **result}), 200
