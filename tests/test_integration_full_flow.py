@@ -152,10 +152,15 @@ def test_full_candidate_journey_end_to_end(client):
 
     # --- 5. Submit exam answers -------------------------------------------
     resp = client.post("/submit_exam", json={
+        "exam_id": exam_id,
         "answers": [{"question_id": 1, "selected_option": "b"}]
     })
     assert resp.status_code == 200
-    assert resp.get_json()["status"] == "success"
+    submit_body = resp.get_json()
+    assert submit_body["status"] == "success"
+    assert submit_body["score"] == 1
+    assert submit_body["total_questions"] == 1
+    assert submit_body["result"] == "Passed"
 
     # --- 6. End monitoring (flush any open interval) ----------------------
     resp = client.post(f"/api/exam/{exam_id}/end_monitoring")

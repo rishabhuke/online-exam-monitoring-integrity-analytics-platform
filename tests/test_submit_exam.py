@@ -69,6 +69,7 @@ def test_submit_exam_success(client, tmp_path):
         sess["candidate_id"] = 1
 
     payload = {
+        "exam_id": 101,
         "answers": [
             {"question_id": 10, "selected_option": "b"}
         ]
@@ -80,6 +81,10 @@ def test_submit_exam_success(client, tmp_path):
     assert data["status"] == "success"
     assert data["message"] == "Answers submitted successfully"
     assert _get_answers_count(db_path) == 1
+    assert data["score"] == 1
+    assert data["total_questions"] == 1
+    assert data["percentage"] == 100.0
+    assert data["result"] == "Passed"
 
 
 def test_submit_exam_partial_answers_saves_only_provided(client, tmp_path):
@@ -103,6 +108,7 @@ def test_submit_exam_partial_answers_saves_only_provided(client, tmp_path):
         sess["candidate_id"] = 1
 
     payload = {
+        "exam_id": 101,
         "answers": [
             {"question_id": 10, "selected_option": "b"}
         ]
@@ -113,6 +119,14 @@ def test_submit_exam_partial_answers_saves_only_provided(client, tmp_path):
     data = response.get_json()
     assert data["status"] == "success"
     assert _get_answers_count(db_path) == 1
+
+    # 3 questions now exist for exam 101 (10, 11, 12); only 1 was answered
+    # (and correctly, per the fixture's correct_option='b' for question 10),
+    # so score should reflect the unanswered ones as wrong, not excluded.
+    assert data["score"] == 1
+    assert data["total_questions"] == 3
+    assert data["percentage"] == round(1 / 3 * 100, 2)
+    assert data["result"] == "Failed"
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -204,6 +218,7 @@ def test_submit_exam_malformed_answers_skipped(client, tmp_path):
         sess["candidate_id"] = 1
 
     payload = {
+        "exam_id": 101,
         "answers": [
             {"wrong_sub_key": 10},  # malformed, should be skipped
             {"question_id": 10, "selected_option": "b"}  # valid

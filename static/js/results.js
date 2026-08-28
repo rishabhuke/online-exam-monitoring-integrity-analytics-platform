@@ -2,9 +2,67 @@ document.addEventListener("DOMContentLoaded", function () {
     const searchInput = document.getElementById("resultSearch");
     const statusFilter = document.getElementById("statusFilter");
     const tableBody = document.getElementById("resultsTableBody");
-    const rows = Array.from(tableBody.querySelectorAll("tr"));
     const noResultsMessage = document.getElementById("noResultsMessage");
-    const reportButtons = document.querySelectorAll(".table-action-btn");
+    const totalExamsCount = document.getElementById("totalExamsCount");
+    const passedCount = document.getElementById("passedCount");
+    const avgScore = document.getElementById("avgScore");
+
+    let rows = [];
+
+    async function fetchJSON(url) {
+        const resp = await fetch(url, {
+            headers: { "Accept": "application/json" }
+        });
+        if (!resp.ok) {
+            throw new Error(`Request to ${url} failed with status ${resp.status}`);
+        }
+        return resp.json();
+    }
+
+    function formatDate(isoString) {
+        const date = new Date(isoString.replace(" ", "T"));
+        if (isNaN(date)) return isoString;
+        return date.toLocaleDateString("en-US", {
+            day: "numeric", month: "long", year: "numeric"
+        });
+    }
+
+    function renderSummary(attempts) {
+        const total = attempts.length;
+        const passed = attempts.filter(a => a.status === "Passed").length;
+        const avg = total > 0
+            ? Math.round(attempts.reduce((sum, a) => sum + a.percentage, 0) / total)
+            : 0;
+
+        totalExamsCount.textContent = total;
+        passedCount.textContent = passed;
+        avgScore.textContent = `${avg}%`;
+    }
+
+    function renderTable(attempts) {
+        tableBody.innerHTML = "";
+
+        attempts.forEach(a => {
+            const statusLower = a.status.toLowerCase();
+
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-status", statusLower);
+
+            tr.innerHTML = `
+                <td>${a.title}</td>
+                <td>${formatDate(a.created_at)}</td>
+                <td>${a.score} / ${a.total_questions}</td>
+                <td>${a.percentage}%</td>
+                <td><span class="status-badge ${statusLower}-badge">${a.status}</span></td>
+                <td><a href="#" class="table-action-btn">View Report</a></td>
+            `;
+
+            tableBody.appendChild(tr);
+        });
+
+        rows = Array.from(tableBody.querySelectorAll("tr"));
+        attachReportButtonHandlers();
+    }
 
     function filterResults() {
         const searchValue = searchInput.value.trim().toLowerCase();
@@ -31,6 +89,30 @@ document.addEventListener("DOMContentLoaded", function () {
         noResultsMessage.style.display = visibleCount === 0 ? "block" : "none";
     }
 
+    function attachReportButtonHandlers() {
+        document.querySelectorAll(".table-action-btn").forEach(button => {
+            button.addEventListener("click", function (e) {
+                e.preventDefault();
+                const row = this.closest("tr");
+                const examName = row.cells[0].textContent.trim();
+                alert(`Detailed report for "${examName}" will open here.`);
+            });
+        });
+    }
+
+    async function loadResults() {
+        try {
+            const attempts = await fetchJSON("/api/results");
+            renderSummary(attempts);
+            renderTable(attempts);
+            filterResults();
+        } catch (err) {
+            console.error(err);
+            tableBody.innerHTML = "";
+            noResultsMessage.style.display = "block";
+        }
+    }
+
     if (searchInput) {
         searchInput.addEventListener("input", filterResults);
     }
@@ -39,14 +121,5 @@ document.addEventListener("DOMContentLoaded", function () {
         statusFilter.addEventListener("change", filterResults);
     }
 
-    reportButtons.forEach(button => {
-        button.addEventListener("click", function (e) {
-            e.preventDefault();
-
-            const row = this.closest("tr");
-            const examName = row.cells[0].textContent.trim();
-
-            alert(`Detailed report for "${examName}" will open here.`);
-        });
-    });
+    loadResults();
 });
