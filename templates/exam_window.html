@@ -5,15 +5,17 @@ Exam Window
 {% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/exam_window.css') }}">
 {% endblock %}
 
 {% block content %}
 
-<!-- Hidden capture elements for face presence monitoring (Milestone 2).
-     Owner: Rishabh. Not meant to be visible - Prashanthi, if we want a
-     visible "monitoring active" indicator later, it can live here too. -->
-<video id="face-monitor-video" autoplay style="display:none;"></video>
+<!-- Capture elements for face presence monitoring (Milestone 2).
+     face-monitor-video is now also used as the candidate's small live
+     self-preview (see .webcam-preview-box in exam_window.css) - same
+     single stream, just no longer hidden. face-monitor-canvas stays
+     hidden; it's only an off-screen buffer for frame snapshots. -->
 <canvas id="face-monitor-canvas" style="display:none;"></canvas>
 
 <div class="exam-window-container">
@@ -21,15 +23,35 @@ Exam Window
     <!-- ================= EXAM HEADER ================= -->
     <section class="exam-header-card">
         <div class="exam-header-left">
-            <h1>Java Programming Assessment</h1>
+            <h1>{{ exam.title }}</h1>
             <p>Read each question carefully and choose the correct answer.</p>
         </div>
 
-        <div class="exam-timer-box">
+        <div class="exam-timer-box" data-duration-minutes="{{ exam.duration }}">
             <h3>Time Left</h3>
-            <div id="examTimer">60:00</div>
+            <div id="examTimer">--:--</div>
+        </div>
+
+        <div class="exam-monitoring-panel" id="monitoringBar" role="status" aria-live="polite">
+            <div class="monitoring-panel-label" id="statusIntegrity">
+                <i class="fa-solid fa-circle status-dot"></i>
+                <span class="status-text">Monitoring Active</span>
+            </div>
+            <div class="webcam-preview-box" id="webcamPreviewBox">
+                <video id="face-monitor-video" autoplay muted playsinline></video>
+                <div class="webcam-preview-fallback" id="webcamPreviewFallback" hidden>
+                    <i class="fa-solid fa-video-slash"></i>
+                    <span>Camera unavailable</span>
+                </div>
+            </div>
+            <div class="monitoring-panel-details">
+                <span id="statusCamera"><i class="fa-solid fa-video"></i> <span class="status-text">Connecting...</span></span>
+                <span id="statusMic"><i class="fa-solid fa-microphone"></i> <span class="status-text">Connecting...</span></span>
+            </div>
         </div>
     </section>
+
+    <div id="monitoringWarning" class="monitoring-warning" hidden></div>
 
     <!-- ================= EXAM BODY ================= -->
     <section class="exam-body">
@@ -37,7 +59,13 @@ Exam Window
         <!-- Question Navigation -->
         <aside class="question-palette">
             <h3>Questions</h3>
+            <div class="palette-legend">
+                <span><i class="legend-swatch legend-current"></i>Current</span>
+                <span><i class="legend-swatch legend-answered"></i>Answered</span>
+                <span><i class="legend-swatch legend-unanswered"></i>Unanswered</span>
+            </div>
             <div class="palette-grid" id="paletteGrid"></div>
+            <div class="palette-progress" id="paletteProgress"></div>
         </aside>
 
         <!-- Question Area -->
@@ -62,6 +90,18 @@ Exam Window
         <button class="submit-btn" id="submitBtn">Submit Exam</button>
     </section>
 
+</div>
+
+<!-- ================= SUBMIT CONFIRMATION MODAL ================= -->
+<div class="exam-modal-overlay" id="submitModalOverlay" hidden>
+    <div class="exam-modal" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
+        <h3 id="submitModalTitle">Submit Exam?</h3>
+        <p id="submitModalBody"></p>
+        <div class="exam-modal-actions">
+            <button class="nav-btn secondary-btn" id="continueExamBtn">Continue Exam</button>
+            <button class="nav-btn primary-btn" id="confirmSubmitBtn">Submit Exam</button>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
