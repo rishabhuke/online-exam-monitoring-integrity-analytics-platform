@@ -1,6 +1,19 @@
 document.addEventListener("DOMContentLoaded", function () {
-    let totalSeconds = 60 * 60; // 60 minutes
+    // ==========================================================
+    // Timer - reads the real exam duration from the server-rendered
+    // data attribute instead of a hardcoded 60 minutes.
+    // ==========================================================
+    const timerBox = document.querySelector(".exam-timer-box");
+    const durationMinutes = timerBox ? parseInt(timerBox.dataset.durationMinutes, 10) || 60 : 60;
+    let totalSeconds = durationMinutes * 60;
     const timerElement = document.getElementById("examTimer");
+    const monitoringWarning = document.getElementById("monitoringWarning");
+
+    function showWarning(message) {
+        if (!monitoringWarning) return;
+        monitoringWarning.textContent = message;
+        monitoringWarning.hidden = false;
+    }
 
     function updateTimer() {
         const minutes = Math.floor(totalSeconds / 60);
@@ -9,11 +22,13 @@ document.addEventListener("DOMContentLoaded", function () {
         timerElement.textContent =
             `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
+        timerElement.classList.toggle("timer-critical", totalSeconds <= 300 && totalSeconds > 0);
+
         if (totalSeconds > 0) {
             totalSeconds--;
         } else {
             clearInterval(timerInterval);
-            alert("Time is up! Your exam will be submitted.");
+            showWarning("Time is up. Your exam is being submitted automatically.");
             submitExam(true);
         }
     }
@@ -21,11 +36,12 @@ document.addEventListener("DOMContentLoaded", function () {
     updateTimer();
     const timerInterval = setInterval(updateTimer, 1000);
 
-    // ==========================================
+    // ==========================================================
     // Question loading, rendering, navigation
-    // ==========================================
+    // ==========================================================
 
     const paletteGrid = document.getElementById("paletteGrid");
+    const paletteProgress = document.getElementById("paletteProgress");
     const questionNumber = document.getElementById("questionNumber");
     const questionText = document.getElementById("questionText");
     const optionsList = document.getElementById("optionsList");
@@ -51,28 +67,40 @@ document.addEventListener("DOMContentLoaded", function () {
         questions.forEach((q, i) => {
             const btn = document.createElement("button");
             btn.className = "palette-btn";
+            btn.type = "button";
+            const isAnswered = Boolean(answers[q.id]);
             if (i === currentIndex) btn.classList.add("active");
-            if (answers[q.id]) btn.classList.add("answered");
+            if (isAnswered) btn.classList.add("answered");
             btn.textContent = i + 1;
+            btn.setAttribute(
+                "aria-label",
+                `Question ${i + 1}${isAnswered ? ", answered" : ", not answered yet"}${i === currentIndex ? ", current question" : ""}`
+            );
             btn.addEventListener("click", () => {
                 currentIndex = i;
                 renderQuestion();
             });
             paletteGrid.appendChild(btn);
         });
+
+        if (paletteProgress) {
+            const answeredCount = Object.keys(answers).length;
+            paletteProgress.textContent = `${answeredCount} of ${questions.length} answered`;
+        }
     }
 
     function renderQuestion() {
         const q = questions[currentIndex];
         if (!q) return;
 
-        questionNumber.textContent = `Question ${currentIndex + 1}`;
+        questionNumber.textContent = `Question ${currentIndex + 1} of ${questions.length}`;
         questionText.textContent = q.question;
 
         optionsList.innerHTML = "";
         [["a", q.option_a], ["b", q.option_b], ["c", q.option_c], ["d", q.option_d]].forEach(([letter, text]) => {
             const label = document.createElement("label");
             label.className = "option-item";
+            if (answers[q.id] === letter) label.classList.add("selected");
 
             const input = document.createElement("input");
             input.type = "radio";
@@ -81,6 +109,8 @@ document.addEventListener("DOMContentLoaded", function () {
             if (answers[q.id] === letter) input.checked = true;
             input.addEventListener("change", () => {
                 answers[q.id] = letter;
+                optionsList.querySelectorAll(".option-item").forEach(el => el.classList.remove("selected"));
+                label.classList.add("selected");
                 renderPalette();
             });
 
@@ -103,12 +133,18 @@ document.addEventListener("DOMContentLoaded", function () {
             questions = await fetchJSON(`/api/exam/${EXAM_ID}`);
             if (questions.length === 0) {
                 questionNumber.textContent = "No questions available";
-                questionText.textContent = "";
+                questionText.textContent = "This exam has no questions configured yet. Please contact your invigilator.";
+                submitBtn.disabled = true;
+                submitBtn.textContent = "No Questions to Submit";
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
                 return;
             }
             renderQuestion();
         } catch (err) {
             questionNumber.textContent = "Failed to load exam";
+            questionText.textContent = "Please refresh the page. If this keeps happening, contact your invigilator.";
+            submitBtn.disabled = true;
             console.error(err);
         }
     }
@@ -127,15 +163,50 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    async function submitExam(auto) {
+    // ==========================================================
+    // Submission - confirmation modal (no window.confirm/alert)
+    // ==========================================================
+
+    const submitBtn = document.getElementById("submitBtn");
+    const modalOverlay = document.getElementById("submitModalOverlay");
+    const modalBody = document.getElementById("submitModalBody");
+    const continueExamBtn = document.getElementById("continueExamBtn");
+    const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
+
+    function openSubmitModal() {
+        if (monitoringWarning) monitoringWarning.hidden = true;
         const unanswered = questions.length - Object.keys(answers).length;
-
-        if (!auto && unanswered > 0) {
+        const answered = questions.length - unanswered;
+        if (unanswered > 0) {
             const noun = unanswered === 1 ? "question" : "questions";
-            const proceed = confirm(`You have ${unanswered} unanswered ${noun}. Do you want to submit?`);
-            if (!proceed) return;
+            modalBody.textContent =
+                `You have answered ${answered} of ${questions.length} questions. ${unanswered} ${noun} remain unanswered. Are you sure you want to submit?`;
+        } else {
+            modalBody.textContent = `You have answered all ${questions.length} questions. Submit your exam now?`;
         }
+        modalOverlay.hidden = false;
+    }
 
+    function closeSubmitModal() {
+        modalOverlay.hidden = true;
+    }
+
+    if (continueExamBtn) {
+        continueExamBtn.addEventListener("click", closeSubmitModal);
+    }
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", (e) => {
+            if (e.target === modalOverlay) closeSubmitModal();
+        });
+    }
+    if (confirmSubmitBtn) {
+        confirmSubmitBtn.addEventListener("click", () => {
+            closeSubmitModal();
+            submitExam(false);
+        });
+    }
+
+    async function submitExam(auto) {
         const payload = {
             exam_id: EXAM_ID,
             answers: Object.entries(answers).map(([questionId, selectedOption]) => ({
@@ -153,6 +224,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: JSON.stringify(payload)
             });
 
+            if (resp.status === 401) {
+                showWarning("Your session has expired. Please log in again to submit your exam.");
+                submitBtn.disabled = false;
+                return;
+            }
+
             if (!resp.ok) {
                 throw new Error(`Submit failed with status ${resp.status}`);
             }
@@ -160,12 +237,15 @@ document.addEventListener("DOMContentLoaded", function () {
             window.location.href = "/results";
         } catch (err) {
             submitBtn.disabled = false;
-            alert("Failed to submit exam. Please try again.");
+            showWarning("Failed to submit exam. Please check your connection and try again.");
             console.error(err);
         }
     }
 
-    submitBtn.addEventListener("click", () => submitExam(false));
+    submitBtn.addEventListener("click", () => {
+        if (questions.length === 0) return;
+        openSubmitModal();
+    });
 
     loadExam();
 // ==========================================================
@@ -227,8 +307,6 @@ window.addEventListener("blur", function () {
 
     // ==========================================================
     // Face presence monitoring capture loop (Milestone 2)
-    // Owner: Rishabh - functional integration; Prashanthi, feel free
-    // to adjust placement/styling of any visible status indicator.
     //
     // Reuses the same getUserMedia + canvas snapshot pattern as
     // webcam.js (registration capture), but runs continuously in the
@@ -236,20 +314,66 @@ window.addEventListener("blur", function () {
     // single manual capture. Expects a global `EXAM_ID` and the
     // hidden <video id="face-monitor-video"> / <canvas id="face-monitor-canvas">
     // pair added to exam_window.html.
+    //
+    // Also requests audio in the same getUserMedia call so the visible
+    // monitoring status bar's "Microphone" indicator reflects a real
+    // permission/stream state rather than a hardcoded label. The audio
+    // track itself isn't processed further yet.
     // ==========================================================
     const FACE_CHECK_INTERVAL_MS = 4000; // send one frame roughly every 4s
 
     const monitorVideo = document.getElementById("face-monitor-video");
     const monitorCanvas = document.getElementById("face-monitor-canvas");
 
+    const statusCamera = document.getElementById("statusCamera");
+    const statusMic = document.getElementById("statusMic");
+    const statusIntegrity = document.getElementById("statusIntegrity");
+
+    function setStatus(el, state, text) {
+        if (!el) return;
+        el.classList.remove("status-ok", "status-error");
+        if (state) el.classList.add(state);
+        const textEl = el.querySelector(".status-text");
+        if (textEl) textEl.textContent = text;
+    }
+
+    const webcamPreviewFallback = document.getElementById("webcamPreviewFallback");
+
+    function showPreviewFallback(text) {
+        if (monitorVideo) monitorVideo.style.display = "none";
+        if (webcamPreviewFallback) {
+            webcamPreviewFallback.hidden = false;
+            const span = webcamPreviewFallback.querySelector("span");
+            if (span && text) span.textContent = text;
+        }
+    }
+
     if (monitorVideo && monitorCanvas && typeof EXAM_ID !== "undefined") {
-        navigator.mediaDevices.getUserMedia({ video: true })
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then((stream) => {
                 monitorVideo.srcObject = stream;
-                setInterval(captureAndSendFrame, FACE_CHECK_INTERVAL_MS);
+
+                const hasVideo = stream.getVideoTracks().length > 0;
+                const hasAudio = stream.getAudioTracks().length > 0;
+
+                setStatus(statusCamera, hasVideo ? "status-ok" : "status-error", hasVideo ? "Connected" : "Unavailable");
+                setStatus(statusMic, hasAudio ? "status-ok" : "status-error", hasAudio ? "Active" : "Unavailable");
+                setStatus(statusIntegrity, "status-ok", "Active");
+
+                if (!hasVideo) {
+                    showPreviewFallback("Camera unavailable");
+                    showWarning("Your camera isn't available. Monitoring may be incomplete - contact your invigilator if this continues.");
+                } else {
+                    setInterval(captureAndSendFrame, FACE_CHECK_INTERVAL_MS);
+                }
             })
             .catch((err) => {
-                console.error("Face monitoring: could not access webcam.", err);
+                console.error("Face monitoring: could not access webcam/microphone.", err);
+                setStatus(statusCamera, "status-error", "Permission denied");
+                setStatus(statusMic, "status-error", "Permission denied");
+                setStatus(statusIntegrity, "status-error", "Limited");
+                showPreviewFallback("Camera blocked");
+                showWarning("Camera/microphone access was blocked. Please allow access and reload this page, or contact your invigilator.");
             });
 
         window.addEventListener("beforeunload", () => {
@@ -259,6 +383,8 @@ window.addEventListener("blur", function () {
         });
     } else {
         console.warn("Face monitoring: required elements or EXAM_ID missing, skipping.");
+        setStatus(statusCamera, "status-error", "Unavailable");
+        setStatus(statusMic, "status-error", "Unavailable");
     }
 
     function captureAndSendFrame() {
