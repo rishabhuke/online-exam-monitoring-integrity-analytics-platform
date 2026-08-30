@@ -12,9 +12,28 @@ pages that don't touch the database directly.
 
 from flask import Blueprint, render_template, session, redirect, url_for
 
-from routes.auth import invigilator_required
+from routes.auth import invigilator_required, get_db_connection
 
 pages_bp = Blueprint("pages", __name__)
+
+
+def _get_exam_meta(exam_id):
+    """Real exam title/duration for the exam header - falls back to
+    generic copy (not fake data) if the exam row can't be found, so a
+    bad/removed exam_id still renders instead of 500ing.
+
+    Uses routes.auth.get_db_connection() (rather than a separate DATABASE
+    constant here) so it honors the same DB path tests/other code already
+    patch via routes.auth.DATABASE.
+    """
+    conn = get_db_connection()
+    row = conn.execute(
+        "SELECT title, duration FROM Exams WHERE id = ?", (exam_id,)
+    ).fetchone()
+    conn.close()
+    if row is None:
+        return {"title": "Exam", "duration": 60}
+    return {"title": row["title"], "duration": row["duration"] or 60}
 
 
 @pages_bp.route("/")
@@ -70,4 +89,5 @@ def help_support():
 def start_exam(exam_id):
     if "candidate_id" not in session:
         return redirect(url_for("auth.login"))
-    return render_template("exam_window.html", exam_id=exam_id)
+    exam = _get_exam_meta(exam_id)
+    return render_template("exam_window.html", exam_id=exam_id, exam=exam)
