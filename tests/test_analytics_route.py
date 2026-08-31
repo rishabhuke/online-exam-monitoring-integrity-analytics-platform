@@ -229,3 +229,100 @@ def test_get_exams_returns_seeded_exam(test_db_and_client):
     body = resp.get_json()
     assert body["status"] == "success"
     assert {"id": 101, "title": "Python Fundamentals Exam", "duration": 60} in body["exams"]
+
+
+# --- Candidate status (submitted vs. attempted-not-submitted) --------------
+# No fabricated "in progress"/"abandoned" state - see
+# modules/analytics.py::get_candidate_status() docstring. These tests seed
+# ExamAttempts directly (not present in the shared fixture) per-test, so
+# each test's ExamAttempts rows are isolated and don't leak across tests.
+
+def _insert_attempt(test_db, candidate_id, score=8, total_questions=10,
+                     percentage=80.0, status="Passed"):
+    conn = sqlite3.connect(test_db)
+    conn.execute(
+        "INSERT INTO ExamAttempts "
+        "(candidate_id, exam_id, score, total_questions, percentage, status) "
+        "VALUES (?, 101, ?, ?, ?, ?)",
+        (candidate_id, score, total_questions, percentage, status),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_candidate_status_all_submitted(test_db_and_client):
+    client, test_db = test_db_and_client
+    for cid in (1, 2, 3, 4):
+        _insert_attempt(test_db, cid)
+    _login_invigilator(client)
+
+    resp = client.get("/api/analytics/candidate-status/101")
+    assert resp.status_code == 200
+    body = resp.get_json()
+
+    assert body["submitted_count"] == 4
+    assert body["attempted_not_submitted_count"] == 0
+    assert body["attempted_not_submitted"] == []
+
+    submitted_ids = {row["candidate_id"] for row in body["submitted"]}
+    assert submitted_ids == {1, 2, 3, 4}
+
+    row = next(r for r in body["submitted"] if r["candidate_id"] == 1)
+    assert row["score"] == 8
+    assert row["total_questions"] == 10
+    assert row["percentage"] == 80.0
+    assert row["result"] == "Passed"
+
+
+def test_candidate_status_activity_without_submission(test_db_and_client):
+    client, _ = test_db_and_client
+    _login_invigilator(client)
+
+    resp = client.get("/api/analytics/candidate-status/101")
+    assert resp.status_code == 200
+    body = resp.get_json()
+
+    assert body["submitted_count"] == 0
+    assert body["submitted"] == []
+    assert body["attempted_not_submitted_count"] == 4
+
+    not_submitted_ids = {row["candidate_id"] for row in body["attempted_not_submitted"]}
+    assert not_submitted_ids == {1, 2, 3, 4}
+
+    for row in body["attempted_not_submitted"]:
+        assert set(row.keys()) == {"candidate_id", "name"}
+
+
+def test_candidate_status_mixed(test_db_and_client):
+    client, test_db = test_db_and_client
+    _insert_attempt(test_db, 1)
+    _insert_attempt(test_db, 3)
+    _login_invigilator(client)
+
+    resp = client.get("/api/analytics/candidate-status/101")
+    assert resp.status_code == 200
+    body = resp.get_json()
+
+    assert body["submitted_count"] == 2
+    assert body["attempted_not_submitted_count"] == 2
+
+    submitted_ids = {row["candidate_id"] for row in body["submitted"]}
+    not_submitted_ids = {row["candidate_id"] for row in body["attempted_not_submitted"]}
+
+    assert submitted_ids == {1, 3}
+    assert not_submitted_ids == {2, 4}
+    assert submitted_ids.isdisjoint(not_submitted_ids)
+
+
+def test_candidate_status_empty_exam(test_db_and_client):
+    client, _ = test_db_and_client
+    _login_invigilator(client)
+
+    resp = client.get("/api/analytics/candidate-status/999")
+    assert resp.status_code == 200
+    body = resp.get_json()
+
+    assert body["submitted_count"] == 0
+    assert body["submitted"] == []
+    assert body["attempted_not_submitted_count"] == 0
+    assert body["attempted_not_submitted"] == []
