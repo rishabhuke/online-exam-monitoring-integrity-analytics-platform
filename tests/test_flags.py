@@ -362,3 +362,72 @@ def test_api_summary_stats(test_db_and_client):
     res_101 = client.get("/api/flags/summary?exam_id=101")
     assert res_101.status_code == 200
     assert res_101.get_json()["summary"]["total_flags"] == 2
+
+
+# --- GET /api/flags/exam/<exam_id> -----------------------------------------
+# Lists every flag for an exam (unfiltered by candidate), joined with the
+# candidate's name - powers the invigilator violations-log dashboard page.
+
+def test_api_get_flags_for_exam_requires_invigilator(test_db_and_client):
+    client, _ = test_db_and_client
+    resp = client.get("/api/flags/exam/101")
+    assert resp.status_code == 401
+
+
+def test_api_get_flags_for_exam_returns_joined_candidate_name(test_db_and_client):
+    client, db_path = test_db_and_client
+
+    flags_storage.create_flag(
+        candidate_id=1,
+        exam_id=101,
+        flag_type="face_absent_single_interval",
+        severity="medium",
+        detail="face missing 12s",
+        threshold_breached="10s",
+    )
+    flags_storage.create_flag(
+        candidate_id=2,
+        exam_id=101,
+        flag_type="tab_switch",
+        severity="high",
+        detail="switched tabs 4 times",
+        threshold_breached="3",
+    )
+    # Different exam - must not appear in the exam 101 results.
+    flags_storage.create_flag(
+        candidate_id=2,
+        exam_id=102,
+        flag_type="tab_switch",
+        severity="low",
+        detail="switched tabs once",
+        threshold_breached="3",
+    )
+
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/api/flags/exam/101")
+    assert resp.status_code == 200
+    body = resp.get_json()
+
+    assert body["status"] == "success"
+    assert body["exam_id"] == 101
+    assert body["count"] == 2
+
+    flags_by_candidate = {f["candidate_id"]: f for f in body["flags"]}
+    assert flags_by_candidate[1]["candidate_name"] == "Alice"
+    assert flags_by_candidate[2]["candidate_name"] == "Bob"
+    assert all(f["exam_id"] == 101 for f in body["flags"])
+
+
+def test_api_get_flags_for_exam_empty_exam_returns_empty_list(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/api/flags/exam/999")
+    assert resp.status_code == 200
+    body = resp.get_json()
+
+    assert body["count"] == 0
+    assert body["flags"] == []

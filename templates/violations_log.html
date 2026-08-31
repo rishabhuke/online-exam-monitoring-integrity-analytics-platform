@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}
+Violations Log
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/invigilator_dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="invig-dashboard-container">
+
+    <section class="invig-welcome-card">
+        <span class="home-eyebrow">Integrity Analytics</span>
+        <h1><i class="fa-solid fa-flag"></i> Violations Log</h1>
+        <p>{{ exam.title }} &mdash; every integrity flag recorded for this exam, most recent first.</p>
+        <a href="{{ url_for('pages.invigilator_dashboard') }}" class="table-action">
+            <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </section>
+
+    <section class="invig-table-card">
+        <h3 id="violations-heading">Recorded Violations</h3>
+        <table id="violations-table" aria-labelledby="violations-heading">
+            <caption class="sr-only">Integrity flags raised for candidates during this exam.</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Candidate</th>
+                    <th scope="col">Flag Type</th>
+                    <th scope="col">Severity</th>
+                    <th scope="col">Detail</th>
+                    <th scope="col">Threshold Breached</th>
+                    <th scope="col">Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="6" class="invig-empty-row">Loading violations...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const VIOLATIONS_EXAM_ID = {{ exam_id }};
+</script>
+<script src="{{ url_for('static', filename='js/violations_log.js') }}"></script>
+{% endblock %}

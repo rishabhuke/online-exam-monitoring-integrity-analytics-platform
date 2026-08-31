@@ -106,6 +106,19 @@ def candidate_status_viewer(exam_id):
     return render_template("candidate_status.html", exam_id=exam_id, exam=exam)
 
 
+@pages_bp.route("/invigilator/violations/<int:exam_id>")
+@invigilator_required
+def violations_log(exam_id):
+    """
+    Violations log viewer (Milestone 5 - P1, admin dashboard additions,
+    page 3 of 3). Lists every integrity flag recorded for this exam
+    (see modules/flags_storage.py::get_flags_for_exam(),
+    GET /api/flags/exam/<exam_id>).
+    """
+    exam = _get_exam_meta(exam_id)
+    return render_template("violations_log.html", exam_id=exam_id, exam=exam)
+
+
 @pages_bp.route("/help-support")
 def help_support():
     return render_template("help_support.html")
