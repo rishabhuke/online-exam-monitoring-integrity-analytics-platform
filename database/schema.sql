@@ -124,3 +124,21 @@ CREATE TABLE IF NOT EXISTS ExamAttempts (
     FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
     FOREIGN KEY(exam_id) REFERENCES Exams(id)
 );
+
+-- Evidence Table (Milestone 5 - integrity analysis port)
+-- One row per evidence image saved when a flag-worthy violation is
+-- confirmed (currently: identity_mismatch, identity_check_no_face,
+-- identity_check_multiple_faces - see modules/detection_engine.py). The
+-- actual image lives on disk; this table stores its path plus metadata so
+-- evidence is queryable (e.g. "show me every mismatch photo for exam 3")
+-- rather than filesystem-listing only.
+CREATE TABLE IF NOT EXISTS Evidence (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id INTEGER,
+    exam_id INTEGER,
+    flag_type TEXT NOT NULL,
+    filepath TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
+    FOREIGN KEY(exam_id) REFERENCES Exams(id)
+);

@@ -29,6 +29,7 @@ import modules.photo_capture as photo_capture
 import modules.detection_engine as detection_engine
 import modules.flags_storage as flags_storage
 import modules.monitoring_storage as monitoring_storage
+import modules.evidence as evidence
 
 
 def make_fake_data_url():
@@ -47,6 +48,7 @@ def isolated_db(monkeypatch, tmp_path):
     monkeypatch.setattr(detection_engine, "DATABASE", test_db)
     monkeypatch.setattr(flags_storage, "DATABASE", test_db)
     monkeypatch.setattr(monitoring_storage, "DATABASE", test_db)
+    monkeypatch.setattr(evidence, "DATABASE", test_db)
 
     conn = sqlite3.connect(test_db)
     conn.execute("PRAGMA foreign_keys = ON")
@@ -350,6 +352,7 @@ def http_isolated_db(monkeypatch, tmp_path):
     monkeypatch.setattr(detection_engine, "DATABASE", test_db)
     monkeypatch.setattr(flags_storage, "DATABASE", test_db)
     monkeypatch.setattr(monitoring_storage, "DATABASE", test_db)
+    monkeypatch.setattr(evidence, "DATABASE", test_db)
 
     conn = sqlite3.connect(test_db)
     conn.execute("PRAGMA foreign_keys = ON")
@@ -602,3 +605,158 @@ def test_face_check_reruns_identity_verification_after_interval(http_isolated_db
     resp2 = client.post("/api/exam/1/face_check", json={"frame": make_fake_data_url()})
     assert resp2.get_json()["identity_check"]["status"] == "verified"
     assert call_count["n"] == 2
+
+
+# ---------------------------------------------------------------------------
+# Evidence capture tests (modules/evidence.py + detection_engine wiring)
+# (Milestone 5 - integrity analysis port)
+#
+# save_evidence_image() itself is tested directly with a real (blank,
+# synthetic) frame - image encode/decode/save is fast and doesn't need
+# InsightFace. The detection_engine wiring tests confirm evidence is (or
+# isn't) captured at the right moments, using tmp_path so no real files
+# leak outside the test's own temp directory.
+# ---------------------------------------------------------------------------
+
+def _evidence_rows(db_path, flag_type=None):
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    query = "SELECT * FROM Evidence"
+    params = ()
+    if flag_type:
+        query += " WHERE flag_type = ?"
+        params = (flag_type,)
+    rows = conn.execute(query, params).fetchall()
+    conn.close()
+    return rows
+
+
+def test_save_evidence_image_writes_file_and_db_row(isolated_db, monkeypatch, tmp_path):
+    evidence_dir = tmp_path / "evidence"
+    monkeypatch.setattr(evidence, "EVIDENCE_DIR", str(evidence_dir))
+
+    filepath = evidence.save_evidence_image(1, 1, "identity_mismatch", make_fake_data_url())
+
+    assert filepath is not None
+    assert os.path.exists(filepath)
+    assert "identity_mismatch" in filepath
+
+    rows = _evidence_rows(isolated_db)
+    assert len(rows) == 1
+    assert rows[0]["candidate_id"] == 1
+    assert rows[0]["exam_id"] == 1
+    assert rows[0]["flag_type"] == "identity_mismatch"
+    assert rows[0]["filepath"] == filepath
+
+
+def test_save_evidence_image_returns_none_on_bad_frame(isolated_db, monkeypatch, tmp_path):
+    evidence_dir = tmp_path / "evidence"
+    monkeypatch.setattr(evidence, "EVIDENCE_DIR", str(evidence_dir))
+
+    result = evidence.save_evidence_image(1, 1, "identity_mismatch", "not-a-valid-data-url")
+
+    assert result is None
+    assert len(_evidence_rows(isolated_db)) == 0
+
+
+def test_confirmed_mismatch_saves_evidence_when_frame_provided(isolated_db, monkeypatch, tmp_path):
+    evidence_dir = tmp_path / "evidence"
+    monkeypatch.setattr(evidence, "EVIDENCE_DIR", str(evidence_dir))
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "identity_mismatch_confirm_count": 2,
+    })
+
+    frame = make_fake_data_url()
+    detection_engine.evaluate_identity_check(1, 1, {"status": "mismatch", "similarity": 0.2}, frame=frame)
+    detection_engine.evaluate_identity_check(1, 1, {"status": "mismatch", "similarity": 0.25}, frame=frame)
+
+    rows = _evidence_rows(isolated_db, "identity_mismatch")
+    assert len(rows) == 1
+    assert os.path.exists(rows[0]["filepath"])
+
+
+def test_unconfirmed_mismatch_does_not_save_evidence(isolated_db, monkeypatch, tmp_path):
+    """Below identity_mismatch_confirm_count, no flag is raised - evidence
+    should not be saved either, since it's tied to the flag being raised."""
+    evidence_dir = tmp_path / "evidence"
+    monkeypatch.setattr(evidence, "EVIDENCE_DIR", str(evidence_dir))
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "identity_mismatch_confirm_count": 3,
+    })
+
+    detection_engine.evaluate_identity_check(1, 1, {"status": "mismatch", "similarity": 0.2}, frame=make_fake_data_url())
+
+    assert len(_evidence_rows(isolated_db)) == 0
+
+
+def test_no_face_check_saves_evidence_immediately(isolated_db, monkeypatch, tmp_path):
+    evidence_dir = tmp_path / "evidence"
+    monkeypatch.setattr(evidence, "EVIDENCE_DIR", str(evidence_dir))
+
+    detection_engine.evaluate_identity_check(1, 1, {"status": "no_face", "similarity": None}, frame=make_fake_data_url())
+
+    rows = _evidence_rows(isolated_db, "identity_check_no_face")
+    assert len(rows) == 1
+
+
+def test_multiple_faces_check_saves_evidence_immediately(isolated_db, monkeypatch, tmp_path):
+    evidence_dir = tmp_path / "evidence"
+    monkeypatch.setattr(evidence, "EVIDENCE_DIR", str(evidence_dir))
+
+    detection_engine.evaluate_identity_check(
+        1, 1, {"status": "multiple_faces", "similarity": None, "message": "2 faces detected."},
+        frame=make_fake_data_url(),
+    )
+
+    rows = _evidence_rows(isolated_db, "identity_check_multiple_faces")
+    assert len(rows) == 1
+
+
+def test_no_evidence_saved_when_frame_not_provided(isolated_db):
+    """frame defaults to None (backward compatibility) - flagging still
+    happens, evidence capture is simply skipped."""
+    raised = detection_engine.evaluate_identity_check(1, 1, {"status": "no_face", "similarity": None})
+
+    assert raised == ["identity_check_no_face"]
+    assert len(_evidence_rows(isolated_db)) == 0
+
+
+def test_verified_status_never_saves_evidence(isolated_db, monkeypatch, tmp_path):
+    evidence_dir = tmp_path / "evidence"
+    monkeypatch.setattr(evidence, "EVIDENCE_DIR", str(evidence_dir))
+
+    detection_engine.evaluate_identity_check(1, 1, {"status": "verified", "similarity": 0.9}, frame=make_fake_data_url())
+
+    assert len(_evidence_rows(isolated_db)) == 0
+
+
+def test_face_check_http_route_saves_evidence_end_to_end(http_isolated_db, monkeypatch, tmp_path):
+    """Full HTTP path: face_check -> evaluate_identity_check -> evidence
+    saved, using the real routes/exam.py wiring (not calling
+    detection_engine directly)."""
+    import routes.exam as exam_routes
+    import modules.face_verification as face_verification_module
+
+    evidence_dir = tmp_path / "evidence"
+    monkeypatch.setattr(evidence, "EVIDENCE_DIR", str(evidence_dir))
+    monkeypatch.setattr(photo_capture, "contains_face", lambda image: True)
+    monkeypatch.setattr(exam_routes, "IDENTITY_CHECK_INTERVAL_SECONDS", 999)
+    exam_routes._last_identity_check.clear()
+
+    def fake_verify(candidate_id, frame):
+        return {"status": "no_face", "similarity": None, "message": "No face detected in live frame."}
+
+    monkeypatch.setattr(face_verification_module, "verify_candidate", fake_verify)
+
+    client = http_isolated_db
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.post("/api/exam/1/face_check", json={"frame": make_fake_data_url()})
+
+    assert resp.status_code == 200
+    assert "identity_check_no_face" in resp.get_json()["flags_raised"]
+
+    rows = _evidence_rows(tmp_path / "test_http.db", "identity_check_no_face")
+    assert len(rows) == 1
+    assert os.path.exists(rows[0]["filepath"])

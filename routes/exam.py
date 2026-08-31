@@ -77,7 +77,7 @@ def face_check(exam_id):
 
     if should_check:
         identity_result = face_verification.verify_candidate(candidate_id, frame)
-        identity_flags = detection_engine.evaluate_identity_check(candidate_id, exam_id, identity_result)
+        identity_flags = detection_engine.evaluate_identity_check(candidate_id, exam_id, identity_result, frame=frame)
         flags_raised.extend(identity_flags)
 
     response = {"status": "success", "flags_raised": flags_raised, **result}
