@@ -34,11 +34,12 @@ Design notes:
 """
 
 import os
+import time
 from typing import Any, Dict, List, Optional
 
 from langchain_core.prompts import PromptTemplate
 
-from modules import flags_storage, monitoring_storage, scoring
+from modules import flags_storage, monitoring_storage, scoring, analytics
 
 # Groq model name, overridable via env var. openai/gpt-oss-20b is fast and
 # free-tier-friendly (llama-3.1-8b-instant was the original choice but Groq
@@ -234,3 +235,162 @@ def generate_summary(candidate_id: int, exam_id: int, llm: Optional[Any] = None)
         "context": context,
         "source": source,
     }
+
+# ---------------------------------------------------------------------------
+# Exam-level (cohort) summary (Milestone 5 - integrity analysis port)
+#
+# generate_summary() above covers one candidate's session. This covers an
+# entire exam's cohort in one call, so an invigilator reviewing many
+# candidates gets one aggregate read instead of opening each report
+# individually. Reuses build_session_context() per candidate (same context
+# generate_summary() already builds) and modules.analytics's cohort
+# enumeration (_get_cohort_candidate_ids) rather than re-querying which
+# candidates took an exam.
+#
+# Cached with the same manual TTL-dict pattern as
+# modules.analytics._cached_cluster_cohort_risk (see that module's comment
+# for the full rationale) - arguably more valuable here, since an LLM call
+# costs real time (1-2s Groq, 60-75s Ollama) rather than a cheap recompute.
+# Only the no-explicit-llm (real usage) path is cached; tests/callers
+# passing their own llm bypass the cache, matching how generate_summary()
+# already treats llm as an override.
+# ---------------------------------------------------------------------------
+
+COHORT_PROMPT = PromptTemplate.from_template(
+    "You are an exam-integrity assistant helping an invigilator review an "
+    "entire exam cohort at a glance. Write a concise, neutral, 3-5 sentence "
+    "summary of the cohort below. State facts only (counts, proportions, "
+    "which flag types are most common) - do not accuse any candidate or "
+    "recommend disciplinary action; the invigilator reviews individual "
+    "reports for that.\n\n"
+    "Exam: {exam_id}\n"
+    "Cohort size: {cohort_size}\n"
+    "Risk breakdown: {risk_breakdown_summary}\n"
+    "Most common integrity flags across the cohort: {flag_summary}\n"
+    "Candidates with no flags raised: {clean_count}\n"
+)
+
+
+def build_exam_cohort_context(exam_id: int) -> Dict[str, Any]:
+    """Gathers per-candidate contexts for every candidate in an exam's
+    cohort (via modules.analytics._get_cohort_candidate_ids), then
+    aggregates them into cohort-level counts. Returns an empty-cohort
+    shape (cohort_size 0) rather than raising if no candidate has any
+    monitoring data yet for this exam."""
+    candidate_ids = analytics._get_cohort_candidate_ids(exam_id)
+
+    per_candidate = [build_session_context(cid, exam_id) for cid in candidate_ids]
+
+    risk_breakdown: Dict[str, int] = {}
+    cohort_flag_counts: Dict[str, int] = {}
+    clean_count = 0
+
+    for ctx in per_candidate:
+        risk_breakdown[ctx["risk_label"]] = risk_breakdown.get(ctx["risk_label"], 0) + 1
+        if ctx["flag_counts"]:
+            for flag_type, count in ctx["flag_counts"].items():
+                cohort_flag_counts[flag_type] = cohort_flag_counts.get(flag_type, 0) + count
+        else:
+            clean_count += 1
+
+    return {
+        "exam_id": exam_id,
+        "cohort_size": len(candidate_ids),
+        "candidate_ids": candidate_ids,
+        "risk_breakdown": risk_breakdown,
+        "flag_counts": cohort_flag_counts,
+        "clean_count": clean_count,
+        "per_candidate": per_candidate,
+    }
+
+
+def _fallback_exam_summary(context: Dict[str, Any]) -> str:
+    """Deterministic, no-LLM-required cohort summary - same role as
+    _fallback_summary() but for a whole exam's cohort."""
+    if context["cohort_size"] == 0:
+        return f"Exam {context['exam_id']}: no candidates have monitoring data for this exam yet."
+
+    risk_summary = _format_counts(context["risk_breakdown"])
+    parts = [f"cohort of {context['cohort_size']} candidate(s), risk breakdown: {risk_summary}"]
+
+    if context["flag_counts"]:
+        flag_summary = _format_counts(context["flag_counts"])
+        parts.append(f"most common integrity flags: {flag_summary}")
+    else:
+        parts.append("no integrity flags raised across the cohort")
+
+    parts.append(f"{context['clean_count']} candidate(s) with no flags raised")
+
+    body = "; ".join(parts)
+    return f"Exam {context['exam_id']}: {body}."
+
+
+def _compute_exam_summary(exam_id: int, llm: Optional[Any] = None) -> Dict[str, Any]:
+    context = build_exam_cohort_context(exam_id)
+
+    if llm is None:
+        llm = get_default_llm()
+
+    if llm is not None and context["cohort_size"] > 0:
+        try:
+            chain = COHORT_PROMPT | llm
+            result = chain.invoke({
+                "exam_id": context["exam_id"],
+                "cohort_size": context["cohort_size"],
+                "risk_breakdown_summary": _format_counts(context["risk_breakdown"]),
+                "flag_summary": _format_counts(context["flag_counts"]),
+                "clean_count": context["clean_count"],
+            })
+            summary_text = getattr(result, "content", str(result))
+            source = "llm"
+        except Exception:
+            summary_text = _fallback_exam_summary(context)
+            source = "template"
+    else:
+        summary_text = _fallback_exam_summary(context)
+        source = "template"
+
+    return {
+        "summary": summary_text,
+        "cohort_size": context["cohort_size"],
+        "risk_breakdown": context["risk_breakdown"],
+        "context": context,
+        "source": source,
+    }
+
+
+_EXAM_SUMMARY_CACHE_TTL_SECONDS = 30.0
+_exam_summary_cache: Dict[Any, Any] = {}
+
+
+def _cached_exam_summary(exam_id: int) -> Dict[str, Any]:
+    from pathlib import Path
+    db_marker = str(getattr(scoring, "DATABASE", "unknown"))
+    cache_key = (db_marker, exam_id)
+    cached = _exam_summary_cache.get(cache_key)
+    if cached is not None:
+        cached_at, result = cached
+        if time.monotonic() - cached_at < _EXAM_SUMMARY_CACHE_TTL_SECONDS:
+            return result
+
+    result = _compute_exam_summary(exam_id, llm=None)
+    _exam_summary_cache[cache_key] = (time.monotonic(), result)
+    return result
+
+
+def generate_exam_summary(exam_id: int, llm: Optional[Any] = None) -> Dict[str, Any]:
+    """
+    Generates the invigilator-facing AI cohort summary for an entire exam.
+
+    Mirrors generate_summary()'s llm-override behavior: pass an explicit
+    `llm` to bypass both the default-provider lookup AND the cache (useful
+    for tests/callers wanting a fresh, uncached call); omit it for normal
+    usage, which uses get_default_llm() and the 30s TTL cache described
+    above the cache functions.
+
+    Returns {"summary": str, "cohort_size": int, "risk_breakdown": dict,
+    "context": dict, "source": "llm"|"template"}.
+    """
+    if llm is not None:
+        return _compute_exam_summary(exam_id, llm=llm)
+    return _cached_exam_summary(exam_id)

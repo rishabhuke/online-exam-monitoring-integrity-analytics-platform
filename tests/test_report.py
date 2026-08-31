@@ -19,6 +19,7 @@ import modules.report_agent as report_agent
 import modules.flags_storage as flags_storage
 import modules.monitoring_storage as monitoring_storage
 import modules.scoring as scoring
+import modules.analytics as analytics
 
 
 @pytest.fixture
@@ -35,7 +36,9 @@ def test_db_and_client(monkeypatch, tmp_path):
     monkeypatch.setattr(flags_storage, "DATABASE", test_db)
     monkeypatch.setattr(monitoring_storage, "DATABASE", test_db)
     monkeypatch.setattr(scoring, "DATABASE", test_db)
+    monkeypatch.setattr(analytics, "DATABASE", test_db)
     monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
+    report_agent._exam_summary_cache.clear()
 
     import routes.auth as auth_module
     monkeypatch.setattr(auth_module, "DATABASE", test_db)
@@ -134,3 +137,51 @@ def test_get_dashboard_report_matches_scoring_module(test_db_and_client):
 
     scoring_result = scoring.calculate_session_score(2, 101)
     assert body["risk_label"] == scoring_result["risk_label"]
+
+
+# --- New M5 exam cohort report endpoint (invigilator-only) -----------------
+
+def test_get_exam_cohort_report_requires_invigilator_auth(test_db_and_client):
+    client, _ = test_db_and_client
+    resp = client.get("/api/report/exam/101")
+    assert resp.status_code == 401
+
+
+def test_get_exam_cohort_report_rejects_candidate_session(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/api/report/exam/101")
+    assert resp.status_code == 401
+
+
+def test_get_exam_cohort_report_allows_invigilator_session(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/api/report/exam/101")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["status"] == "success"
+    assert "summary" in body
+    assert "cohort_size" in body
+    assert "risk_breakdown" in body
+
+
+def test_get_exam_cohort_report_reflects_seeded_events(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    monitoring_storage.create_browser_event(2, 101, event_type="tab_switch")
+    monitoring_storage.create_browser_event(2, 101, event_type="tab_switch")
+    flags_storage.create_flag(2, 101, "excessive_tab_switching", "medium", "2 switches", "max_tab_switches=1")
+
+    resp = client.get("/api/report/exam/101")
+    body = resp.get_json()
+
+    assert body["cohort_size"] == 1
+    assert body["risk_breakdown"].get("Medium") == 1
+    assert "cohort of 1 candidate(s)" in body["summary"]

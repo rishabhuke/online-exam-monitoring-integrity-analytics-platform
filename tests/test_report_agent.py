@@ -26,6 +26,7 @@ import modules.report_agent as report_agent
 import modules.flags_storage as flags_storage
 import modules.monitoring_storage as monitoring_storage
 import modules.scoring as scoring
+import modules.analytics as analytics
 
 
 @pytest.fixture
@@ -34,6 +35,8 @@ def isolated_db(monkeypatch, tmp_path):
     monkeypatch.setattr(flags_storage, "DATABASE", test_db)
     monkeypatch.setattr(monitoring_storage, "DATABASE", test_db)
     monkeypatch.setattr(scoring, "DATABASE", test_db)
+    monkeypatch.setattr(analytics, "DATABASE", test_db)
+    report_agent._exam_summary_cache.clear()
 
     conn = sqlite3.connect(test_db)
     conn.execute("PRAGMA foreign_keys = ON")
@@ -201,3 +204,127 @@ def test_risk_scenario_high(isolated_db, monkeypatch):
     assert "360s" in result["summary"]
     assert "2 integrity flag(s)" in result["summary"]
     assert "Overall integrity risk: High." in result["summary"]
+
+
+# ---------------------------------------------------------------------------
+# Exam-level (cohort) summary tests (Milestone 5 - integrity analysis port)
+# ---------------------------------------------------------------------------
+
+def test_build_exam_cohort_context_with_no_candidates(isolated_db):
+    """No candidate has any monitoring data for this exam yet."""
+    context = report_agent.build_exam_cohort_context(1)
+
+    assert context["cohort_size"] == 0
+    assert context["candidate_ids"] == []
+    assert context["risk_breakdown"] == {}
+    assert context["flag_counts"] == {}
+    assert context["clean_count"] == 0
+
+
+def test_build_exam_cohort_context_aggregates_across_candidates(isolated_db):
+    # Second candidate needed for a real cohort - reuse the isolated_db
+    # fixture's exam (id=1), add another candidate.
+    conn = sqlite3.connect(isolated_db)
+    conn.execute(
+        "INSERT INTO Candidates (id, name, email, password_hash) VALUES (2, 'Bob', 'bob@test.com', 'hash')"
+    )
+    conn.commit()
+    conn.close()
+
+    # Candidate 1: flagged (medium risk)
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+    flags_storage.create_flag(1, 1, "excessive_tab_switching", "medium", "2 switches", "max_tab_switches=2")
+
+    # Candidate 2: clean session, no events/flags at all - but needs to
+    # appear in the cohort, so give it a browser event with no resulting
+    # flag (cohort membership comes from _get_cohort_candidate_ids, which
+    # looks at BrowserEvents/FaceAbsenceEvents/IntegrityFlags directly).
+    monitoring_storage.create_browser_event(2, 1, event_type="focus_loss")
+
+    context = report_agent.build_exam_cohort_context(1)
+
+    assert context["cohort_size"] == 2
+    assert set(context["candidate_ids"]) == {1, 2}
+    assert context["risk_breakdown"]["Medium"] == 1
+    assert context["risk_breakdown"]["Low"] == 1
+    assert context["flag_counts"] == {"excessive_tab_switching": 1}
+    assert context["clean_count"] == 1  # candidate 2 has no flags
+
+
+def test_generate_exam_summary_empty_cohort_uses_template_message(isolated_db):
+    """cohort_size == 0 must never attempt an LLM call, even if one would
+    otherwise be available - nothing meaningful to summarize."""
+    from langchain_core.runnables import RunnableLambda
+
+    calls = {"n": 0}
+
+    def _tracking_llm(prompt_value):
+        calls["n"] += 1
+        return _StubResult("should not be called")
+
+    result = report_agent.generate_exam_summary(1, llm=RunnableLambda(_tracking_llm))
+
+    assert calls["n"] == 0
+    assert result["source"] == "template"
+    assert "no candidates have monitoring data" in result["summary"]
+
+
+def test_generate_exam_summary_with_flagged_cohort_template(isolated_db, monkeypatch):
+    monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
+
+    conn = sqlite3.connect(isolated_db)
+    conn.execute(
+        "INSERT INTO Candidates (id, name, email, password_hash) VALUES (2, 'Bob', 'bob@test.com', 'hash')"
+    )
+    conn.commit()
+    conn.close()
+
+    # Matches test_risk_scenario_high's setup exactly - reaching "High"
+    # requires both a high- and a medium-severity flag together (combined
+    # severity score crosses the threshold), not a single high flag alone.
+    monitoring_storage.create_face_event(1, 1, "2026-01-01T00:00:00", "2026-01-01T00:06:00", 360)
+    flags_storage.create_flag(1, 1, "face_absent_single_interval", "high", "absent 360s", "max_face_absent_seconds=120")
+    flags_storage.create_flag(1, 1, "excessive_tab_switching", "medium", "4 tab switches", "max_tab_switches=2")
+    monitoring_storage.create_browser_event(2, 1, event_type="tab_switch")
+
+    result = report_agent.generate_exam_summary(1)
+
+    assert result["cohort_size"] == 2
+    assert result["source"] == "template"
+    assert result["risk_breakdown"].get("High") == 1
+    assert "cohort of 2 candidate(s)" in result["summary"]
+
+
+def test_generate_exam_summary_uses_llm_when_provided(isolated_db):
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+
+    result = report_agent.generate_exam_summary(1, llm=_StubLLM())
+
+    assert result["source"] == "llm"
+    assert result["summary"].startswith("stub summary for:")
+
+
+def test_generate_exam_summary_default_path_is_cached(isolated_db, monkeypatch):
+    """No explicit llm -> goes through _cached_exam_summary(). Two calls
+    in quick succession should return the identical cached object (same
+    id), confirming the second call didn't recompute."""
+    monkeypatch.setattr(report_agent, "get_default_llm", lambda: None)
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+
+    result1 = report_agent.generate_exam_summary(1)
+    result2 = report_agent.generate_exam_summary(1)
+
+    assert result1 is result2
+
+
+def test_generate_exam_summary_explicit_llm_bypasses_cache(isolated_db):
+    """Passing an explicit llm should never go through the cache - each
+    call recomputes, so two calls return different dict objects even for
+    the same exam_id."""
+    monitoring_storage.create_browser_event(1, 1, event_type="tab_switch")
+
+    result1 = report_agent.generate_exam_summary(1, llm=_StubLLM())
+    result2 = report_agent.generate_exam_summary(1, llm=_StubLLM())
+
+    assert result1 is not result2
