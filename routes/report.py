@@ -38,6 +38,22 @@ def get_dashboard_report(candidate_id, exam_id):
     return jsonify({"status": "success", **result}), 200
 
 
+@report_bp.route("/exam/<int:exam_id>", methods=["GET"])
+@invigilator_required
+def get_exam_cohort_report(exam_id):
+    """
+    Milestone 5: returns an AI-generated cohort-level integrity summary
+    for an entire exam - every candidate with monitoring data for this
+    exam, aggregated into one summary, rather than one report per
+    candidate. Cached for 30s (see modules.report_agent's cache comment).
+
+    Gated by @invigilator_required (routes/auth.py) - only a logged-in
+    invigilator can call this.
+    """
+    result = report_agent.generate_exam_summary(exam_id)
+    return jsonify({"status": "success", **result}), 200
+
+
 # ---------------------------------------------------------------------------
 # Integrity Score API (Milestone 4). Owner: Rishabh
 #
