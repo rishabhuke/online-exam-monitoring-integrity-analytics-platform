@@ -10,7 +10,7 @@ those need to process form submissions. This file only renders GET-only
 pages that don't touch the database directly.
 """
 
-from flask import Blueprint, render_template, session, redirect, url_for
+from flask import Blueprint, render_template, session, redirect, url_for, request
 
 from routes.auth import invigilator_required, get_db_connection
 
@@ -77,7 +77,8 @@ def analytics():
 
 @pages_bp.route("/environment-check")
 def environment_check():
-    return render_template("environment_check.html")
+    exam_id = request.args.get("exam_id", type=int)
+    return render_template("environment_check.html", exam_id=exam_id)
 
 
 @pages_bp.route("/invigilator/dashboard")

@@ -377,6 +377,82 @@ def http_isolated_db(monkeypatch, tmp_path):
         yield client
 
 
+def test_environment_face_check_requires_auth(http_isolated_db):
+    """No candidate_id in session -> 401, matching the existing face_check
+    route's auth pattern."""
+    client = http_isolated_db
+    resp = client.post("/api/exam/environment/face_check", json={
+        "frame": make_fake_data_url(),
+    })
+    assert resp.status_code == 401
+    assert resp.get_json()["status"] == "error"
+
+
+def test_environment_face_check_returns_face_present_true(http_isolated_db, monkeypatch):
+    monkeypatch.setattr(photo_capture, "contains_face", lambda image: True)
+    client = http_isolated_db
+
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.post("/api/exam/environment/face_check", json={
+        "frame": make_fake_data_url(),
+    })
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "success"
+    assert data["face_present"] is True
+
+
+def test_environment_face_check_returns_face_present_false(http_isolated_db, monkeypatch):
+    monkeypatch.setattr(photo_capture, "contains_face", lambda image: False)
+    client = http_isolated_db
+
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.post("/api/exam/environment/face_check", json={
+        "frame": make_fake_data_url(),
+    })
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "success"
+    assert data["face_present"] is False
+
+
+def test_environment_face_check_missing_frame_returns_400(http_isolated_db):
+    client = http_isolated_db
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.post("/api/exam/environment/face_check", json={})
+    assert resp.status_code == 400
+
+
+def test_environment_face_check_does_not_write_integrity_flags(http_isolated_db, monkeypatch):
+    """Critical isolation guarantee: this endpoint must never write to
+    FaceAbsenceEvents or IntegrityFlags, since it isn't a real exam
+    session - see the route's own docstring."""
+    monkeypatch.setattr(photo_capture, "contains_face", lambda image: False)
+    client = http_isolated_db
+
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    for _ in range(5):
+        resp = client.post("/api/exam/environment/face_check", json={
+            "frame": make_fake_data_url(),
+        })
+        assert resp.status_code == 200
+
+    conn = sqlite3.connect(photo_capture.DATABASE)
+    flags = conn.execute("SELECT COUNT(*) FROM IntegrityFlags").fetchone()[0]
+    absences = conn.execute("SELECT COUNT(*) FROM FaceAbsenceEvents").fetchone()[0]
+    conn.close()
+    assert flags == 0
+    assert absences == 0
+
+
 def test_uppercase_tab_switch_from_frontend_raises_flag(http_isolated_db, monkeypatch):
     """Reproduces the real frontend payload shape (exam_window.js sends
     'TAB_SWITCH', uppercase) through the actual HTTP route, and asserts a

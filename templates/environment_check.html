@@ -39,7 +39,7 @@ Environment Check
         </div>
 
         <div class="readiness-right">
-            <div class="readiness-score" id="readinessScore">2 / 6 Ready</div>
+            <div class="readiness-score" id="readinessScore">0 / 6 Ready</div>
             <span class="readiness-badge pending-badge" id="overallBadge">Pending Checks</span>
         </div>
     </section>
@@ -174,6 +174,24 @@ Environment Check
             <button class="run-all-btn" id="runAllChecksBtn">Run All Checks</button>
         </div>
     </section>
+
+    <!-- ================= START EXAMINATION ================= -->
+    <section class="run-all-section glass-panel" id="startExamSection" data-exam-id="{{ exam_id if exam_id is not none else '' }}">
+        <div class="run-all-left">
+            <h2><i class="fa-solid fa-circle-play"></i> Start Examination</h2>
+            <p id="startExamHelpText">Complete all required checks above before starting.</p>
+        </div>
+
+        <div class="run-all-right">
+            <a class="run-all-btn disabled-btn" id="startExamBtn" href="#" aria-disabled="true">
+                Start Examination
+            </a>
+        </div>
+    </section>
+
+    <!-- hidden capture elements shared by Camera + Face Visibility checks -->
+    <video id="env-video" autoplay muted playsinline style="display:none;"></video>
+    <canvas id="env-canvas" style="display:none;"></canvas>
 
     <!-- ================= HELP / INSTRUCTIONS ================= -->
     <section class="environment-help-grid">
