@@ -45,7 +45,13 @@ def home():
 def dashboard_page():
     if "candidate_id" not in session:
         return redirect(url_for("auth.login"))
-    return render_template("dashboard.html")
+    conn = get_db_connection()
+    row = conn.execute(
+        "SELECT name FROM Candidates WHERE id = ?", (session["candidate_id"],)
+    ).fetchone()
+    conn.close()
+    candidate_name = row["name"] if row else "Candidate"
+    return render_template("dashboard.html", candidate_name=candidate_name)
 
 
 @pages_bp.route("/exams")
