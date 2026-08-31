@@ -34,7 +34,7 @@ import sqlite3
 import threading
 from pathlib import Path
 
-from modules import flags_storage, monitoring_storage
+from modules import flags_storage, monitoring_storage, evidence
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATABASE = BASE_DIR / "database.db"
@@ -200,10 +200,16 @@ _identity_lock = threading.Lock()
 _identity_mismatch_streaks = {}  # key: (candidate_id, exam_id) -> consecutive mismatch count
 
 
-def evaluate_identity_check(candidate_id: int, exam_id: int, verification_result: dict) -> list:
+def evaluate_identity_check(candidate_id: int, exam_id: int, verification_result: dict, frame: str = None) -> list:
     """
     Call this after modules.face_verification.verify_candidate() returns,
     on every throttled identity-check call from routes/exam.py.
+
+    frame: the same base64 data URL passed to verify_candidate() - used to
+    save evidence at the moment a flag is raised. Optional (defaults to
+    None) so existing callers/tests that don't care about evidence capture
+    don't break; when None, flagging still happens, evidence simply isn't
+    saved.
 
     Returns a list of flag_type strings that were raised (empty if none).
     """
@@ -234,6 +240,8 @@ def evaluate_identity_check(candidate_id: int, exam_id: int, verification_result
             raised.append("identity_mismatch")
             with _identity_lock:
                 _identity_mismatch_streaks[key] = 0
+            if frame:
+                evidence.save_evidence_image(candidate_id, exam_id, "identity_mismatch", frame)
         return raised
 
     if status == "no_face":
@@ -244,6 +252,8 @@ def evaluate_identity_check(candidate_id: int, exam_id: int, verification_result
             detail="No face detected during identity verification check",
             threshold_breached="n/a",
         )
+        if frame:
+            evidence.save_evidence_image(candidate_id, exam_id, "identity_check_no_face", frame)
         return ["identity_check_no_face"]
 
     if status == "multiple_faces":
@@ -254,6 +264,8 @@ def evaluate_identity_check(candidate_id: int, exam_id: int, verification_result
             detail=verification_result.get("message", "Multiple faces detected"),
             threshold_breached="n/a",
         )
+        if frame:
+            evidence.save_evidence_image(candidate_id, exam_id, "identity_check_multiple_faces", frame)
         return ["identity_check_multiple_faces"]
 
     # status == "error": verification couldn't run (e.g. no registered
