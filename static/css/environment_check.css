@@ -330,6 +330,24 @@
     box-shadow:0 18px 30px rgba(22,163,74,.28);
 }
 
+.run-all-btn.disabled-btn{
+    background:#9ca3af;
+    color:#f3f4f6;
+    cursor:not-allowed;
+    pointer-events:none;
+    box-shadow:none;
+}
+
+.run-all-btn.disabled-btn:hover{
+    transform:none;
+    box-shadow:none;
+}
+
+.env-status.blocked{
+    background:#fef3c7;
+    color:#b45309;
+}
+
 /* ================= HELP GRID ================= */
 
 .environment-help-grid{

@@ -32,6 +32,35 @@ _identity_check_lock = threading.Lock()
 _last_identity_check = {}  # key: (candidate_id, exam_id) -> datetime of last check
 
 
+@exam_bp.route("/environment/face_check", methods=["POST"])
+def environment_face_check():
+    """
+    Pre-exam environment check only. Reuses photo_capture's pure detection
+    primitives (decode_base64_image + contains_face) but deliberately does
+    NOT call process_exam_frame/detection_engine - this must never write to
+    FaceAbsenceEvents or IntegrityFlags, since it isn't a real exam session.
+
+    Expects JSON: {"frame": "data:image/png;base64,...."}
+    """
+    if "candidate_id" not in session:
+        return jsonify({"status": "error", "message": "Not authenticated"}), 401
+
+    data = request.get_json(silent=True) or {}
+    frame = data.get("frame")
+    if not frame:
+        return jsonify({"status": "error", "message": "No frame provided"}), 400
+
+    try:
+        image = photo_capture.decode_base64_image(frame)
+        if image is None:
+            return jsonify({"status": "error", "message": "Could not decode frame"}), 400
+        face_present = photo_capture.contains_face(image)
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Face check failed: {str(e)}"}), 500
+
+    return jsonify({"status": "success", "face_present": face_present})
+
+
 @exam_bp.route("/<int:exam_id>/face_check", methods=["POST"])
 def face_check(exam_id):
     """
