@@ -85,6 +85,24 @@ def test_candidate_pages_render_with_candidate_session(client, path):
     assert resp.status_code == 200
 
 
+def test_dashboard_shows_real_candidate_name(client):
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/dashboard")
+    assert resp.status_code == 200
+    assert b"Alice" in resp.data
+
+
+def test_dashboard_has_no_fake_last_login(client):
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/dashboard")
+    assert resp.status_code == 200
+    assert b"Last Login" not in resp.data
+
+
 def test_start_exam_redirects_when_logged_out(client):
     resp = client.get("/start_exam/101")
     assert resp.status_code == 302
