@@ -126,3 +126,32 @@ def test_invigilator_dashboard_allows_invigilator_session(client):
 
     resp = client.get("/invigilator/dashboard")
     assert resp.status_code == 200
+
+
+# --- Invigilator-gated page: /invigilator/evidence/<exam_id> ----------------
+# Same @invigilator_required decorator as /invigilator/dashboard above -
+# mirrors that test class exactly (401 JSON on no/wrong session, 200 on a
+# valid invigilator session).
+
+def test_evidence_viewer_requires_auth_no_session(client):
+    resp = client.get("/invigilator/evidence/1")
+    assert resp.status_code == 401
+    body = resp.get_json()
+    assert body["status"] == "error"
+
+
+def test_evidence_viewer_rejects_candidate_session(client):
+    """A valid CANDIDATE session must not satisfy @invigilator_required."""
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/invigilator/evidence/1")
+    assert resp.status_code == 401
+
+
+def test_evidence_viewer_allows_invigilator_session(client):
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/invigilator/evidence/1")
+    assert resp.status_code == 200

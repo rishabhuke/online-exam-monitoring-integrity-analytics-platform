@@ -80,6 +80,18 @@ def invigilator_dashboard():
     return render_template("invigilator_dashboard.html")
 
 
+@pages_bp.route("/invigilator/evidence/<int:exam_id>")
+@invigilator_required
+def evidence_viewer(exam_id):
+    """
+    Evidence viewer (Milestone 5 - P1, admin dashboard additions,
+    page 1 of 3). Lists every evidence image captured for this exam
+    (see modules/evidence.py, GET /api/alert-evidence/exam/<exam_id>).
+    """
+    exam = _get_exam_meta(exam_id)
+    return render_template("evidence_viewer.html", exam_id=exam_id, exam=exam)
+
+
 @pages_bp.route("/help-support")
 def help_support():
     return render_template("help_support.html")

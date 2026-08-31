@@ -194,7 +194,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td><span class="risk-badge ${riskClass(a.cluster_risk_label)}">${a.cluster_risk_label}</span></td>
                 <td>${renderExamResultCell(attempt)}</td>
                 <td><span class="status-pill">Monitored</span></td>
-                <td><a class="table-action" href="/api/export/${a.candidate_id}/${examId}?format=csv">Export CSV</a></td>
+                <td>
+                    <a class="table-action" href="/api/export/${a.candidate_id}/${examId}?format=csv">Export CSV</a>
+                    &nbsp;|&nbsp;
+                    <a class="table-action" href="/invigilator/evidence/${examId}">View Evidence</a>
+                </td>
             `;
             tableBody.appendChild(tr);
         });
