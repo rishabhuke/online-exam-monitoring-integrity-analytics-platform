@@ -14,11 +14,22 @@ pipeline:
 back what's been raised for a session.
 """
 
+import threading
+from datetime import datetime
+
 from flask import Blueprint, request, jsonify, session
 
-from modules import photo_capture, detection_engine
+from modules import photo_capture, detection_engine, face_verification
 
 exam_bp = Blueprint("exam", __name__, url_prefix="/api/exam")
+
+# Identity verification runs on a throttle - InsightFace is heavier than
+# the Haar Cascade presence check in photo_capture.py, and doesn't need to
+# run on every ~4s frame like presence does. State kept local to this
+# module, separate from photo_capture's absence tracker (different concern).
+IDENTITY_CHECK_INTERVAL_SECONDS = 15
+_identity_check_lock = threading.Lock()
+_last_identity_check = {}  # key: (candidate_id, exam_id) -> datetime of last check
 
 
 @exam_bp.route("/<int:exam_id>/face_check", methods=["POST"])
@@ -52,7 +63,28 @@ def face_check(exam_id):
             candidate_id, exam_id, result["interval_duration_seconds"]
         )
 
-    return jsonify({"status": "success", "flags_raised": flags_raised, **result}), 200
+    identity_result = None
+    key = (candidate_id, exam_id)
+    now = datetime.now()
+    with _identity_check_lock:
+        last_check = _last_identity_check.get(key)
+        should_check = (
+            last_check is None
+            or (now - last_check).total_seconds() >= IDENTITY_CHECK_INTERVAL_SECONDS
+        )
+        if should_check:
+            _last_identity_check[key] = now
+
+    if should_check:
+        identity_result = face_verification.verify_candidate(candidate_id, frame)
+        identity_flags = detection_engine.evaluate_identity_check(candidate_id, exam_id, identity_result)
+        flags_raised.extend(identity_flags)
+
+    response = {"status": "success", "flags_raised": flags_raised, **result}
+    if identity_result is not None:
+        response["identity_check"] = identity_result
+
+    return jsonify(response), 200
 
 
 @exam_bp.route("/<int:exam_id>/end_monitoring", methods=["POST"])

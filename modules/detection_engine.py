@@ -31,6 +31,7 @@ touching the evaluation logic.
 """
 
 import sqlite3
+import threading
 from pathlib import Path
 
 from modules import flags_storage, monitoring_storage
@@ -44,6 +45,7 @@ THRESHOLDS = {
     "max_cumulative_absent_seconds": 180,  # total absence across a session
     "max_tab_switches": 3,
     "max_focus_loss_count": 5,
+    "identity_mismatch_confirm_count": 2,  # consecutive mismatches before flagging
 }
 
 
@@ -177,3 +179,83 @@ def evaluate_focus_loss(candidate_id: int, exam_id: int) -> list:
 def get_flags(candidate_id: int, exam_id: int) -> list:
     """Returns all flags raised for a given candidate/exam session, oldest first."""
     return flags_storage.get_flags_filtered(candidate_id=candidate_id, exam_id=exam_id)
+
+# ---------------------------------------------------------------------------
+# Identity verification flags (Milestone 5 - integrity analysis port)
+#
+# Unlike the count/duration checks above, a single call to
+# modules.face_verification.verify_candidate() already returns a definitive
+# status - there's no accumulation needed to know *what* happened. What
+# needs debouncing is *reliability*: one bad-angle frame shouldn't raise a
+# mismatch flag, so we require identity_mismatch_confirm_count consecutive
+# mismatches (mirrors photo_capture.py's ABSENCE_CONFIRM_FRAMES pattern)
+# before raising. no_face/multiple_faces during an identity check are
+# already-confirmed facts (not similarity thresholds), so those flag
+# immediately - no confirm-count needed.
+#
+# Tracking state is in-memory, keyed by (candidate_id, exam_id), local to
+# this module - same single-process assumption as photo_capture.py.
+# ---------------------------------------------------------------------------
+_identity_lock = threading.Lock()
+_identity_mismatch_streaks = {}  # key: (candidate_id, exam_id) -> consecutive mismatch count
+
+
+def evaluate_identity_check(candidate_id: int, exam_id: int, verification_result: dict) -> list:
+    """
+    Call this after modules.face_verification.verify_candidate() returns,
+    on every throttled identity-check call from routes/exam.py.
+
+    Returns a list of flag_type strings that were raised (empty if none).
+    """
+    status = verification_result.get("status")
+    key = (candidate_id, exam_id)
+    raised = []
+
+    if status == "verified":
+        with _identity_lock:
+            _identity_mismatch_streaks[key] = 0
+        return raised
+
+    if status == "mismatch":
+        with _identity_lock:
+            count = _identity_mismatch_streaks.get(key, 0) + 1
+            _identity_mismatch_streaks[key] = count
+
+        if count >= THRESHOLDS["identity_mismatch_confirm_count"]:
+            similarity = verification_result.get("similarity")
+            _raise_flag(
+                candidate_id, exam_id,
+                flag_type="identity_mismatch",
+                severity="high",
+                detail=f"Identity mismatch confirmed over {count} consecutive checks "
+                       f"(similarity={similarity})",
+                threshold_breached=f"identity_mismatch_confirm_count={THRESHOLDS['identity_mismatch_confirm_count']}",
+            )
+            raised.append("identity_mismatch")
+            with _identity_lock:
+                _identity_mismatch_streaks[key] = 0
+        return raised
+
+    if status == "no_face":
+        _raise_flag(
+            candidate_id, exam_id,
+            flag_type="identity_check_no_face",
+            severity="medium",
+            detail="No face detected during identity verification check",
+            threshold_breached="n/a",
+        )
+        return ["identity_check_no_face"]
+
+    if status == "multiple_faces":
+        _raise_flag(
+            candidate_id, exam_id,
+            flag_type="identity_check_multiple_faces",
+            severity="high",
+            detail=verification_result.get("message", "Multiple faces detected"),
+            threshold_breached="n/a",
+        )
+        return ["identity_check_multiple_faces"]
+
+    # status == "error": verification couldn't run (e.g. no registered
+    # photo) - not the candidate's fault, don't flag.
+    return raised
