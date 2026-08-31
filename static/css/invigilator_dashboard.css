@@ -308,3 +308,16 @@
     border-radius: 50%;
     display: inline-block;
 }
+
+/* ======================================================
+   EVIDENCE VIEWER
+====================================================== */
+
+.evidence-thumb {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    display: block;
+}

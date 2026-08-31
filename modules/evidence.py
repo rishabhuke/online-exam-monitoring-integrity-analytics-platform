@@ -80,3 +80,55 @@ def save_evidence_image(candidate_id: int, exam_id: int, flag_type: str, frame_d
         conn.close()
 
     return filepath
+
+
+def get_evidence_for_exam(exam_id: int) -> list[dict]:
+    """
+    Returns every Evidence row for an exam, most recent first, joined with
+    the candidate's name so the invigilator evidence viewer doesn't need a
+    second round-trip per row.
+
+    Used by GET /api/alert-evidence/exam/<exam_id> (routes/alert_evidence.py)
+    to power the evidence-viewer dashboard page - lists all evidence for an
+    exam, not scoped to one flag.
+    """
+    conn = _get_db_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT Evidence.id, Evidence.candidate_id, Evidence.exam_id,
+                   Evidence.flag_type, Evidence.filepath, Evidence.created_at,
+                   Candidates.name AS candidate_name
+            FROM Evidence
+            LEFT JOIN Candidates ON Candidates.id = Evidence.candidate_id
+            WHERE Evidence.exam_id = ?
+            ORDER BY Evidence.created_at DESC
+            """,
+            (exam_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_evidence_for_session(candidate_id: int, exam_id: int, flag_type: str | None = None) -> list[dict]:
+    """
+    Returns Evidence rows for one candidate's session on one exam, most
+    recent first. If flag_type is given, scopes to just that flag type -
+    used by routes/alert_evidence.py's per-flag endpoint to show only the
+    evidence relevant to the specific flag being viewed, not every
+    evidence image from that candidate's whole session.
+    """
+    conn = _get_db_connection()
+    try:
+        query = "SELECT * FROM Evidence WHERE candidate_id = ? AND exam_id = ?"
+        params = [candidate_id, exam_id]
+        if flag_type:
+            query += " AND flag_type = ?"
+            params.append(flag_type)
+        query += " ORDER BY created_at DESC"
+
+        rows = conn.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
