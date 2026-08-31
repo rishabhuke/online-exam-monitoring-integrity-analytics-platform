@@ -158,3 +158,41 @@ def get_flag_summary_stats(exam_id: Optional[int] = None) -> Dict[str, Any]:
         }
     finally:
         conn.close()
+
+
+def get_flags_for_exam(exam_id: int) -> List[Dict[str, Any]]:
+    """
+    Returns every IntegrityFlags row for an exam, most recent first,
+    joined with the candidate's name - same join pattern as
+    modules.evidence.get_evidence_for_exam(), so the invigilator
+    violations-log page doesn't need a second round-trip per row.
+
+    Deliberately separate from get_flags_filtered() above rather than
+    adding the join there: get_flags_filtered() has existing consumers
+    (modules/detection_engine.py, modules/report_agent.py,
+    routes/export.py, routes/flags.py) and dedicated tests asserting
+    its current response shape - this narrower function avoids any
+    risk of changing that shared, already-tested behavior.
+
+    Used by GET /api/flags/exam/<exam_id> (routes/flags.py) to power
+    the violations-log dashboard page.
+    """
+    conn = get_db_connection()
+    try:
+        rows = conn.execute(
+            """
+            SELECT IntegrityFlags.id, IntegrityFlags.candidate_id,
+                   IntegrityFlags.exam_id, IntegrityFlags.flag_type,
+                   IntegrityFlags.severity, IntegrityFlags.detail,
+                   IntegrityFlags.threshold_breached, IntegrityFlags.created_at,
+                   Candidates.name AS candidate_name
+            FROM IntegrityFlags
+            LEFT JOIN Candidates ON Candidates.id = IntegrityFlags.candidate_id
+            WHERE IntegrityFlags.exam_id = ?
+            ORDER BY IntegrityFlags.created_at DESC
+            """,
+            (exam_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()

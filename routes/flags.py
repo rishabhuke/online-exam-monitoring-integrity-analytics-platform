@@ -37,6 +37,20 @@ def list_flags():
     return jsonify({"status": "success", "count": len(flags), "flags": flags}), 200
 
 
+@flags_bp.route("/exam/<int:exam_id>", methods=["GET"])
+@invigilator_required
+def get_flags_for_exam(exam_id: int):
+    """
+    GET /api/flags/exam/<exam_id>
+    Every integrity flag for an exam, joined with candidate name,
+    most recent first. Powers the invigilator violations-log page.
+    Separate from list_flags() above - see
+    modules.flags_storage.get_flags_for_exam() for why.
+    """
+    flags = flags_storage.get_flags_for_exam(exam_id)
+    return jsonify({"status": "success", "exam_id": exam_id, "count": len(flags), "flags": flags}), 200
+
+
 @flags_bp.route("/<int:flag_id>", methods=["GET"])
 def get_flag(flag_id: int):
     """

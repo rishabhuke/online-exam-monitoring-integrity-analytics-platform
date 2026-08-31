@@ -200,6 +200,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     <a class="table-action" href="/invigilator/evidence/${examId}">View Evidence</a>
                     &nbsp;|&nbsp;
                     <a class="table-action" href="/invigilator/candidate-status/${examId}">Candidate Status</a>
+                    &nbsp;|&nbsp;
+                    <a class="table-action" href="/invigilator/violations/${examId}">Violations Log</a>
                 </td>
             `;
             tableBody.appendChild(tr);

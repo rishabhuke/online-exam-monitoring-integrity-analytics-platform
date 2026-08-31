@@ -183,3 +183,30 @@ def test_candidate_status_viewer_allows_invigilator_session(client):
 
     resp = client.get("/invigilator/candidate-status/1")
     assert resp.status_code == 200
+
+
+# --- Invigilator-gated page: /invigilator/violations/<exam_id> -------------
+# Same @invigilator_required decorator as the other invigilator pages above.
+
+def test_violations_log_requires_auth_no_session(client):
+    resp = client.get("/invigilator/violations/1")
+    assert resp.status_code == 401
+    body = resp.get_json()
+    assert body["status"] == "error"
+
+
+def test_violations_log_rejects_candidate_session(client):
+    """A valid CANDIDATE session must not satisfy @invigilator_required."""
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/invigilator/violations/1")
+    assert resp.status_code == 401
+
+
+def test_violations_log_allows_invigilator_session(client):
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/invigilator/violations/1")
+    assert resp.status_code == 200
