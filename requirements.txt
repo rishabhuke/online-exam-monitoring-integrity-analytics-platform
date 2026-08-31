@@ -1,6 +1,6 @@
 Flask
 opencv-python==4.10.0.84
-numpy==1.26.4
+numpy==2.5.2
 Faker==26.0.0
 langchain-core==0.3.29
 langchain-ollama==0.2.2
@@ -8,3 +8,4 @@ pandas==2.2.2
 langchain-groq==0.2.3
 scikit-learn==1.6.1
 python-dotenv
+insightface==1.0.1

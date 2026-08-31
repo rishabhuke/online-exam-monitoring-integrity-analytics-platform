@@ -73,6 +73,7 @@ def isolated_db(monkeypatch, tmp_path):
     # Each test gets a clean in-memory tracking dict too, since it's
     # module-level state shared across calls.
     photo_capture._monitor_sessions.clear()
+    detection_engine._identity_mismatch_streaks.clear()
 
     return test_db
 
@@ -365,6 +366,9 @@ def http_isolated_db(monkeypatch, tmp_path):
     conn.commit()
     conn.close()
 
+    photo_capture._monitor_sessions.clear()
+    detection_engine._identity_mismatch_streaks.clear()
+
     app_module.app.config["TESTING"] = True
     with app_module.app.test_client() as client:
         yield client
@@ -430,3 +434,171 @@ def test_uppercase_focus_loss_from_frontend_raises_flag(http_isolated_db, monkey
     flags = detection_engine.get_flags(1, 1)
     assert len(flags) == 1
     assert flags[0]["flag_type"] == "excessive_focus_loss"
+
+
+# ---------------------------------------------------------------------------
+# Identity verification tests (modules/detection_engine.evaluate_identity_check)
+# (Milestone 5 - integrity analysis port)
+#
+# face_verification.verify_candidate() itself is not exercised here - it
+# calls real InsightFace, which is slow and requires the model files/a
+# registered photo on disk. Instead we test evaluate_identity_check() with
+# fake verification_result dicts of the exact shape verify_candidate()
+# returns, same spirit as this file already stubbing contains_face().
+# ---------------------------------------------------------------------------
+
+def test_identity_verified_resets_mismatch_streak(isolated_db, monkeypatch):
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "identity_mismatch_confirm_count": 2,
+    })
+
+    # Build up one mismatch, then a verified result should reset the streak.
+    detection_engine.evaluate_identity_check(1, 1, {"status": "mismatch", "similarity": 0.3})
+    raised = detection_engine.evaluate_identity_check(1, 1, {"status": "verified", "similarity": 0.9})
+
+    assert raised == []
+    assert detection_engine._identity_mismatch_streaks[(1, 1)] == 0
+    assert detection_engine.get_flags(1, 1) == []
+
+
+def test_single_mismatch_below_confirm_count_raises_nothing(isolated_db, monkeypatch):
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "identity_mismatch_confirm_count": 2,
+    })
+
+    raised = detection_engine.evaluate_identity_check(1, 1, {"status": "mismatch", "similarity": 0.2})
+
+    assert raised == []
+    assert detection_engine.get_flags(1, 1) == []
+
+
+def test_confirmed_mismatch_raises_flag_and_resets_streak(isolated_db, monkeypatch):
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "identity_mismatch_confirm_count": 2,
+    })
+
+    detection_engine.evaluate_identity_check(1, 1, {"status": "mismatch", "similarity": 0.2})
+    raised = detection_engine.evaluate_identity_check(1, 1, {"status": "mismatch", "similarity": 0.25})
+
+    assert "identity_mismatch" in raised
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["flag_type"] == "identity_mismatch"
+    assert flags[0]["severity"] == "high"
+    # streak resets after flagging - a third mismatch shouldn't immediately re-flag
+    assert detection_engine._identity_mismatch_streaks[(1, 1)] == 0
+
+
+def test_no_face_during_identity_check_flags_immediately(isolated_db):
+    raised = detection_engine.evaluate_identity_check(1, 1, {"status": "no_face", "similarity": None})
+
+    assert raised == ["identity_check_no_face"]
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["severity"] == "medium"
+
+
+def test_multiple_faces_during_identity_check_flags_immediately(isolated_db):
+    raised = detection_engine.evaluate_identity_check(
+        1, 1, {"status": "multiple_faces", "similarity": None, "message": "2 faces detected in live frame."}
+    )
+
+    assert raised == ["identity_check_multiple_faces"]
+    flags = detection_engine.get_flags(1, 1)
+    assert len(flags) == 1
+    assert flags[0]["severity"] == "high"
+
+
+def test_verification_error_status_raises_nothing(isolated_db):
+    """error (e.g. no registered photo on file) is not the candidate's
+    fault - should never produce a flag."""
+    raised = detection_engine.evaluate_identity_check(
+        1, 1, {"status": "error", "similarity": None, "message": "No registered photo on file."}
+    )
+
+    assert raised == []
+    assert detection_engine.get_flags(1, 1) == []
+
+
+def test_identity_streaks_tracked_independently_per_session(isolated_db, monkeypatch):
+    monkeypatch.setattr(detection_engine, "THRESHOLDS", {
+        **detection_engine.THRESHOLDS, "identity_mismatch_confirm_count": 2,
+    })
+
+    detection_engine.evaluate_identity_check(1, 1, {"status": "mismatch", "similarity": 0.2})
+    detection_engine.evaluate_identity_check(2, 1, {"status": "mismatch", "similarity": 0.2})
+
+    assert detection_engine.get_flags(1, 1) == []
+    assert detection_engine.get_flags(2, 1) == []
+
+    raised_1 = detection_engine.evaluate_identity_check(1, 1, {"status": "mismatch", "similarity": 0.2})
+    assert "identity_mismatch" in raised_1
+    # candidate 2's streak should be untouched by candidate 1 reaching threshold
+    assert detection_engine._identity_mismatch_streaks[(2, 1)] == 1
+
+
+# ---------------------------------------------------------------------------
+# HTTP-level throttle test for routes/exam.py's face_check identity-check
+# wiring. Confirms verify_candidate is only invoked once per throttle
+# interval, not on every frame.
+# ---------------------------------------------------------------------------
+
+def test_face_check_throttles_identity_verification(http_isolated_db, monkeypatch):
+    import routes.exam as exam_routes
+    import modules.face_verification as face_verification
+
+    call_count = {"n": 0}
+
+    def fake_verify(candidate_id, frame):
+        call_count["n"] += 1
+        return {"status": "verified", "similarity": 0.95, "message": "Identity verified."}
+
+    monkeypatch.setattr(face_verification, "verify_candidate", fake_verify)
+    monkeypatch.setattr(photo_capture, "contains_face", lambda image: True)
+    monkeypatch.setattr(exam_routes, "IDENTITY_CHECK_INTERVAL_SECONDS", 999)
+    exam_routes._last_identity_check.clear()
+
+    client = http_isolated_db
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp1 = client.post("/api/exam/1/face_check", json={"frame": make_fake_data_url()})
+    assert resp1.status_code == 200
+    assert resp1.get_json()["identity_check"]["status"] == "verified"
+    assert call_count["n"] == 1
+
+    # Second frame, same session, well within the throttle window -
+    # verify_candidate should NOT be called again.
+    resp2 = client.post("/api/exam/1/face_check", json={"frame": make_fake_data_url()})
+    assert resp2.status_code == 200
+    assert "identity_check" not in resp2.get_json()
+    assert call_count["n"] == 1
+
+
+def test_face_check_reruns_identity_verification_after_interval(http_isolated_db, monkeypatch):
+    import routes.exam as exam_routes
+    import modules.face_verification as face_verification
+
+    call_count = {"n": 0}
+
+    def fake_verify(candidate_id, frame):
+        call_count["n"] += 1
+        return {"status": "verified", "similarity": 0.95, "message": "Identity verified."}
+
+    monkeypatch.setattr(face_verification, "verify_candidate", fake_verify)
+    monkeypatch.setattr(photo_capture, "contains_face", lambda image: True)
+    monkeypatch.setattr(exam_routes, "IDENTITY_CHECK_INTERVAL_SECONDS", 0.05)
+    exam_routes._last_identity_check.clear()
+
+    client = http_isolated_db
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    client.post("/api/exam/1/face_check", json={"frame": make_fake_data_url()})
+    assert call_count["n"] == 1
+
+    time.sleep(0.1)
+
+    resp2 = client.post("/api/exam/1/face_check", json={"frame": make_fake_data_url()})
+    assert resp2.get_json()["identity_check"]["status"] == "verified"
+    assert call_count["n"] == 2
