@@ -92,6 +92,20 @@ def evidence_viewer(exam_id):
     return render_template("evidence_viewer.html", exam_id=exam_id, exam=exam)
 
 
+@pages_bp.route("/invigilator/candidate-status/<int:exam_id>")
+@invigilator_required
+def candidate_status_viewer(exam_id):
+    """
+    Candidate status viewer (Milestone 5 - P1, admin dashboard additions,
+    page 2 of 3). Shows submitted vs. attempted-not-submitted candidates
+    for this exam (see modules/analytics.py::get_candidate_status(),
+    GET /api/analytics/candidate-status/<exam_id>). No fabricated
+    "in progress" or "abandoned" states - see that function's docstring.
+    """
+    exam = _get_exam_meta(exam_id)
+    return render_template("candidate_status.html", exam_id=exam_id, exam=exam)
+
+
 @pages_bp.route("/help-support")
 def help_support():
     return render_template("help_support.html")

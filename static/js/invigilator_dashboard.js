@@ -198,6 +198,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     <a class="table-action" href="/api/export/${a.candidate_id}/${examId}?format=csv">Export CSV</a>
                     &nbsp;|&nbsp;
                     <a class="table-action" href="/invigilator/evidence/${examId}">View Evidence</a>
+                    &nbsp;|&nbsp;
+                    <a class="table-action" href="/invigilator/candidate-status/${examId}">Candidate Status</a>
                 </td>
             `;
             tableBody.appendChild(tr);

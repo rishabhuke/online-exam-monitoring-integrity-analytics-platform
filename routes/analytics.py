@@ -24,6 +24,15 @@ def get_exams():
     return jsonify({"status": "success", "exams": result}), 200
 
 
+@analytics_bp.route("/candidate-status/<int:exam_id>", methods=["GET"])
+@invigilator_required
+def get_candidate_status(exam_id):
+    """Per-candidate submission status: submitted (with score/result)
+    vs. attempted with no submission. No fabricated in-progress state."""
+    result = analytics.get_candidate_status(exam_id)
+    return jsonify({"status": "success", **result}), 200
+
+
 @analytics_bp.route("/distribution/<int:exam_id>", methods=["GET"])
 @invigilator_required
 def get_distribution(exam_id):

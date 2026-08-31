@@ -101,6 +101,71 @@ def _get_cohort_candidate_ids(exam_id: int) -> List[int]:
         conn.close()
 
 
+def get_candidate_status(exam_id: int) -> Dict[str, Any]:
+    """
+    Per-candidate submission status for an exam, split into two honest
+    buckets - no fabricated "in progress"/"abandoned" state, since
+    SessionLogs has no real (non-faker) writer anywhere in this codebase:
+
+    - submitted: candidates with an ExamAttempts row, using the exact
+      same field values/names as modules.grading.get_exam_attempt_summary()
+      (score/total_questions/percentage/result straight from the stored
+      row, not recomputed) so this page never disagrees with the
+      candidate's own results view.
+    - attempted_not_submitted: candidates with real monitoring activity
+      for this exam (reuses _get_cohort_candidate_ids - not duplicated)
+      but no ExamAttempts row. Deliberately NOT labeled "abandoned" -
+      we cannot tell abandonment from a still-open tab. (UI label:
+      "Attempted - Not Submitted".)
+
+    Candidates who never touched this exam at all are excluded, not
+    padded in as a fake "not started" row - there's no exam-assignment
+    table in this schema, so "every candidate in the system" is not a
+    meaningful roster for one exam.
+    """
+    conn = get_db_connection()
+    try:
+        submitted_rows = conn.execute("""
+            SELECT ExamAttempts.candidate_id, Candidates.name,
+                   ExamAttempts.created_at AS submitted_at,
+                   ExamAttempts.score, ExamAttempts.total_questions,
+                   ExamAttempts.percentage, ExamAttempts.status AS result
+            FROM ExamAttempts
+            JOIN Candidates ON Candidates.id = ExamAttempts.candidate_id
+            WHERE ExamAttempts.exam_id = ?
+            ORDER BY ExamAttempts.created_at DESC
+        """, (exam_id,)).fetchall()
+        submitted = [dict(r) for r in submitted_rows]
+        submitted_ids = {r["candidate_id"] for r in submitted}
+
+        cohort_ids = _get_cohort_candidate_ids(exam_id)
+        seen = set()
+        not_submitted_ids = []
+        for cid in cohort_ids:
+            if cid not in submitted_ids and cid not in seen:
+                seen.add(cid)
+                not_submitted_ids.append(cid)
+
+        attempted_not_submitted = []
+        if not_submitted_ids:
+            placeholders = ",".join("?" * len(not_submitted_ids))
+            rows = conn.execute(
+                f"SELECT id AS candidate_id, name FROM Candidates WHERE id IN ({placeholders}) ORDER BY id",
+                not_submitted_ids,
+            ).fetchall()
+            attempted_not_submitted = [dict(r) for r in rows]
+
+        return {
+            "exam_id": exam_id,
+            "submitted": submitted,
+            "submitted_count": len(submitted),
+            "attempted_not_submitted": attempted_not_submitted,
+            "attempted_not_submitted_count": len(attempted_not_submitted),
+        }
+    finally:
+        conn.close()
+
+
 def get_score_distribution(exam_id: int) -> Dict[str, Any]:
     """
     Integrity score distribution across every candidate in the cohort

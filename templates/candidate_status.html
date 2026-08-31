@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}
+Candidate Status
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/invigilator_dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="invig-dashboard-container">
+
+    <section class="invig-welcome-card">
+        <span class="home-eyebrow">Integrity Analytics</span>
+        <h1><i class="fa-solid fa-user-check"></i> Candidate Status</h1>
+        <p>{{ exam.title }} &mdash; submission status for every candidate with activity on this exam.</p>
+        <a href="{{ url_for('pages.invigilator_dashboard') }}" class="table-action">
+            <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </section>
+
+    <section class="invig-table-card">
+        <h3 id="submitted-heading">Submitted</h3>
+        <table id="submitted-table" aria-labelledby="submitted-heading">
+            <caption class="sr-only">Candidates who have submitted this exam, with their result.</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Candidate</th>
+                    <th scope="col">Score</th>
+                    <th scope="col">Result</th>
+                    <th scope="col">Submitted</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="4" class="invig-empty-row">Loading candidate status...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="invig-table-card">
+        <h3 id="not-submitted-heading">Attempted &mdash; Not Submitted</h3>
+        <table id="not-submitted-table" aria-labelledby="not-submitted-heading">
+            <caption class="sr-only">Candidates with monitored activity on this exam who have not submitted. This does not indicate abandonment.</caption>
+            <thead>
+                <tr><th scope="col">Candidate</th></tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="1" class="invig-empty-row">Loading candidate status...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const CANDIDATE_STATUS_EXAM_ID = {{ exam_id }};
+</script>
+<script src="{{ url_for('static', filename='js/candidate_status.js') }}"></script>
+{% endblock %}
