@@ -20,7 +20,7 @@ import io
 
 from flask import Blueprint, jsonify, request, Response
 
-from modules import scoring, monitoring_storage, flags_storage, report_agent, analytics
+from modules import scoring, monitoring_storage, flags_storage, report_agent, analytics, document_export
 from routes.auth import invigilator_required
 
 export_bp = Blueprint("export", __name__, url_prefix="/api/export")
@@ -113,22 +113,40 @@ def export_session(candidate_id, exam_id):
     """
     Exports a full session report for an arbitrary candidate's exam.
 
-    Query param: ?format=json (default) or ?format=csv
+    Query param: ?format=json (default), csv, pdf, or docx
     """
     fmt = request.args.get("format", "json").strip().lower()
 
-    if fmt not in ("json", "csv"):
-        return jsonify({"status": "error", "message": "format must be 'json' or 'csv'"}), 400
+    if fmt not in ("json", "csv", "pdf", "docx"):
+        return jsonify({"status": "error", "message": "format must be 'json', 'csv', 'pdf', or 'docx'"}), 400
 
     payload = _build_export_payload(candidate_id, exam_id)
 
     if fmt == "json":
         return jsonify({"status": "success", **payload}), 200
 
-    csv_body = _build_export_csv(payload)
-    filename = f"session_export_candidate{candidate_id}_exam{exam_id}.csv"
+    if fmt == "csv":
+        csv_body = _build_export_csv(payload)
+        filename = f"session_export_candidate{candidate_id}_exam{exam_id}.csv"
+        return Response(
+            csv_body,
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+
+    if fmt == "pdf":
+        pdf_bytes = document_export.build_pdf_report(payload)
+        filename = f"session_export_candidate{candidate_id}_exam{exam_id}.pdf"
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+
+    docx_bytes = document_export.build_docx_report(payload)
+    filename = f"session_export_candidate{candidate_id}_exam{exam_id}.docx"
     return Response(
-        csv_body,
-        mimetype="text/csv",
+        docx_bytes,
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )

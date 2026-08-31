@@ -202,3 +202,103 @@ def test_export_csv_populated_section_has_data_row(test_db_and_client):
     data_row = reader[section_idx + 2]
     assert "event_type" in header_row
     assert "tab_switch" in data_row
+
+
+# --- PDF format --------------------------------------------------------
+
+def test_export_pdf_format_headers_and_content_type(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/api/export/2/101?format=pdf")
+    assert resp.status_code == 200
+    assert resp.mimetype == "application/pdf"
+    assert "attachment" in resp.headers["Content-Disposition"]
+    assert "candidate2_exam101" in resp.headers["Content-Disposition"]
+    assert ".pdf" in resp.headers["Content-Disposition"]
+
+
+def test_export_pdf_produces_valid_pdf_bytes(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/api/export/2/101?format=pdf")
+    body = resp.get_data()
+
+    assert body[:4] == b"%PDF"
+    assert len(body) > 500  # a real rendered doc, not an empty/stub file
+
+
+def test_export_pdf_works_for_candidate_with_no_events(test_db_and_client):
+    """Candidate 1 (Alice) has no seeded events/flags - PDF rendering must
+    handle the all-empty-sections case without erroring."""
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/api/export/1/101?format=pdf")
+    assert resp.status_code == 200
+    assert resp.get_data()[:4] == b"%PDF"
+
+
+# --- DOCX format -------------------------------------------------------
+
+def test_export_docx_format_headers_and_content_type(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/api/export/2/101?format=docx")
+    assert resp.status_code == 200
+    assert resp.mimetype == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    assert "attachment" in resp.headers["Content-Disposition"]
+    assert "candidate2_exam101" in resp.headers["Content-Disposition"]
+    assert ".docx" in resp.headers["Content-Disposition"]
+
+
+def test_export_docx_produces_valid_docx_bytes(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/api/export/2/101?format=docx")
+    body = resp.get_data()
+
+    assert body[:2] == b"PK"  # docx is a zip container
+    assert len(body) > 1000
+
+
+def test_export_docx_content_matches_populated_data(test_db_and_client):
+    """Round-trips the actual DOCX bytes through python-docx to confirm
+    the seeded browser event genuinely made it into the rendered document,
+    not just that some non-empty bytes came back."""
+    from docx import Document
+    import io as io_module
+
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/api/export/2/101?format=docx")
+    document = Document(io_module.BytesIO(resp.get_data()))
+
+    all_text = "\n".join(
+        cell.text
+        for table in document.tables
+        for row in table.rows
+        for cell in row.cells
+    )
+    assert "tab_switch" in all_text
+    assert "excessive_tab_switching" in all_text
+
+
+def test_export_docx_works_for_candidate_with_no_events(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/api/export/1/101?format=docx")
+    assert resp.status_code == 200
+    assert resp.get_data()[:2] == b"PK"
