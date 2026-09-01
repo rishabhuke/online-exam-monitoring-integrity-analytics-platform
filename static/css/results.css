@@ -234,6 +234,22 @@
     background:#1d4ed8;
 }
 
+.results-action-cell{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    align-items:flex-start;
+}
+
+.table-action-btn-secondary{
+    background:#e5e7eb;
+    color:#374151;
+}
+
+.table-action-btn-secondary:hover{
+    background:#d1d5db;
+}
+
 /* ================= EMPTY MESSAGE ================= */
 
 .no-results-message{

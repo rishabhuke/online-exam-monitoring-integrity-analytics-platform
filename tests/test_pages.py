@@ -156,7 +156,27 @@ def test_start_exam_renders_with_candidate_session(client):
     assert resp.status_code == 200
 
 
-# --- Invigilator-gated page: /invigilator/dashboard -------------------------
+# --- Candidate-only page: /results/<exam_id>/answers (Milestone 5 P2) -------
+# Candidate identity always comes from session["candidate_id"] - exam_id is
+# the only URL parameter, so there is no candidate_id in the path to swap.
+
+def test_answer_review_page_redirects_when_logged_out(client):
+    resp = client.get("/results/101/answers")
+    assert resp.status_code == 302
+    assert "/login" in resp.headers["Location"]
+
+
+def test_answer_review_page_renders_with_candidate_session(client):
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/results/101/answers")
+    assert resp.status_code == 200
+    # exam_id must reach the JS via the data attribute answer_review.js reads
+    assert b'data-exam-id="101"' in resp.data
+
+
+# --- Invigilator-gated page: /invigilator/dashboard --------------------------
 # Uses @invigilator_required (routes/auth.py), which returns a 401 JSON
 # error, NOT a redirect - unlike every other page route above. A test that
 # assumed a redirect here would be silently wrong.

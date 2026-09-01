@@ -54,7 +54,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${a.score} / ${a.total_questions}</td>
                 <td>${a.percentage}%</td>
                 <td><span class="status-badge ${statusLower}-badge">${a.status}</span></td>
-                <td><a href="/report/${a.exam_id}" class="table-action-btn">View Report</a></td>
+                <td class="results-action-cell">
+                    <a href="/report/${a.exam_id}" class="table-action-btn">View Report</a>
+                    <a href="/results/${a.exam_id}/answers" class="table-action-btn table-action-btn-secondary">Review Answers</a>
+                </td>
             `;
 
             tableBody.appendChild(tr);

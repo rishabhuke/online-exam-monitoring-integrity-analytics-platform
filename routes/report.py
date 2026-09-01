@@ -114,3 +114,24 @@ def get_dashboard_attempt(candidate_id, exam_id):
     """
     result = grading.get_exam_attempt_summary(candidate_id, exam_id)
     return jsonify({"status": "success", **result}), 200
+
+
+@attempt_bp.route("/<int:exam_id>/answers", methods=["GET"])
+def get_own_answer_review(exam_id):
+    """
+    Milestone 5 (P2): candidate self-service per-question answer review
+    for the CURRENT candidate's own session.
+
+    candidate_id always comes from session["candidate_id"], never from
+    the URL - exam_id is the only URL parameter, so there is no way to
+    request another candidate's answers by changing the path. Mirrors
+    get_score()/get_report() above in routes/report.py, not the
+    dashboard_* routes (which are invigilator-only and take an arbitrary
+    candidate_id because an invigilator is allowed to see any
+    candidate's data - a candidate is not).
+    """
+    if "candidate_id" not in session:
+        return jsonify({"status": "error", "message": "Not authenticated"}), 401
+
+    result = grading.get_answer_review(session["candidate_id"], exam_id)
+    return jsonify({"status": "success", **result}), 200
