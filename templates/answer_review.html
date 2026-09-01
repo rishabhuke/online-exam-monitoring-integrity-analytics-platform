@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}
+Answer Review
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analytics.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container analytics-page" id="answerReviewPage" data-exam-id="{{ exam_id }}">
+
+    <!-- ================= PAGE HEADER ================= -->
+    <section class="analytics-header">
+        <div class="analytics-header-left">
+            <h1>
+                <i class="fa-solid fa-list-check"></i>
+                Answer Review
+            </h1>
+            <p>{{ exam.title }}</p>
+        </div>
+
+        <div class="analytics-badge">
+            <i class="fa-solid fa-clipboard-question"></i>
+            <span>Your Submission</span>
+        </div>
+    </section>
+
+    <!-- ================= SCORE SUMMARY ================= -->
+    <section class="analytics-stats-grid" id="statsGrid" aria-live="polite">
+
+        <div class="analytics-stat-card stat-blue">
+            <div class="stat-icon">
+                <i class="fa-solid fa-file-circle-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Score</h3>
+                <p id="statScore">&mdash;</p>
+                <span>Correct out of total</span>
+            </div>
+        </div>
+
+        <div class="analytics-stat-card stat-green">
+            <div class="stat-icon">
+                <i class="fa-solid fa-chart-column"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Percentage</h3>
+                <p id="statPercentage">&mdash;</p>
+                <span>Overall result</span>
+            </div>
+        </div>
+
+        <div class="analytics-stat-card stat-orange">
+            <div class="stat-icon">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Result</h3>
+                <p id="statResult">&mdash;</p>
+                <span>Pass / fail status</span>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ================= ANSWER LIST ================= -->
+    <section class="analytics-activity-section glass-panel">
+        <div class="panel-header">
+            <h2><i class="fa-solid fa-list-ol"></i> Question-by-Question Review</h2>
+            <p>Your selected answer compared with the correct answer for each question.</p>
+        </div>
+
+        <div class="answer-review-list" id="answerReviewList" aria-live="polite"></div>
+
+        <div class="analytics-state-message" id="loadingState">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Loading your answers...</span>
+        </div>
+
+        <div class="analytics-state-message" id="notSubmittedState" hidden>
+            <i class="fa-solid fa-inbox"></i>
+            <span>You haven't submitted this exam yet, so there's nothing to review.</span>
+        </div>
+
+        <div class="analytics-state-message analytics-state-error" id="errorState" hidden>
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Couldn't load your answer review right now. Please try refreshing the page.</span>
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/answer_review.js') }}"></script>
+{% endblock %}

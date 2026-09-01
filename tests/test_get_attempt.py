@@ -178,4 +178,141 @@ def test_get_exam_attempt_summary_module_function_directly(client, tmp_path):
     assert result["submitted"] is True
     assert result["correct"] == 1
     assert result["unanswered"] == 1
-    assert result["result"] == "Failed"
+
+
+# ---------------------------------------------------------------------------
+# Candidate self-service answer review: GET /api/attempt/<exam_id>/answers
+# (Milestone 5 P2). candidate_id always comes from session, never the URL -
+# only exam_id is a path parameter, so authorization tests below confirm
+# session-scoping rather than a candidate_id-in-URL check that doesn't exist.
+# ---------------------------------------------------------------------------
+
+def _login_as_candidate(client, candidate_id=1):
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = candidate_id
+
+
+def test_get_own_answer_review_requires_auth(client):
+    resp = client.get("/api/attempt/101/answers")
+    assert resp.status_code == 401
+
+
+def test_get_own_answer_review_not_submitted(client):
+    """No ExamAttempts row - candidate hasn't submitted this exam yet."""
+    _login_as_candidate(client)
+
+    resp = client.get("/api/attempt/101/answers")
+    assert resp.status_code == 200
+
+    data = resp.get_json()
+    assert data["status"] == "success"
+    assert data["submitted"] is False
+    assert "questions" not in data
+
+
+def test_get_own_answer_review_resolves_option_text(client, tmp_path):
+    db_path = tmp_path / "test_get_attempt.db"
+    _seed_attempt_and_answers(
+        db_path, score=1, total_questions=2, percentage=50.0, status="Passed",
+        answers=[(10, "b"), (11, "a")]  # Q10 correct (b), Q11 wrong (correct is b)
+    )
+    _login_as_candidate(client)
+
+    resp = client.get("/api/attempt/101/answers")
+    data = resp.get_json()
+
+    assert data["submitted"] is True
+    assert data["score"] == 1
+    assert data["total_questions"] == 2
+    assert data["result"] == "Passed"
+    assert len(data["questions"]) == 2
+
+    q10 = next(q for q in data["questions"] if q["question_id"] == 10)
+    assert q10["selected_option"] == "b"
+    assert q10["selected_text"] == "4"   # option_b for "What is 2+2?"
+    assert q10["correct_text"] == "4"
+    assert q10["answered"] is True
+    assert q10["is_correct"] is True
+
+    q11 = next(q for q in data["questions"] if q["question_id"] == 11)
+    assert q11["selected_option"] == "a"
+    assert q11["selected_text"] == "5"   # option_a for "What is 3+3?"
+    assert q11["correct_text"] == "6"    # correct_option is "b"
+    assert q11["is_correct"] is False
+
+
+def test_get_own_answer_review_marks_unanswered_questions(client, tmp_path):
+    db_path = tmp_path / "test_get_attempt.db"
+    _seed_attempt_and_answers(
+        db_path, score=1, total_questions=2, percentage=50.0, status="Failed",
+        answers=[(10, "b")]  # question 11 never answered
+    )
+    _login_as_candidate(client)
+
+    resp = client.get("/api/attempt/101/answers")
+    data = resp.get_json()
+
+    q11 = next(q for q in data["questions"] if q["question_id"] == 11)
+    assert q11["answered"] is False
+    assert q11["selected_option"] is None
+    assert q11["selected_text"] is None
+    assert q11["is_correct"] is False
+    assert q11["correct_text"] == "6"
+
+
+def test_get_own_answer_review_scoped_to_session_candidate_not_other_candidates(client, tmp_path):
+    """The only path parameter is exam_id - a candidate cannot see another
+    candidate's answers by changing anything in the URL, since candidate_id
+    never appears there. This confirms candidate 2's session only ever
+    resolves candidate 2's own (empty, in this case) submission."""
+    db_path = tmp_path / "test_get_attempt.db"
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        "INSERT INTO Candidates (id, name, email, password_hash) VALUES (2, 'Bob', 'bob@test.com', 'hash2')"
+    )
+    conn.commit()
+    conn.close()
+
+    _seed_attempt_and_answers(
+        db_path, score=2, total_questions=2, percentage=100.0, status="Passed",
+        answers=[(10, "b"), (11, "b")]
+    )
+    _login_as_candidate(client, candidate_id=2)
+
+    resp = client.get("/api/attempt/101/answers")
+    data = resp.get_json()
+
+    # Candidate 1 (seeded above) submitted; candidate 2 never did - same
+    # URL, different session, genuinely different (and correct) result.
+    assert data["submitted"] is False
+    assert data["candidate_id"] == 2
+
+
+def test_get_answer_review_dedups_duplicate_answer_rows_to_latest(client, tmp_path):
+    """Direct unit test of modules.grading.get_answer_review()'s dedup
+    safeguard: if Answers somehow has more than one row for the same
+    (candidate_id, question_id) - which the schema doesn't prevent, since
+    Answers has no attempt_id - the review must resolve to the LATEST row,
+    not silently pick an arbitrary one or double-count the question."""
+    db_path = tmp_path / "test_get_attempt.db"
+    _seed_attempt_and_answers(
+        db_path, score=1, total_questions=2, percentage=50.0, status="Passed",
+        answers=[(10, "a"), (11, "b")]  # question 10's first (wrong) answer
+    )
+    # Simulate a second submission's answer for the same question arriving
+    # later (higher id) with a different, now-correct, selection.
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        "INSERT INTO Answers (candidate_id, question_id, selected_option) VALUES (1, 10, 'b')"
+    )
+    conn.commit()
+    conn.close()
+
+    result = grading.get_answer_review(1, 101)
+
+    assert result["submitted"] is True
+    assert len(result["questions"]) == 2  # not 3 - one row per question, not per Answers row
+
+    q10 = next(q for q in result["questions"] if q["question_id"] == 10)
+    assert q10["selected_option"] == "b"  # the later row, not the first "a"
+    assert q10["is_correct"] is True

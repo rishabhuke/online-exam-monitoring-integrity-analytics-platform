@@ -181,6 +181,22 @@ def report_page(exam_id):
     return render_template("report.html", exam_id=exam_id, exam=exam)
 
 
+@pages_bp.route("/results/<int:exam_id>/answers")
+def answer_review_page(exam_id):
+    """
+    Milestone 5 (P2): candidate-only answer review page. Only exam_id is
+    a URL parameter - candidate identity is always read from
+    session["candidate_id"] (here and in the API route it calls,
+    GET /api/attempt/<exam_id>/answers), so this URL cannot be used to
+    view another candidate's answers by changing a parameter. Mirrors
+    report_page() above exactly.
+    """
+    if "candidate_id" not in session:
+        return redirect(url_for("auth.login"))
+    exam = _get_exam_meta(exam_id)
+    return render_template("answer_review.html", exam_id=exam_id, exam=exam)
+
+
 @pages_bp.route("/start_exam/<int:exam_id>")
 def start_exam(exam_id):
     if "candidate_id" not in session:
