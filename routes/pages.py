@@ -58,7 +58,15 @@ def dashboard_page():
 def exams():
     if "candidate_id" not in session:
         return redirect(url_for("auth.login"))
-    return render_template("exams.html")
+    conn = get_db_connection()
+    exam_rows = conn.execute(
+        "SELECT e.id, e.title, e.duration, COUNT(q.id) AS question_count "
+        "FROM Exams e LEFT JOIN Questions q ON q.exam_id = e.id "
+        "GROUP BY e.id, e.title, e.duration "
+        "ORDER BY e.id"
+    ).fetchall()
+    conn.close()
+    return render_template("exams.html", exams=exam_rows)
 
 
 @pages_bp.route("/results")
