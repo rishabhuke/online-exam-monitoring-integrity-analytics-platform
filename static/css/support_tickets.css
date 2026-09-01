@@ -1,0 +1,124 @@
+/* ======================================================
+   INVIGILATOR SUPPORT TICKETS PAGE
+   (Milestone 5 - support ticket backend port)
+====================================================== */
+
+#tickets-list{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.ticket-card{
+    border:1.5px solid #ecebf0;
+    border-radius:14px;
+    padding:18px 20px;
+    background:#faf9fc;
+}
+
+.ticket-card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+}
+
+.ticket-card-candidate{
+    font-weight:700;
+    color:var(--auth-ink, #14141c);
+    font-size:15px;
+}
+
+.ticket-card-meta{
+    color:#8a8a94;
+    font-size:13px;
+    margin-top:2px;
+}
+
+.ticket-card-message{
+    color:#3f3f46;
+    font-size:14.5px;
+    line-height:1.6;
+    margin-bottom:14px;
+}
+
+.ticket-card-response-existing{
+    background:#eef4ff;
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:13.5px;
+    color:#1e3a8a;
+    margin-bottom:12px;
+    line-height:1.6;
+}
+
+.ticket-card-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+}
+
+.ticket-card-actions select{
+    padding:8px 12px;
+    border-radius:10px;
+    border:1.5px solid #ecebf0;
+    background:#fff;
+    font-size:13px;
+}
+
+.ticket-card-response-input{
+    flex:1;
+    min-width:200px;
+    padding:8px 12px;
+    border-radius:10px;
+    border:1.5px solid #ecebf0;
+    font-size:13.5px;
+}
+
+.ticket-card-save-btn{
+    border:none;
+    outline:none;
+    background:#ff5a36;
+    color:#fff;
+    padding:9px 16px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.ticket-card-save-btn:hover{
+    background:#e64a28;
+}
+
+.ticket-card-save-status{
+    font-size:12.5px;
+    font-weight:600;
+    color:#8a8a94;
+}
+
+.ticket-status-badge{
+    padding:6px 14px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
+}
+
+.ticket-status-open{
+    background:#fee2e2;
+    color:#b91c1c;
+}
+
+.ticket-status-progress{
+    background:#fef3c7;
+    color:#b45309;
+}
+
+.ticket-status-resolved{
+    background:#dcfce7;
+    color:#15803d;
+}

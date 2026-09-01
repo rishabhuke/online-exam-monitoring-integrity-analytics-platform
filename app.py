@@ -18,6 +18,7 @@ from routes.export import export_bp
 from routes.analytics import analytics_bp
 from routes.alert_evidence import alert_evidence_bp
 from routes.quiz import quiz_bp
+from routes.support import support_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "online_exam_monitoring_2026_secret")
@@ -36,6 +37,7 @@ app.register_blueprint(export_bp)
 app.register_blueprint(analytics_bp)
 app.register_blueprint(alert_evidence_bp)
 app.register_blueprint(quiz_bp)
+app.register_blueprint(support_bp)
 
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE = BASE_DIR / "database.db"

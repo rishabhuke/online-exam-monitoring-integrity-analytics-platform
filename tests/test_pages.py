@@ -267,3 +267,57 @@ def test_violations_log_allows_invigilator_session(client):
 
     resp = client.get("/invigilator/violations/1")
     assert resp.status_code == 200
+
+
+# --- Invigilator-gated page: /invigilator/support-tickets ------------------
+# Same @invigilator_required decorator as the other invigilator pages above
+# (Milestone 5 - support ticket backend port).
+
+def test_support_tickets_page_requires_auth_no_session(client):
+    resp = client.get("/invigilator/support-tickets")
+    assert resp.status_code == 401
+    body = resp.get_json()
+    assert body["status"] == "error"
+
+
+def test_support_tickets_page_rejects_candidate_session(client):
+    """A valid CANDIDATE session must not satisfy @invigilator_required."""
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/invigilator/support-tickets")
+    assert resp.status_code == 401
+
+
+def test_support_tickets_page_allows_invigilator_session(client):
+    with client.session_transaction() as sess:
+        sess["invigilator_id"] = 1
+
+    resp = client.get("/invigilator/support-tickets")
+    assert resp.status_code == 200
+
+
+# --- /help-support: candidate ticket form visibility ------------------------
+# The "Report an Issue" form and "My Support Tickets" list only render for
+# a logged-in candidate (see routes/pages.py::help_support()); an anonymous
+# visitor still sees the public FAQ/contact info but gets a login prompt
+# instead of the form.
+
+def test_help_support_shows_issue_form_for_candidate(client):
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/help-support")
+    assert resp.status_code == 200
+    assert b'id="issueForm"' in resp.data
+    assert b'id="myTicketsList"' in resp.data
+    # Prefilled from the candidate's own record, not left blank
+    assert b"Alice" in resp.data
+    assert b"alice@test.com" in resp.data
+
+
+def test_help_support_hides_issue_form_for_anonymous(client):
+    resp = client.get("/help-support")
+    assert resp.status_code == 200
+    assert b'id="issueForm"' not in resp.data
+    assert b"log in</a> as a candidate" in resp.data
