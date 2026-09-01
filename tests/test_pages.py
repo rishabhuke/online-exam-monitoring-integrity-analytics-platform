@@ -103,6 +103,45 @@ def test_dashboard_has_no_fake_last_login(client):
     assert b"Last Login" not in resp.data
 
 
+def test_exams_page_shows_real_exam_data(client):
+    import routes.auth as auth_module
+    conn = sqlite3.connect(auth_module.DATABASE)
+    conn.execute(
+        "INSERT INTO Exams (id, title, duration) VALUES (101, 'Python Fundamentals Exam', 60)"
+    )
+    conn.execute(
+        "INSERT INTO Questions (id, exam_id, question, option_a, option_b, option_c, option_d, correct_option) "
+        "VALUES (1, 101, 'Q1?', 'a', 'b', 'c', 'd', 'a')"
+    )
+    conn.execute(
+        "INSERT INTO Questions (id, exam_id, question, option_a, option_b, option_c, option_d, correct_option) "
+        "VALUES (2, 101, 'Q2?', 'a', 'b', 'c', 'd', 'b')"
+    )
+    conn.commit()
+    conn.close()
+
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/exams")
+    assert resp.status_code == 200
+    assert b"Python Fundamentals Exam" in resp.data
+    assert b"2 MCQs" in resp.data
+    assert b"/start_exam/101" in resp.data
+    # Fabricated exams from the old hardcoded markup must never appear
+    assert b"Database Management System" not in resp.data
+    assert b"Web Technologies Assessment" not in resp.data
+
+
+def test_exams_page_shows_empty_state_with_no_exams(client):
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/exams")
+    assert resp.status_code == 200
+    assert b"No examinations are currently available" in resp.data
+
+
 def test_start_exam_redirects_when_logged_out(client):
     resp = client.get("/start_exam/101")
     assert resp.status_code == 302

@@ -29,15 +29,16 @@ Available Examinations
     <!-- ================= EXAMS LIST ================= -->
     <section class="exam-section">
 
-        <!-- Exam 1 -->
+        {% if exams %}
+        {% for exam in exams %}
         <div class="exam-card available">
             <div class="exam-card-top">
                 <div class="exam-title-wrap">
                     <div class="exam-icon">
-                        <i class="fa-brands fa-java"></i>
+                        <i class="fa-solid fa-file-circle-check"></i>
                     </div>
                     <div>
-                        <h3>Java Programming Assessment</h3>
+                        <h3>{{ exam.title }}</h3>
                     </div>
                 </div>
             </div>
@@ -45,133 +46,42 @@ Available Examinations
             <div class="exam-details">
                 <div class="detail-item">
                     <span class="label">Duration</span>
-                    <span class="value">60 Minutes</span>
+                    <span class="value">{{ exam.duration }} Minutes</span>
                 </div>
 
                 <div class="detail-item">
                     <span class="label">Questions</span>
-                    <span class="value">30 MCQs</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Scheduled Date</span>
-                    <span class="value">15 July 2026</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Start Time</span>
-                    <span class="value">10:00 AM</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Status</span>
-                    <span class="value status available-text">Available</span>
+                    <span class="value">{{ exam.question_count }} MCQs</span>
                 </div>
             </div>
 
             <div class="exam-footer">
-                <a href="{{ url_for('pages.start_exam', exam_id=1) }}" class="exam-btn start-btn">
+                <a href="{{ url_for('pages.start_exam', exam_id=exam.id) }}" class="exam-btn start-btn">
                     Start Exam
                 </a>
             </div>
         </div>
-
-        <!-- Exam 2 -->
-        <div class="exam-card upcoming">
-            <div class="exam-card-top">
-                <div class="exam-title-wrap">
-                    <div class="exam-icon">
-                        <i class="fa-solid fa-database"></i>
-                    </div>
-                    <div>
-                        <h3>Database Management System</h3>
-                    </div>
-                </div>
-            </div>
-
-            <div class="exam-details">
-                <div class="detail-item">
-                    <span class="label">Duration</span>
-                    <span class="value">45 Minutes</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Questions</span>
-                    <span class="value">25 MCQs</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Scheduled Date</span>
-                    <span class="value">18 July 2026</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Start Time</span>
-                    <span class="value">2:00 PM</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Status</span>
-                    <span class="value status upcoming-text">Upcoming</span>
-                </div>
-            </div>
-
-            <div class="exam-footer">
-                <button class="exam-btn disabled-btn" type="button">
-                    Not Available
-                </button>
-            </div>
+        {% endfor %}
+        {% else %}
+        <div class="exam-card">
+            <p>No examinations are currently available. Check back later or contact your invigilator.</p>
         </div>
-
-        <!-- Exam 3 -->
-        <div class="exam-card upcoming">
-            <div class="exam-card-top">
-                <div class="exam-title-wrap">
-                    <div class="exam-icon">
-                        <i class="fa-solid fa-globe"></i>
-                    </div>
-                    <div>
-                        <h3>Web Technologies Assessment</h3>
-                    </div>
-                </div>
-            </div>
-
-            <div class="exam-details">
-                <div class="detail-item">
-                    <span class="label">Duration</span>
-                    <span class="value">90 Minutes</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Questions</span>
-                    <span class="value">40 MCQs</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Scheduled Date</span>
-                    <span class="value">22 July 2026</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Start Time</span>
-                    <span class="value">9:30 AM</span>
-                </div>
-
-                <div class="detail-item">
-                    <span class="label">Status</span>
-                    <span class="value status upcoming-text">Upcoming</span>
-                </div>
-            </div>
-
-            <div class="exam-footer">
-                <button class="exam-btn disabled-btn" type="button">
-                    Not Available
-                </button>
-            </div>
-        </div>
+        {% endif %}
 
     </section>
 
+</div>
+
+<!-- ================= START EXAM CONFIRMATION MODAL ================= -->
+<div class="exam-modal-overlay" id="startExamModalOverlay" hidden>
+    <div class="exam-modal" role="dialog" aria-modal="true" aria-labelledby="startExamModalTitle">
+        <h3 id="startExamModalTitle">Start Exam?</h3>
+        <p id="startExamModalBody"></p>
+        <div class="exam-modal-actions">
+            <button class="exam-btn exam-modal-cancel-btn" id="cancelStartExamBtn" type="button">Cancel</button>
+            <button class="exam-btn start-btn" id="confirmStartExamBtn" type="button">Start Exam</button>
+        </div>
+    </div>
 </div>
 
 {% endblock %}

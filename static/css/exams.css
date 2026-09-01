@@ -268,3 +268,63 @@
         font-size:18px;
     }
 }
+
+/* ======================================================
+   START EXAM CONFIRMATION MODAL
+   (matches the pattern in static/css/exam_window.css)
+====================================================== */
+
+.exam-modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(20,20,28,.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:200;
+    padding:20px;
+}
+
+.exam-modal-overlay[hidden]{
+    display:none;
+}
+
+.exam-modal{
+    background:#fff;
+    border-radius:20px;
+    padding:32px;
+    max-width:420px;
+    width:100%;
+    box-shadow:0 30px 60px -20px rgba(20,20,28,.4);
+}
+
+.exam-modal h3{
+    font-size:20px;
+    font-weight:700;
+    color:#1e3a8a;
+    margin-bottom:12px;
+}
+
+.exam-modal p{
+    font-size:14.5px;
+    color:#4b5563;
+    line-height:1.6;
+    margin-bottom:24px;
+}
+
+.exam-modal-actions{
+    display:flex;
+    gap:12px;
+    justify-content:flex-end;
+}
+
+.exam-modal-cancel-btn{
+    background:#e5e7eb;
+    color:#6b7280;
+    min-width:auto;
+    padding:14px 22px;
+}
+
+.exam-modal-cancel-btn:hover{
+    background:#dbe1e8;
+}
