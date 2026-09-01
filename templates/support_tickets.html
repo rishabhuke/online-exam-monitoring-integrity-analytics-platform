@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}
+Support Tickets
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/invigilator_dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/support_tickets.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="invig-dashboard-container">
+
+    <section class="invig-welcome-card">
+        <span class="home-eyebrow">Integrity Analytics</span>
+        <h1><i class="fa-solid fa-headset"></i> Support Tickets</h1>
+        <p>Every issue candidates have reported, most recent first.</p>
+        <a href="{{ url_for('pages.invigilator_dashboard') }}" class="table-action">
+            <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </section>
+
+    <section class="invig-controls">
+        <label for="status-filter">Status</label>
+        <select id="status-filter">
+            <option value="">All</option>
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+        </select>
+        <span id="ticket-count-summary" aria-live="polite"></span>
+    </section>
+
+    <section class="invig-table-card">
+        <h3 id="tickets-heading">Tickets</h3>
+        <div id="tickets-list" aria-labelledby="tickets-heading">
+            <p class="invig-empty-row">Loading tickets...</p>
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/support_tickets.js') }}"></script>
+{% endblock %}

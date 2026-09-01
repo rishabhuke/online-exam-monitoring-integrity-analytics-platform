@@ -136,7 +136,41 @@ def violations_log(exam_id):
 
 @pages_bp.route("/help-support")
 def help_support():
-    return render_template("help_support.html")
+    """
+    Public page - FAQ/contact info are visible to anyone. The "Report an
+    Issue" form and "My Support Tickets" list (Milestone 5 - support
+    ticket backend) only render for a logged-in candidate; the template
+    checks `candidate_id` for that. contact_name/contact_email prefill
+    the form from the candidate's own record (still editable client-side,
+    still not trusted server-side - routes/support.py always uses
+    session["candidate_id"] as the real owner).
+    """
+    contact_name = None
+    contact_email = None
+    if "candidate_id" in session:
+        conn = get_db_connection()
+        row = conn.execute(
+            "SELECT name, email FROM Candidates WHERE id = ?", (session["candidate_id"],)
+        ).fetchone()
+        conn.close()
+        if row:
+            contact_name = row["name"]
+            contact_email = row["email"]
+    return render_template(
+        "help_support.html", contact_name=contact_name, contact_email=contact_email
+    )
+
+
+@pages_bp.route("/invigilator/support-tickets")
+@invigilator_required
+def support_tickets_page():
+    """
+    Invigilator support-ticket queue (Milestone 5 - support ticket
+    backend). Not exam-scoped like evidence/candidate-status/violations
+    (a support ticket isn't tied to one exam), so this is a standalone
+    page rather than following those pages' /<exam_id> URL pattern.
+    """
+    return render_template("support_tickets.html")
 
 
 @pages_bp.route("/report/<int:exam_id>")

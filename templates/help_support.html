@@ -58,7 +58,7 @@ Help & Support
             </div>
             <h3>Contact Administrator</h3>
             <p>Reach out to the exam administrator if you need urgent help related to access, results, or exam schedule.</p>
-            <button class="support-btn primary-btn">Contact Admin</button>
+            <button class="support-btn primary-btn" id="contactAdminBtn" type="button">Contact Admin</button>
         </div>
 
     </section>
@@ -191,22 +191,23 @@ Help & Support
     </section>
 
     <!-- ================= ISSUE REPORT FORM ================= -->
+    {% if session.candidate_id %}
     <section class="glass-panel issue-report-card">
         <div class="section-header">
             <h2><i class="fa-solid fa-bug"></i> Report an Issue</h2>
-            <p>Submit your issue and the support team can review it.</p>
+            <p>Submit your issue and an invigilator will review it.</p>
         </div>
 
         <form class="issue-form" id="issueForm">
             <div class="form-grid">
                 <div class="form-group">
                     <label for="issueName">Full Name</label>
-                    <input type="text" id="issueName" placeholder="Enter your name">
+                    <input type="text" id="issueName" value="{{ contact_name or '' }}" placeholder="Enter your name">
                 </div>
 
                 <div class="form-group">
                     <label for="issueEmail">Email Address</label>
-                    <input type="email" id="issueEmail" placeholder="Enter your email">
+                    <input type="email" id="issueEmail" value="{{ contact_email or '' }}" placeholder="Enter your email">
                 </div>
 
                 <div class="form-group">
@@ -239,10 +240,31 @@ Help & Support
             </div>
 
             <div class="issue-form-actions">
+                <span class="issue-form-status" id="issueFormStatus" role="status" aria-live="polite"></span>
                 <button type="submit" class="support-btn submit-btn">Submit Issue</button>
             </div>
         </form>
     </section>
+
+    <!-- ================= MY SUPPORT TICKETS ================= -->
+    <section class="glass-panel my-tickets-card">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-ticket"></i> My Support Tickets</h2>
+            <p>Track the issues you've submitted and any invigilator response.</p>
+        </div>
+
+        <div class="my-tickets-list" id="myTicketsList">
+            <p class="my-tickets-empty">Loading your tickets...</p>
+        </div>
+    </section>
+    {% else %}
+    <section class="glass-panel issue-report-card">
+        <div class="section-header">
+            <h2><i class="fa-solid fa-bug"></i> Report an Issue</h2>
+            <p>Please <a href="{{ url_for('auth.login') }}">log in</a> as a candidate to submit and track support tickets.</p>
+        </div>
+    </section>
+    {% endif %}
 
 </div>
 

@@ -142,3 +142,31 @@ CREATE TABLE IF NOT EXISTS Evidence (
     FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
     FOREIGN KEY(exam_id) REFERENCES Exams(id)
 );
+
+-- SupportTickets Table (Milestone 5 - support ticket backend port)
+-- Backs the "Report an Issue" form on help_support.html, which previously
+-- only alert()'d and never persisted anything (see routes/support.py).
+-- Column shape borrows from Prashanthi's branch's SupportTickets table,
+-- but ownership is scoped to this project's actual auth model
+-- (Candidates + Invigilators) - her Admins/AdminInviteIDs system was
+-- explicitly not ported (see docs/feature-port-analysis.md DON'T PORT).
+-- contact_name/contact_email are an optional snapshot taken at submission
+-- time (prefilled from the session but editable), not a live FK to
+-- Candidates - so a ticket still shows who asked even if their profile
+-- changes later.
+CREATE TABLE IF NOT EXISTS SupportTickets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    candidate_id INTEGER NOT NULL,
+    contact_name TEXT,
+    contact_email TEXT,
+    issue_type TEXT NOT NULL,
+    priority TEXT NOT NULL DEFAULT 'Medium',
+    message TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Open',
+    response TEXT,
+    responded_by INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(candidate_id) REFERENCES Candidates(id),
+    FOREIGN KEY(responded_by) REFERENCES Invigilators(id)
+);
