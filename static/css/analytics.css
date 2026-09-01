@@ -421,3 +421,22 @@
         margin-left:62px;
     }
 }
+
+
+/* ======================================================
+   REPORT PAGE - AI SUMMARY TEXT
+====================================================== */
+
+.report-summary-text{
+    font-size:15px;
+    line-height:1.8;
+    color:#374151;
+    padding:4px 2px 8px;
+}
+
+#summarySourceBadge{
+    font-size:12px;
+    font-weight:700;
+    color:#9ca3af;
+    margin-left:8px;
+}

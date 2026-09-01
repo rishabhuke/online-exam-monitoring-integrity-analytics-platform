@@ -54,14 +54,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${a.score} / ${a.total_questions}</td>
                 <td>${a.percentage}%</td>
                 <td><span class="status-badge ${statusLower}-badge">${a.status}</span></td>
-                <td><a href="#" class="table-action-btn">View Report</a></td>
+                <td><a href="/report/${a.exam_id}" class="table-action-btn">View Report</a></td>
             `;
 
             tableBody.appendChild(tr);
         });
 
         rows = Array.from(tableBody.querySelectorAll("tr"));
-        attachReportButtonHandlers();
     }
 
     function filterResults() {
@@ -89,16 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
         noResultsMessage.style.display = visibleCount === 0 ? "block" : "none";
     }
 
-    function attachReportButtonHandlers() {
-        document.querySelectorAll(".table-action-btn").forEach(button => {
-            button.addEventListener("click", function (e) {
-                e.preventDefault();
-                const row = this.closest("tr");
-                const examName = row.cells[0].textContent.trim();
-                alert(`Detailed report for "${examName}" will open here.`);
-            });
-        });
-    }
+
 
     async function loadResults() {
         try {

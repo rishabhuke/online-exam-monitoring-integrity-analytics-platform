@@ -91,6 +91,27 @@ def test_get_report_returns_own_session_summary(test_db_and_client):
     assert "risk_label" in body
 
 
+# --- New /report/<exam_id> page route (candidate-facing) -------------------
+
+def test_report_page_redirects_when_logged_out(test_db_and_client):
+    client, _ = test_db_and_client
+    resp = client.get("/report/101")
+    assert resp.status_code == 302
+    assert "/login" in resp.headers["Location"]
+
+
+def test_report_page_renders_with_candidate_session(test_db_and_client):
+    client, _ = test_db_and_client
+    with client.session_transaction() as sess:
+        sess["candidate_id"] = 1
+
+    resp = client.get("/report/101")
+    assert resp.status_code == 200
+    assert b"Python Fundamentals Exam" in resp.data
+    # exam_id must reach the JS via the data attribute the new report.js reads
+    assert b'data-exam-id="101"' in resp.data
+
+
 # --- New M4 dashboard endpoint (invigilator-only) --------------------------
 
 def test_get_dashboard_report_requires_invigilator_auth(test_db_and_client):
