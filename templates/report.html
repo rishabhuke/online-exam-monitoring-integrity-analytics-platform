@@ -1,1 +1,112 @@
-<!-- Placeholder-->
+{% extends "base.html" %}
+
+{% block title %}
+Integrity Report
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analytics.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-container analytics-page" id="reportPage" data-exam-id="{{ exam_id }}">
+
+    <!-- ================= PAGE HEADER ================= -->
+    <section class="analytics-header">
+        <div class="analytics-header-left">
+            <h1>
+                <i class="fa-solid fa-shield-halved"></i>
+                Integrity Report
+            </h1>
+            <p>{{ exam.title }}</p>
+        </div>
+
+        <div class="analytics-badge">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Session Summary</span>
+        </div>
+    </section>
+
+    <!-- ================= SCORE STATS ================= -->
+    <section class="analytics-stats-grid" id="statsGrid" aria-live="polite">
+
+        <div class="analytics-stat-card stat-blue">
+            <div class="stat-icon">
+                <i class="fa-solid fa-gauge-high"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Integrity Score</h3>
+                <p id="statIntegrityScore">&mdash;</p>
+                <span>Out of 100</span>
+            </div>
+        </div>
+
+        <div class="analytics-stat-card stat-purple">
+            <div class="stat-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Risk Level</h3>
+                <p id="statRiskLabel">&mdash;</p>
+                <span>Overall assessment</span>
+            </div>
+        </div>
+
+        <div class="analytics-stat-card stat-green">
+            <div class="stat-icon">
+                <i class="fa-solid fa-camera"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Face Presence</h3>
+                <p id="statFacePresence">&mdash;</p>
+                <span>Time visible on camera</span>
+            </div>
+        </div>
+
+        <div class="analytics-stat-card stat-orange">
+            <div class="stat-icon">
+                <i class="fa-solid fa-flag"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Total Flags</h3>
+                <p id="statTotalFlags">&mdash;</p>
+                <span id="statTotalEventsSub">&mdash; browser events</span>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ================= AI SUMMARY ================= -->
+    <section class="analytics-activity-section glass-panel">
+        <div class="panel-header">
+            <h2><i class="fa-solid fa-robot"></i> AI Integrity Summary</h2>
+            <p>Generated from this session's monitoring data.<span id="summarySourceBadge"></span></p>
+        </div>
+
+        <p id="summaryText" class="report-summary-text" hidden></p>
+
+        <div class="analytics-state-message" id="loadingState">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Generating your integrity report...</span>
+        </div>
+
+        <div class="analytics-state-message" id="emptyState" hidden>
+            <i class="fa-solid fa-inbox"></i>
+            <span>No monitoring data was recorded for this session.</span>
+        </div>
+
+        <div class="analytics-state-message analytics-state-error" id="errorState" hidden>
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Couldn't load this report right now. Please try refreshing the page.</span>
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/report.js') }}"></script>
+{% endblock %}

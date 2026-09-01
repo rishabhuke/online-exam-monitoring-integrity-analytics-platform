@@ -139,6 +139,14 @@ def help_support():
     return render_template("help_support.html")
 
 
+@pages_bp.route("/report/<int:exam_id>")
+def report_page(exam_id):
+    if "candidate_id" not in session:
+        return redirect(url_for("auth.login"))
+    exam = _get_exam_meta(exam_id)
+    return render_template("report.html", exam_id=exam_id, exam=exam)
+
+
 @pages_bp.route("/start_exam/<int:exam_id>")
 def start_exam(exam_id):
     if "candidate_id" not in session:
